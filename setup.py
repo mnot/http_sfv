@@ -13,7 +13,7 @@ setup(
   author_email = 'mnot@mnot.net',
   license = "MIT",
   url = 'http://github.com/mnot/shhh/',
-  download_url = 'http://github.com/mnot/thor/tarball/shhh-%s' % shh.__version__,
+  download_url = 'http://github.com/mnot/thor/tarball/shhh-%s' % shhh.__version__,
   packages = find_packages(),
   provides = ['shhh'],
   python_requires=">=3.5",
