@@ -5,7 +5,7 @@ import shhh
 
 setup(
   name = 'shhh',
-  version = shh.__version__,
+  version = shhh.__version__,
   description = 'Structured HTTP Headers (handily)',
   long_description=open("README.md").read(),
   long_description_content_type="text/markdown",
