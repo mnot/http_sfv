@@ -2,10 +2,6 @@ PYTHON=python3
 PYTHONPATH=./
 name=shhh
 version=$(shell PYTHONPATH=$(PYTHONPATH) $(PYTHON) -c "import $(name); print($(name).__version__)")
-PY_TESTS=test/test_*.py
-
-all:
-	@echo "make dist to 1) push and tag to github, and 2) upload to pypi."
 
 # for running from IDEs (e.g., TextMate)
 .PHONY: run
@@ -28,11 +24,12 @@ lint:
 	PYTHONPATH=$(PYTHONPATH) $(PYTHON) -m pylint --rcfile=test/pylintrc $(name)
 
 .PHONY: test
-test: $(PY_TESTS)
+test: test/tests
+	git submodule update --remote
+	PYTHONPATH=$(PYTHONPATH) $(PYTHON) test/test.py
 
-.PHONY: $(PY_TESTS)
-$(PY_TESTS):
-	PYTHONPATH=$(PYTHONPATH) $(PYTHON) $@
+test/tests:
+	git submodule update --init --recursive
 
 .PHONY: typecheck
 typecheck:
