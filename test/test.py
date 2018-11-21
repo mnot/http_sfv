@@ -75,3 +75,5 @@ if __name__ == "__main__":
         total_tests += tests
         total_passed += passed
     print("TOTAL: %s of %s passed." % (total_passed, total_tests))
+    if total_passed < total_tests:
+        sys.exit(1)
