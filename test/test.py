@@ -27,7 +27,7 @@ def run_suite(suite_name: str, suite: List) -> None:
         parse_success = False
         parse_fail_reason = None
         test_success = False
-        sys.stdout.write("* %s - " % test["name"])
+        sys.stdout.write("* %s: " % test["name"])
         try:
             parsed = parse(", ".join(test["raw"]), test["header_type"])
             parse_success = True
@@ -39,8 +39,8 @@ def run_suite(suite_name: str, suite: List) -> None:
             test_success = test["expected"] == walk_json(parsed)
         print(test_success and "PASS" or "FAIL")
         if not test_success:
-            print("  - expected %s" % test["expected"])
-            print("  -      got %s" % walk_json(parsed))
+            print("  - expected: %s" % (test["expected"] or "FAIL"))
+            print("  -      got: %s" % walk_json(parsed))
     print()
 
 
