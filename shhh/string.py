@@ -12,7 +12,7 @@ def parse_string(input_string: str) -> Tuple[str, str]:
         raise ValueError("First character of string is not DQUOTE.", input_string)
     input_string = input_string[1:]
     while input_string:
-        char = input_string[0]
+        input_string, char = remove_char(input_string)
         if char == BACKSLASH:
             if not input_string:
                 raise ValueError("Last character of input was a backslash.", input_string)
