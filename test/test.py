@@ -33,13 +33,13 @@ def run_suite(suite_name: str, suite: List) -> None:
             parse_success = True
         except ValueError as why:
             parse_fail_reason = why
-        if test["expected"] is False:
+        if test.get("must_fail", False):
             test_success = not parse_success
         else:
             test_success = test["expected"] == walk_json(parsed)
         print(test_success and "PASS" or "FAIL")
         if not test_success:
-            print("  - expected: %s" % (test["expected"] or "FAIL"))
+            print("  - expected: %s" % test.get("expected", "FAIL"))
             print("  -      got: %s" % walk_json(parsed))
         if not test_success and test.get("can_fail", False):
             print("  - (test failure not critical)")
