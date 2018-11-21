@@ -22,7 +22,10 @@ def load_tests(files=None) -> List:
 
 def run_suite(suite_name: str, suite: List) -> None:
     print("*** %s" % suite_name)
+    suite_tests = 0
+    suite_passed = 0
     for test in suite:
+        suite_tests += 1
         parsed = None
         parse_success = False
         parse_fail_reason = None
@@ -38,12 +41,17 @@ def run_suite(suite_name: str, suite: List) -> None:
         else:
             test_success = test["expected"] == walk_json(parsed)
         print(test_success and "PASS" or "FAIL")
-        if not test_success:
+        if test_success:
+            suite_passed += 1
+        else:
             print("  - expected: %s" % test.get("expected", "FAIL"))
             print("  -      got: %s" % walk_json(parsed))
         if not test_success and test.get("can_fail", False):
             print("  - (test failure not critical)")
+            suite_passed += 1
+    print("*** %s of %s passed." % (suite_passed, suite_tests))
     print()
+    return suite_tests, suite_passed
 
 
 def walk_json(thing: Any) -> Any:
@@ -60,5 +68,10 @@ def walk_json(thing: Any) -> Any:
 
 if __name__ == "__main__":
     suites = load_tests()
+    total_tests = 0
+    total_passed = 0
     for filename, suite in suites:
-        run_suite(filename, suite)
+        tests, passed = run_suite(filename, suite)
+        total_tests += tests
+        total_passed += passed
+    print("TOTAL: %s of %s passed." % (total_passed, total_tests))
