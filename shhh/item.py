@@ -10,6 +10,8 @@ from .boolean import parse_boolean, ser_boolean
 from .identifier import parse_identifier, ser_identifier
 
 def parse_item(input_string: str) -> Tuple[str, Any]:
+    if not input_string:
+        raise ValueError("Empty item.", input_string)
     if input_string[0] in digits + '-':
         return parse_number(input_string)
     if input_string[0] == DQUOTE:
