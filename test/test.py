@@ -21,7 +21,7 @@ def load_tests(files=None) -> List:
     return suites
 
 def run_suite(suite_name: str, suite: List) -> None:
-    print("*** %s" % suite_name)
+    print("* %s" % suite_name)
     suite_tests = 0
     suite_passed = 0
     for test in suite:
@@ -30,26 +30,28 @@ def run_suite(suite_name: str, suite: List) -> None:
         parse_success = False
         parse_fail_reason = None
         test_success = False
-        sys.stdout.write("* %s: " % test["name"])
         try:
             parsed = parse(", ".join(test["raw"]), test["header_type"])
             parse_success = True
         except ValueError as why:
             parse_fail_reason = why
+        except Exception:
+            sys.stderr.write("*** TEST ERROR in %s\n" % test["name"])
+            raise
         if test.get("must_fail", False):
             test_success = not parse_success
         else:
             test_success = test["expected"] == walk_json(parsed)
-        print(test_success and "PASS" or "FAIL")
         if test_success:
             suite_passed += 1
         else:
-            print("  - expected: %s" % test.get("expected", "FAIL"))
-            print("  -      got: %s" % walk_json(parsed))
+            print("* %s: %s" % (test["name"], test_success and "PASS" or "FAIL"))
+            print("    - expected: %s" % test.get("expected", "FAIL"))
+            print("    -      got: %s" % walk_json(parsed))
         if not test_success and test.get("can_fail", False):
-            print("  - (test failure not critical)")
+            print("    - (test failure not critical)")
             suite_passed += 1
-    print("*** %s of %s passed." % (suite_passed, suite_tests))
+    print("* %s of %s passed." % (suite_passed, suite_tests))
     print()
     return suite_tests, suite_passed
 
