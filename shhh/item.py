@@ -1,5 +1,5 @@
 
-from string import ascii_lowercase, digits
+from string import ascii_letters, digits
 from typing import Any, Tuple
 
 from .integer import parse_number, ser_integer
@@ -20,9 +20,9 @@ def parse_item(input_string: str) -> Tuple[str, Any]:
         return parse_byteseq(input_string)
     if input_string[0] == "?":
         return parse_boolean(input_string)
-    if input_string[0] in ascii_lowercase:
+    if input_string[0] in ascii_letters:
         return parse_identifier(input_string)
-    raise ValueError("Item %s can't be identified.", input_string)
+    raise ValueError("Item starting with '%s' can't be identified." % input_string[0], input_string)
 
 def ser_item(item: Any) -> str:
     item_type = type(item)
