@@ -48,6 +48,7 @@ def run_suite(suite_name: str, suite: List) -> None:
             print("* %s: %s" % (test["name"], test_success and "PASS" or "FAIL"))
             print("    - expected: %s" % test.get("expected", "FAIL"))
             print("    -      got: %s" % walk_json(parsed))
+            print("    -   reason: %s" % parse_fail_reason)
         if not test_success and test.get("can_fail", False):
             print("    - (test failure not critical)")
             suite_passed += 1
