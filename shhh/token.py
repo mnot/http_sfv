@@ -4,9 +4,9 @@ from typing import Tuple
 
 from .util import remove_char
 
-def parse_identifier(input_string: str) -> Tuple[str, str]:
+def parse_token(input_string: str) -> Tuple[str, str]:
     if not input_string or input_string[0] not in ascii_letters:
-        raise ValueError("Identifier didn't start with ALPHA.", input_string)
+        raise ValueError("Token didn't start with ALPHA.", input_string)
     output_string = ""
     while input_string:
         input_string, char = remove_char(input_string)
@@ -16,11 +16,11 @@ def parse_identifier(input_string: str) -> Tuple[str, str]:
         output_string += char
     return input_string, output_string
 
-def ser_identifier(identifier: str) -> str:
-    if type(identifier) is not str:
-        raise ValueError("Identifier is not str.")
-    if not all(char in ascii_letters + digits + "_-.:%*/" for char in identifier):
-        raise ValueError("Identifier contains disallowed characters.")
+def ser_token(token: str) -> str:
+    if type(token) is not str:
+        raise ValueError("Token is not str.")
+    if not all(char in ascii_letters + digits + "_-.:%*/" for char in token):
+        raise ValueError("Token contains disallowed characters.")
     output = ""
-    output += identifier
+    output += token
     return output

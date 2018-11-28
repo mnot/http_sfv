@@ -7,7 +7,7 @@ from .float import ser_float
 from .string import parse_string, ser_string, DQUOTE
 from .byteseq import parse_byteseq, ser_byteseq
 from .boolean import parse_boolean, ser_boolean
-from .identifier import parse_identifier, ser_identifier
+from .token import parse_token, ser_token
 
 def parse_item(input_string: str) -> Tuple[str, Any]:
     if not input_string:
@@ -21,7 +21,7 @@ def parse_item(input_string: str) -> Tuple[str, Any]:
     if input_string[0] == "?":
         return parse_boolean(input_string)
     if input_string[0] in ascii_letters:
-        return parse_identifier(input_string)
+        return parse_token(input_string)
     raise ValueError("Item starting with '%s' can't be identified." % input_string[0], input_string)
 
 def ser_item(item: Any) -> str:
@@ -35,7 +35,7 @@ def ser_item(item: Any) -> str:
     if item_type is str:
         return ser_string(item)
     if item_type is str:
-        return ser_identifier(item)
+        return ser_token(item)
     if item_type is bool:
         return ser_boolean(item)
     return ser_byteseq(item)

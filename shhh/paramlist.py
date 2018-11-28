@@ -2,7 +2,7 @@
 from typing import List, Dict, Tuple
 
 from .dictionary import parse_key, ser_key
-from .identifier import parse_identifier, ser_identifier
+from .token import parse_token, ser_token
 from .item import parse_item, ser_item
 from .util import discard_ows, remove_char
 
@@ -25,7 +25,7 @@ def parse_paramlist(input_string: str) -> Tuple[str, List]:
 
 
 def parse_paramid(input_string: str) -> Tuple[str, Tuple[str, Dict]]:
-    input_string, primary_identifier = parse_identifier(input_string)
+    input_string, primary_identifier = parse_token(input_string)
     parameters = {}  # type: Dict
     while True:
         input_string = discard_ows(input_string)
@@ -49,7 +49,7 @@ def ser_paramlist(input_list: List) -> str:
     count = len(input_list)
     for x in range(0, count):
         (mem_id, mem_params) = input_list[x]
-        _id = ser_identifier(mem_id)
+        _id = ser_token(mem_id)
         output += _id
         for param_name in mem_params:
             output += ";"
