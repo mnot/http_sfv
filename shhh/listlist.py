@@ -34,6 +34,8 @@ def ser_listlist(input_list: List[List]) -> str:
         inner_list = input_list[x]
         if type(inner_list) != list:
             raise ValueError("Top-level list member is not a List.")
+        if not inner_list:
+            raise ValueError("Inner list is empty.")
         inner_count = len(inner_list)
         for y in range(0, inner_count):
             inner_mem = inner_list[y]
