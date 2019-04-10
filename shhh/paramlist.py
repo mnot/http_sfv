@@ -1,4 +1,5 @@
 
+from collections import OrderedDict
 from typing import List, Dict, Tuple
 
 from .dictionary import parse_key, ser_key
@@ -26,7 +27,7 @@ def parse_paramlist(input_string: str) -> Tuple[str, List]:
 
 def parse_paramid(input_string: str) -> Tuple[str, Tuple[str, Dict]]:
     input_string, primary_identifier = parse_token(input_string)
-    parameters = {}  # type: Dict
+    parameters = OrderedDict()  # type: OrderedDict
     while True:
         input_string = discard_ows(input_string)
         if not input_string or input_string[0] != ";":
