@@ -5,10 +5,10 @@ def parse_boolean(input_string: str) -> Tuple[str, bool]:
     if not input_string or input_string[0] != "?":
         raise ValueError("First character of Boolean is not '?'", input_string)
     input_string = input_string[1:]
-    if input_string and input_string[0] == "T":
+    if input_string and input_string[0] == "1":
         input_string = input_string[1:]
         return input_string, True
-    if input_string and input_string[0] == "F":
+    if input_string and input_string[0] == "0":
         input_string = input_string[1:]
         return input_string, False
     raise ValueError("No Boolean value found.", input_string)
@@ -19,7 +19,7 @@ def ser_boolean(inval: bool) -> str:
     output = ""
     output += "?"
     if inval:
-        output += "T"
+        output += "1"
     if not inval:
-        output += "F"
+        output += "0"
     return output
