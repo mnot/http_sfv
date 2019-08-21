@@ -32,20 +32,14 @@ from typing import Any
 from .util import discard_ows
 from .dictionary import parse_dictionary, ser_dictionary
 from .list import parse_list, ser_list
-from .listlist import parse_listlist, ser_listlist
-from .paramlist import parse_paramlist, ser_paramlist
 from .item import parse_item, ser_item
 
 def parse(input_string: str, header_type: str) -> Any:
     input_string = discard_ows(input_string)
     if header_type == "dictionary":
         input_string, output = parse_dictionary(input_string) # type: ignore
-    if header_type == "list-list":
-        input_string, output = parse_listlist(input_string)  # type: ignore
     if header_type == "list":
         input_string, output = parse_list(input_string)  # type: ignore
-    if header_type == "param-list":
-        input_string, output = parse_paramlist(input_string)  # type: ignore
     if header_type == "item":
         input_string, output = parse_item(input_string)  # type: ignore
     input_string = discard_ows(input_string)
@@ -57,10 +51,6 @@ def serialise(input_data: Any) -> str:
     data_type = type(input_data)
     if data_type == dict:
         return ser_dictionary(input_data)
-    if data_type == list and type(input_data[0]) == list:
-        return ser_listlist(input_data)
-    if data_type == list and type(input_data[0]) == tuple:
-        return ser_paramlist(input_data)
     if data_type == list:
         return ser_list(input_data)
     if data_type in [str, int, float, bool, bytes]:
