@@ -9,6 +9,8 @@ from typing import Any, List
 
 from shhh import parse
 
+FAIL = '\033[91m'
+ENDC = '\033[0m'
 
 def load_tests(files=None) -> List:
     suites = []
@@ -21,7 +23,7 @@ def load_tests(files=None) -> List:
     return suites
 
 def run_suite(suite_name: str, suite: List) -> None:
-    print("* %s" % suite_name)
+    print("## %s" % suite_name)
     suite_tests = 0
     suite_passed = 0
     for test in suite:
@@ -45,26 +47,24 @@ def run_suite(suite_name: str, suite: List) -> None:
         if test_success:
             suite_passed += 1
         else:
-            print("* %s: %s" % (test["name"], test_success and "PASS" or "FAIL"))
+            print("%s  * %s: FAIL%s" % (FAIL, test["name"], ENDC))
             print("    - expected: %s" % test.get("expected", "FAIL"))
             print("    -      got: %s" % walk_json(parsed))
             print("    -   reason: %s" % parse_fail_reason)
         if not test_success and test.get("can_fail", False):
             print("    - (test failure not critical)")
             suite_passed += 1
-    print("* %s of %s passed." % (suite_passed, suite_tests))
+    print("-> %s of %s passed." % (suite_passed, suite_tests))
     print()
     return suite_tests, suite_passed
 
 
 def walk_json(thing: Any) -> Any:
     out = thing
-    if type(thing) is OrderedDict:
+    if type(thing) in [OrderedDict, dict]:
         out = {k: walk_json(thing[k]) for k in thing}
-    if type(thing) is list:
+    if type(thing) in [list, tuple]:
         out = [walk_json(i) for i in thing]
-    if type(thing) is tuple:
-        out = list(thing)
     if type(thing) is bytes:
         out = base64.b32encode(thing).decode('ascii')
     return out
