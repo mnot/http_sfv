@@ -21,7 +21,7 @@ def parse_list(input_string: str) -> Tuple[str, List]:
         input_string = discard_ows(input_string)
         if not input_string:
             raise ValueError("Trailing comma at end of list.", input_string)
-    raise ValueError("No List found.", input_string)
+    return input_string, members
 
 
 def parse_param_member(input_string: str) -> Tuple[str, Tuple[Any, OrderedDict]]:

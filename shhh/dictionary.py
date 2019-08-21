@@ -26,7 +26,7 @@ def parse_dictionary(input_string: str) -> Tuple[str, OrderedDict]:
         input_string = discard_ows(input_string)
         if not input_string:
             raise ValueError("Dictionary has trailing comma.", input_string)
-    raise ValueError("No Dictionary found.")
+    return input_string, dictionary
 
 
 
