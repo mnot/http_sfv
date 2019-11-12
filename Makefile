@@ -29,7 +29,6 @@ black:
 
 .PHONY: test
 test: test/tests
-	git submodule update --remote
 	PYTHONPATH=$(PYTHONPATH) $(PYTHON) test/test.py
 
 test/tests:
