@@ -16,7 +16,7 @@ setup(
   download_url = 'http://github.com/mnot/thor/tarball/shhh-%s' % shhh.__version__,
   packages = find_packages(),
   provides = ['shhh'],
-  python_requires=">=3.5",
+  python_requires=">=3.7",
   extras_require={
       'dev': [
           'mypy'
@@ -27,7 +27,7 @@ setup(
     'Intended Audience :: Developers',
     'License :: OSI Approved :: MIT License',
     'Programming Language :: Python',
-    'Programming Language :: Python :: 3.5',
+    'Programming Language :: Python :: 3.7',
     'Operating System :: POSIX',
     'Topic :: Internet :: WWW/HTTP',
     'Topic :: Software Development :: Libraries :: Python Modules',

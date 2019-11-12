@@ -21,9 +21,7 @@ def load_tests(files=None) -> List:
         files = Path("test/tests").glob("*.json")
     for filename in files:
         fh = open(filename)
-        suite_json = json.load(
-            fh, parse_float=decimal.Decimal, object_pairs_hook=OrderedDict
-        )
+        suite_json = json.load(fh, parse_float=decimal.Decimal)
         suites.append((filename, suite_json))
     return suites
 
@@ -103,7 +101,7 @@ def test_serialise(test: dict) -> Union[bool, str, str, str]:
 
 def walk_json_parse(thing: Any) -> Any:
     out = thing
-    if type(thing) in [OrderedDict, dict]:
+    if type(thing) is dict:
         out = {k: walk_json_parse(thing[k]) for k in thing}
     if type(thing) in [list, tuple]:
         out = [walk_json_parse(i) for i in thing]

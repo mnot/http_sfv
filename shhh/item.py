@@ -1,4 +1,3 @@
-from collections import OrderedDict
 from decimal import Decimal
 from string import ascii_letters, ascii_lowercase, digits
 from typing import Any, Tuple
@@ -12,7 +11,7 @@ from .boolean import parse_boolean, ser_boolean
 from .token import parse_token, ser_token, Token
 
 
-def parse_item(input_string: str) -> Tuple[str, Tuple[Any, OrderedDict]]:
+def parse_item(input_string: str) -> Tuple[str, Tuple[Any, dict]]:
     input_string, bare_item = parse_bare_item(input_string)
     input_string, parameters = parse_parameters(input_string)
     return input_string, (bare_item, parameters)
@@ -36,8 +35,8 @@ def parse_bare_item(input_string: str) -> Any:
     )
 
 
-def parse_parameters(input_string: str) -> Tuple[str, OrderedDict]:
-    parameters = OrderedDict()  # type: OrderedDict
+def parse_parameters(input_string: str) -> Tuple[str, dict]:
+    parameters = {}
     while input_string:
         if input_string[0] != ";":
             break
@@ -68,7 +67,7 @@ def parse_key(input_string: str) -> Tuple[str, str]:
     return input_string, output_string
 
 
-def ser_item(item: Any, item_parameters: OrderedDict) -> str:
+def ser_item(item: Any, item_parameters: dict) -> str:
     output = ""
     output += ser_bare_item(item)
     output += ser_parameters(item_parameters)
@@ -92,7 +91,7 @@ def ser_bare_item(item: Any) -> str:
     raise ValueError(f"Can't serialise; unrecognised item with type {item_type}")
 
 
-def ser_parameters(parameters: OrderedDict) -> str:
+def ser_parameters(parameters: dict) -> str:
     output = ""
     for param_name in parameters:
         param_value = parameters[param_name]

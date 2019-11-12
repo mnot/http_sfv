@@ -1,4 +1,3 @@
-from collections import OrderedDict
 from typing import List, Tuple, Any
 
 from .item import parse_item, ser_item, parse_parameters, ser_parameters
@@ -28,7 +27,7 @@ def parse_item_or_inner_list(input_string: str) -> Tuple[str, Any]:
     return parse_item(input_string)
 
 
-def parse_inner_list(input_string: str) -> Tuple[str, Tuple[List, OrderedDict]]:
+def parse_inner_list(input_string: str) -> Tuple[str, Tuple[List, dict]]:
     input_string, char = remove_char(input_string)
     if char != "(":
         raise ValueError("First character of inner list is not (.", input_string)
@@ -61,7 +60,7 @@ def ser_list(input_list: List) -> str:
     return output
 
 
-def ser_inner_list(inner_list: List, list_parameters: OrderedDict) -> str:
+def ser_inner_list(inner_list: List, list_parameters: dict) -> str:
     output = "("
     count = len(inner_list)
     for x in range(0, count):
