@@ -69,6 +69,6 @@ def ser_inner_list(inner_list: List, list_parameters: OrderedDict) -> str:
         output += ser_item(member_value, parameters)
         if x + 1 < count:
             output += " "
-        output += ")"
-        output += ser_parameters(list_parameters)
+    output += ")"
+    output += ser_parameters(list_parameters)
     return output
