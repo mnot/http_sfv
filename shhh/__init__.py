@@ -58,5 +58,5 @@ def serialise(input_data: Any, header_type: str) -> str:
     if header_type == "list":
         return ser_list(input_data)
     if header_type == "item":
-        return ser_item(input_data["value"], input_data["parameters"])
+        return ser_item(input_data[0], input_data[1])
     raise ValueError("Unrecognised header_type.", header_type)
