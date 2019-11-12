@@ -46,14 +46,16 @@ def run_suite(suite_name: str, suite: List) -> None:
                 print(f"{FAIL}  * {test['name']}: PARSE FAIL{ENDC}")
                 print(f"    - expected: {test.get('expected', 'FAIL')}")
                 print(f"    -      got: {walk_json_parse(parsed)}")
-                print(f"    -   reason: {parse_fail_reason}")
+                if parse_fail_reason:
+                    print(f"    -   reason: {parse_fail_reason}")
                 if test.get("can_fail", False):
                     print("    - (test failure not critical)")
             if not ser_success:
                 print(f"{FAIL} * {test['name']}: SERIALISE FAIL{ENDC}")
                 print(f"    - expected: {ser_expected}")
                 print(f"    -      got: ['{serialised}']")
-                print(f"    -   reason: {ser_fail_reason}")
+                if ser_fail_reason:
+                    print(f"    -   reason: {ser_fail_reason}")
 
     print(f"-> {suite_passed} of {suite_tests} passed.")
     print()
