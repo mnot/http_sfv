@@ -6,6 +6,10 @@ from .util import remove_char
 TOKEN_CHARS = ascii_letters + digits + ":/!#$%&'*+-.^_`|~"
 
 
+class Token(str):
+    pass
+
+
 def parse_token(input_string: str) -> Tuple[str, str]:
     if not input_string or input_string[0] not in ascii_letters:
         raise ValueError("Token didn't start with ALPHA.", input_string)
@@ -16,7 +20,7 @@ def parse_token(input_string: str) -> Tuple[str, str]:
             input_string = char + input_string
             return input_string, output_string
         output_string += char
-    return input_string, output_string
+    return input_string, Token(output_string)
 
 
 def ser_token(token: str) -> str:

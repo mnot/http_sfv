@@ -1,4 +1,5 @@
 from collections import OrderedDict
+from decimal import Decimal
 from string import ascii_letters, ascii_lowercase, digits
 from typing import Any, Tuple
 
@@ -8,7 +9,7 @@ from .float import ser_float
 from .string import parse_string, ser_string, DQUOTE
 from .byteseq import parse_byteseq, ser_byteseq
 from .boolean import parse_boolean, ser_boolean
-from .token import parse_token, ser_token
+from .token import parse_token, ser_token, Token
 
 
 def parse_item(input_string: str) -> Tuple[str, Tuple[Any, OrderedDict]]:
@@ -78,12 +79,12 @@ def ser_bare_item(item: Any) -> str:
     item_type = type(item)
     if item_type is int:
         return ser_integer(item)
-    if item_type is float:
+    if isinstance(item, Decimal):
         return ser_float(item)
+    if isinstance(item, Token):
+        return ser_token(item)
     if item_type is str:
         return ser_string(item)
-    if item_type is str:  ## FIXME
-        return ser_token(item)
     if item_type is bool:
         return ser_boolean(item)
     if item_type is bytes:

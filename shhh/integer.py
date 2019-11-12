@@ -1,3 +1,4 @@
+from decimal import Decimal
 from string import digits
 from typing import Tuple, Union
 
@@ -60,5 +61,5 @@ def parse_number(input_string: str) -> Tuple[str, Union[int, float]]:
         raise ValueError("Float ends in '.'.", input_string)
     if len(input_number.split(".", 1)[1]) > 6:
         raise ValueError("Float fractional component too long", input_string)
-    output_float = float(input_number) * _sign  # type: float
+    output_float = Decimal(input_number) * _sign
     return input_string, output_float
