@@ -9,8 +9,9 @@ from typing import Any, List
 
 from shhh import parse
 
-FAIL = '\033[91m'
-ENDC = '\033[0m'
+FAIL = "\033[91m"
+ENDC = "\033[0m"
+
 
 def load_tests(files=None) -> List:
     suites = []
@@ -21,6 +22,7 @@ def load_tests(files=None) -> List:
         suite_json = json.load(fh)
         suites.append((filename, suite_json))
     return suites
+
 
 def run_suite(suite_name: str, suite: List) -> None:
     print("## %s" % suite_name)
@@ -66,8 +68,9 @@ def walk_json(thing: Any) -> Any:
     if type(thing) in [list, tuple]:
         out = [walk_json(i) for i in thing]
     if type(thing) is bytes:
-        out = base64.b32encode(thing).decode('ascii')
+        out = base64.b32encode(thing).decode("ascii")
     return out
+
 
 if __name__ == "__main__":
     suites = load_tests()
