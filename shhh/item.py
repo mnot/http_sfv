@@ -18,13 +18,15 @@ def parse_item(input_string: str) -> Tuple[str, Tuple[Any, OrderedDict]]:
 
 
 def parse_bare_item(input_string: str) -> Any:
+    if not input_string:
+        raise ValueError("Empty item.", input_string)
     if input_string[0] in digits + "-":
         return parse_number(input_string)
-    if input_string[0] == DQUOTE:
+    if input_string.startswith(DQUOTE):
         return parse_string(input_string)
-    if input_string[0] == "*":
+    if input_string.startswith("*"):
         return parse_byteseq(input_string)
-    if input_string[0] == "?":
+    if input_string.startswith("?"):
         return parse_boolean(input_string)
     if input_string[0] in ascii_letters:
         return parse_token(input_string)
