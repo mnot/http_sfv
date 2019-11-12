@@ -119,7 +119,7 @@ def walk_json_ser(thing: Any) -> Any:
     if isinstance(thing, str):
         try:
             ser_token(thing)      # test to see if it can be serialised as a token
-            out = Token(thing)    # and if so, assume it is
+            out = Token(thing)    # and if so, assume it is. FIXME
         except ValueError:
             pass
     return out
