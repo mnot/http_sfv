@@ -24,6 +24,8 @@ def parse_token(input_string: str) -> Tuple[str, str]:
 
 
 def ser_token(token: str) -> str:
+    if token and token[0] not in ascii_letters:
+        raise ValueError("Token didn't start with ALPHA.")
     if not all(char in TOKEN_CHARS for char in token):
         raise ValueError("Token contains disallowed characters.")
     output = ""
