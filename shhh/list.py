@@ -51,7 +51,7 @@ def ser_list(input_list: List) -> str:
     count = len(input_list)
     for x in range(0, count):
         member_value, parameters = input_list[x]
-        if member_value.isinstance(list):
+        if isinstance(member_value, list):
             output += ser_inner_list(member_value, parameters)
         else:
             output += ser_item(member_value, parameters)

@@ -36,7 +36,7 @@ def ser_dictionary(input_dict: OrderedDict) -> str:
         member_name, (member_value, parameters) = members.pop(0)
         output += ser_key(member_name)
         output += "="
-        if member_value.isinstance(list):
+        if isinstance(member_value, list):
             output += ser_inner_list(member_value, parameters)
         else:
             output += ser_item(member_value, parameters)
