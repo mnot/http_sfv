@@ -12,7 +12,8 @@ def ser_float(input_float: Decimal) -> str:
     output = ""
     if input_float < 0:
         output += "-"
-    integer_component = abs(int(input_float))
+    abs_float = abs(input_float)
+    integer_component = int(abs_float)
     output += str(integer_component)
     integer_digits = len(str(integer_component))
     if integer_digits > 14:
@@ -20,6 +21,6 @@ def ser_float(input_float: Decimal) -> str:
     digits_avail = 15 - integer_digits
     fractional_digits_avail = min(digits_avail, 6)
     output += "."
-    fractional_component = str(abs(input_float.remainder_near(1)))[2:]
+    fractional_component = str(abs_float.remainder_near(integer_component or 1))[2:]
     output += fractional_component[:fractional_digits_avail]
     return output
