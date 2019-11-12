@@ -23,6 +23,10 @@ dist: clean typecheck # test
 lint:
 	PYTHONPATH=$(PYTHONPATH) $(PYTHON) -m pylint --rcfile=test/pylintrc $(name)
 
+.PHONY: black
+black:
+	PYTHONPATH=$(PYTHONPATH) black shhh/*.py
+
 .PHONY: test
 test: test/tests
 	git submodule update --remote
