@@ -52,7 +52,7 @@ def parse(input_string: str, header_type: str) -> Any:
 def serialise(input_data: Any, header_type: str) -> str:
     if header_type in ["list", "dictionary"]:
         if not input_data:
-            return None
+            return None # Do not serialise this header
     if header_type == "dictionary":
         return ser_dictionary(input_data)
     if header_type == "list":

@@ -9,6 +9,7 @@ import sys
 from typing import Any, List, Union
 
 from shhh import parse, serialise
+from shhh.token import ser_token, Token
 
 FAIL = "\033[91m"
 ENDC = "\033[0m"
@@ -20,7 +21,9 @@ def load_tests(files=None) -> List:
         files = Path("test/tests").glob("*.json")
     for filename in files:
         fh = open(filename)
-        suite_json = json.load(fh, parse_float=decimal.Decimal)
+        suite_json = json.load(
+            fh, parse_float=decimal.Decimal, object_pairs_hook=OrderedDict
+        )
         suites.append((filename, suite_json))
     return suites
 
@@ -51,7 +54,7 @@ def run_suite(suite_name: str, suite: List) -> None:
             if not ser_success:
                 print(f"{FAIL} * {test['name']}: SERIALISE FAIL{ENDC}")
                 print(f"    - expected: {ser_expected}")
-                print(f"    -      got: [{serialised}]")
+                print(f"    -      got: ['{serialised}']")
                 print(f"    -   reason: {ser_fail_reason}")
 
     print(f"-> {suite_passed} of {suite_tests} passed.")
@@ -91,7 +94,10 @@ def test_serialise(test: dict) -> Union[bool, str, str, str]:
     except Exception:
         sys.stderr.write(f"*** TEST ERROR in {test['name']}\n")
         raise
-    test_success = expected == [output]
+    if output is None:
+        test_success = expected == []
+    else:
+        test_success = expected == [output]
     return test_success, output, expected, serialise_fail_reason
 
 
@@ -105,6 +111,7 @@ def walk_json_parse(thing: Any) -> Any:
         out = base64.b32encode(thing).decode("ascii")
     return out
 
+
 def walk_json_ser(thing: Any) -> Any:
     out = thing
     if type(thing) is dict:
@@ -112,8 +119,11 @@ def walk_json_ser(thing: Any) -> Any:
     if type(thing) is list:
         out = [walk_json_ser(i) for i in thing]
     if isinstance(thing, str):
-        if thing.endswith("=*"):
-            out = base64.b32decode(thing)
+        try:
+            ser_token(thing)      # test to see if it can be serialised as a token
+            out = Token(thing)    # and if so, assume it is
+        except ValueError:
+            pass
     return out
 
 
