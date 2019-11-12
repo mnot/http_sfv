@@ -34,12 +34,13 @@ from .dictionary import parse_dictionary, ser_dictionary
 from .list import parse_list, ser_list
 from .item import parse_item, ser_item
 
+
 def parse(input_string: str, header_type: str) -> Any:
     input_string = discard_ows(input_string)
-    if header_type == "dictionary":
-        input_string, output = parse_dictionary(input_string) # type: ignore
     if header_type == "list":
         input_string, output = parse_list(input_string)  # type: ignore
+    if header_type == "dictionary":
+        input_string, output = parse_dictionary(input_string)  # type: ignore
     if header_type == "item":
         input_string, output = parse_item(input_string)  # type: ignore
     input_string = discard_ows(input_string)
@@ -47,12 +48,15 @@ def parse(input_string: str, header_type: str) -> Any:
         raise ValueError("Trailing text after parsed value.", input_string)
     return output
 
-def serialise(input_data: Any) -> str:
-    data_type = type(input_data)
-    if data_type == dict:
+
+def serialise(input_data: Any, header_type: str) -> str:
+    if header_type in ["list", "dictionary"]:
+        if not input_data:
+            return None
+    if header_type == "dictionary":
         return ser_dictionary(input_data)
-    if data_type == list:
+    if header_type == "list":
         return ser_list(input_data)
-    if data_type in [str, int, float, bool, bytes]:
-        return ser_item(input_data)
-    raise ValueError("Unrecognised input data.")
+    if header_type == "item":
+        return ser_item(input_data["value"], input_data["parameters"])
+    raise ValueError("Unrecognised header_type.", header_type)

@@ -1,5 +1,5 @@
-
 from typing import Tuple
+
 
 def parse_boolean(input_string: str) -> Tuple[str, bool]:
     if not input_string or input_string[0] != "?":
@@ -13,9 +13,8 @@ def parse_boolean(input_string: str) -> Tuple[str, bool]:
         return input_string, False
     raise ValueError("No Boolean value found.", input_string)
 
+
 def ser_boolean(inval: bool) -> str:
-    if type(inval) is not bool:
-        raise ValueError("Input is not Boolean.")
     output = ""
     output += "?"
     if inval:

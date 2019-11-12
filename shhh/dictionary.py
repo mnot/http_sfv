@@ -1,10 +1,10 @@
-
 from collections import OrderedDict
 from typing import Tuple
 
-from .item import ser_item
-from .list import parse_key, ser_key, ser_inner_list, parse_param_member, ser_parameters
+from .item import ser_item, ser_key, parse_key
+from .list import ser_inner_list, parse_item_or_inner_list
 from .util import remove_char, discard_ows
+
 
 def parse_dictionary(input_string: str) -> Tuple[str, OrderedDict]:
     dictionary = OrderedDict()  # type: OrderedDict
@@ -15,7 +15,7 @@ def parse_dictionary(input_string: str) -> Tuple[str, OrderedDict]:
         input_string, char = remove_char(input_string)
         if char != "=":
             raise ValueError("Dictionary key not followed by '='.", input_string)
-        input_string, member = parse_param_member(input_string)
+        input_string, member = parse_item_or_inner_list(input_string)
         dictionary[this_key] = member
         input_string = discard_ows(input_string)
         if not input_string:
@@ -29,21 +29,17 @@ def parse_dictionary(input_string: str) -> Tuple[str, OrderedDict]:
     return input_string, dictionary
 
 
-
 def ser_dictionary(input_dict: OrderedDict) -> str:
     output = ""
     members = list(input_dict.items())
     while members:
         member_name, (member_value, parameters) = members.pop(0)
-        name = ser_key(member_name)
-        output += name
+        output += ser_key(member_name)
         output += "="
         if member_value.isinstance(list):
-            value = ser_inner_list(member_value)
+            output += ser_inner_list(member_value, parameters)
         else:
-            value = ser_item(member_value)
-        output += value
-        output += ser_parameters(parameters)
+            output += ser_item(member_value, parameters)
         if members:
             output += ","
             output += " "

@@ -1,10 +1,10 @@
-
 from typing import Tuple
 
 from .util import remove_char
 
 DQUOTE = '"'
-BACKSLASH = '\\'
+BACKSLASH = "\\"
+
 
 def parse_string(input_string: str) -> Tuple[str, str]:
     output_string = ""
@@ -15,23 +15,25 @@ def parse_string(input_string: str) -> Tuple[str, str]:
         input_string, char = remove_char(input_string)
         if char == BACKSLASH:
             if not input_string:
-                raise ValueError("Last character of input was a backslash.", input_string)
-            else:
-                input_string, next_char = remove_char(input_string)
-                if next_char not in DQUOTE + BACKSLASH:
-                    raise ValueError("Backslash before disallowed character.", input_string)
-                output_string += next_char
+                raise ValueError(
+                    "Last character of input was a backslash.", input_string
+                )
+            input_string, next_char = remove_char(input_string)
+            if next_char not in DQUOTE + BACKSLASH:
+                raise ValueError("Backslash before disallowed character.", input_string)
+            output_string += next_char
         elif char == DQUOTE:
             return input_string, output_string
         elif not 31 < ord(char) < 127:
             raise ValueError("String contains disallowed character.", input_string)
         else:
             output_string += char
-    raise ValueError("Reached end of input without finding a closing DQUOTE.", input_string)
+    raise ValueError(
+        "Reached end of input without finding a closing DQUOTE.", input_string
+    )
+
 
 def ser_string(inval: str) -> str:
-    if type(inval) is not str:
-        raise ValueError("Input is not str.")
     if not all(31 < ord(char) < 127 for char in inval):
         raise ValueError("String contains disallowed characters.")
     output = ""
