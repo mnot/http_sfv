@@ -39,10 +39,10 @@ def parse_inner_list(input_string: str) -> Tuple[str, Tuple[List, OrderedDict]]:
             input_string = input_string[1:]
             input_string, parameters = parse_parameters(input_string)
             return input_string, (inner_list, parameters)
-        item = parse_item(input_string)
+        input_string, item = parse_item(input_string)
         inner_list.append(item)
         if not (input_string.startswith(" ") or input_string.startswith(")")):
-            raise ValueError("Inner list doesn't end well.", input_string)
+            raise ValueError("Inner list bad delimitation.", input_string)
     raise ValueError("End of inner list not found.", input_string)
 
 
