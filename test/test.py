@@ -12,6 +12,7 @@ from shhh import parse, serialise
 from shhh.token import Token
 
 FAIL = "\033[91m"
+WARN = "\033[93m"
 ENDC = "\033[0m"
 
 
@@ -43,14 +44,15 @@ def run_suite(suite_name: str, suite: List) -> None:
             suite_passed += 1
         else:
             if not parse_success:
-                print(f"{FAIL}  * {test['name']}: PARSE FAIL{ENDC}")
+                if test.get("can_fail", False):
+                    print(f"{WARN}  * {test['name']}: PARSE FAIL (non-critical){ENDC}")
+                else:
+                    print(f"{FAIL}  * {test['name']}: PARSE FAIL{ENDC}")
                 print(f"    -      raw: {test['raw']}")
                 print(f"    - expected: {test.get('expected', 'FAIL')}")
                 print(f"    -      got: {py2json(parsed)}")
                 if parse_fail_reason:
                     print(f"    -   reason: {parse_fail_reason}")
-                if test.get("can_fail", False):
-                    print("    - (test failure not critical)")
             if not ser_success:
                 print(f"{FAIL} * {test['name']}: SERIALISE FAIL{ENDC}")
                 print(f"    - expected: {ser_expected}")
