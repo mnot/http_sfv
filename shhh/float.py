@@ -21,6 +21,6 @@ def ser_float(input_float: Decimal) -> str:
     digits_avail = 15 - integer_digits
     fractional_digits_avail = min(digits_avail, 6)
     output += "."
-    fractional_component = str(abs_float.remainder_near(integer_component or 1))[2:]
+    fractional_component = str(abs_float % 1)[2:]
     output += fractional_component[:fractional_digits_avail]
     return output
