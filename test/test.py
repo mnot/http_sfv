@@ -9,7 +9,7 @@ import sys
 from typing import Any, List, Union
 
 from shhh import parse, serialise
-from shhh.token import ser_token, Token
+from shhh.token import Token
 
 FAIL = "\033[91m"
 ENDC = "\033[0m"
@@ -44,8 +44,9 @@ def run_suite(suite_name: str, suite: List) -> None:
         else:
             if not parse_success:
                 print(f"{FAIL}  * {test['name']}: PARSE FAIL{ENDC}")
+                print(f"    -      raw: {test['raw']}")
                 print(f"    - expected: {test.get('expected', 'FAIL')}")
-                print(f"    -      got: {walk_json_parse(parsed)}")
+                print(f"    -      got: {py2json(parsed)}")
                 if parse_fail_reason:
                     print(f"    -   reason: {parse_fail_reason}")
                 if test.get("can_fail", False):
@@ -78,7 +79,7 @@ def test_parse(test: dict) -> Union[bool, Any, str]:
     if test.get("must_fail", False):
         test_success = not parse_success
     else:
-        test_success = test["expected"] == walk_json_parse(parsed)
+        test_success = test["expected"] == py2json(parsed)
     return test_success, parsed, parse_fail_reason
 
 
@@ -86,7 +87,7 @@ def test_serialise(test: dict) -> Union[bool, str, str, str]:
     expected = test.get("canonical", test["raw"])
     output = None
     serialise_fail_reason = None
-    input_data = walk_json_ser(test["expected"])
+    input_data = json2py(test["expected"])
     try:
         output = serialise(input_data, test["header_type"])
     except ValueError as why:
@@ -101,29 +102,33 @@ def test_serialise(test: dict) -> Union[bool, str, str, str]:
     return test_success, output, expected, serialise_fail_reason
 
 
-def walk_json_parse(thing: Any) -> Any:
+def py2json(thing: Any) -> Any:
     out = thing
-    if type(thing) is dict:
-        out = {k: walk_json_parse(thing[k]) for k in thing}
+    if isinstance(thing, dict):
+        out = {k: py2json(thing[k]) for k in thing}
     if type(thing) in [list, tuple]:
-        out = [walk_json_parse(i) for i in thing]
-    if type(thing) is bytes:
-        out = base64.b32encode(thing).decode("ascii")
+        out = [py2json(i) for i in thing]
+    if isinstance(thing, bytes):
+        out = {"__type": "binary", "value": base64.b32encode(thing).decode("ascii")}
+    if isinstance(thing, Token):
+        out = {"__type": "token", "value": thing}
     return out
 
 
-def walk_json_ser(thing: Any) -> Any:
+def json2py(thing: Any) -> Any:
     out = thing
-    if type(thing) is dict:
-        out = {k: walk_json_ser(thing[k]) for k in thing}
-    if type(thing) is list:
-        out = [walk_json_ser(i) for i in thing]
-    if isinstance(thing, str):
-        try:
-            ser_token(thing)      # test to see if it can be serialised as a token
-            out = Token(thing)    # and if so, assume it is. FIXME
-        except ValueError:
-            pass
+    if isinstance(thing, dict):
+        if "__type" in thing:
+            if thing["__type"] == "token":
+                out = Token(thing["value"])
+            elif thing["__type"] == "binary":
+                out = base64.b32decode(thing["value"])
+            else:
+                raise Exception(f"Unrecognised data type {thing['__type']}")
+        else:
+            out = {k: json2py(thing[k]) for k in thing}
+    elif isinstance(thing, list):
+        out = [json2py(i) for i in thing]
     return out
 
 
