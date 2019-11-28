@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import base64
 from collections import OrderedDict
@@ -135,7 +135,12 @@ def json2py(thing: Any) -> Any:
 
 
 if __name__ == "__main__":
-    suites = load_tests()
+    import argparse
+    argparser = argparse.ArgumentParser(description='Test shhh.')
+    argparser.add_argument('files', metavar='filename', type=str, nargs='*',
+                        help='a JSON file containing tests')
+    args = argparser.parse_args()
+    suites = load_tests(args.files)
     total_tests = 0
     total_passed = 0
     for filename, suite in suites:
