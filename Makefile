@@ -1,5 +1,6 @@
 PYTHON=python3
 PYTHONPATH=./
+TESTS=test/tests/*.json
 name=shhh
 version=$(shell PYTHONPATH=$(PYTHONPATH) $(PYTHON) -c "import $(name); print($(name).__version__)")
 
@@ -28,8 +29,8 @@ black:
 	PYTHONPATH=$(PYTHONPATH) black shhh/*.py
 
 .PHONY: test
-test: test/tests
-	PYTHONPATH=$(PYTHONPATH) $(PYTHON) test/test.py
+test: $(TESTS)
+	PYTHONPATH=$(PYTHONPATH) $(PYTHON) test/test.py $(TESTS)
 
 test/tests:
 	git submodule update --init --recursive
