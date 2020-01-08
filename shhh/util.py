@@ -11,5 +11,5 @@ def remove_char(input_string: str) -> Tuple[str, str]:
 
 
 def discard_ows(input_string: str) -> str:
-    "Remove leading OWS from input_string."
-    return input_string.lstrip("\t ")
+    "Remove leading space from input_string."
+    return input_string.lstrip(" ")
