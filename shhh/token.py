@@ -3,6 +3,7 @@ from typing import Tuple
 
 from .util import remove_char
 
+TOKEN_START_CHARS = ascii_letters + '*'
 TOKEN_CHARS = ascii_letters + digits + ":/!#$%&'*+-.^_`|~"
 
 
@@ -11,8 +12,8 @@ class Token(str):
 
 
 def parse_token(input_string: str) -> Tuple[str, str]:
-    if not input_string or input_string[0] not in ascii_letters:
-        raise ValueError("Token didn't start with ALPHA.", input_string)
+    if not input_string or input_string[0] not in TOKEN_START_CHARS:
+        raise ValueError("Token didn't start with legal character.", input_string)
     output_string = ""
     while input_string:
         input_string, char = remove_char(input_string)
@@ -24,8 +25,8 @@ def parse_token(input_string: str) -> Tuple[str, str]:
 
 
 def ser_token(token: str) -> str:
-    if token and token[0] not in ascii_letters:
-        raise ValueError("Token didn't start with ALPHA.")
+    if token and token[0] not in TOKEN_START_CHARS:
+        raise ValueError("Token didn't start with legal character.")
     if not all(char in TOKEN_CHARS for char in token):
         raise ValueError("Token contains disallowed characters.")
     output = ""

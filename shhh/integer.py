@@ -23,10 +23,10 @@ def ser_integer(inval: int) -> str:
 
 
 INTEGER = "integer"
-FLOAT = "float"
+DECIMAL = "decimal"
 
 
-def parse_number(input_string: str) -> Tuple[str, Union[int, float]]:
+def parse_number(input_string: str) -> Tuple[str, Union[int, Decimal]]:
     _type = INTEGER
     _sign = 1
     input_number = ""
@@ -42,15 +42,17 @@ def parse_number(input_string: str) -> Tuple[str, Union[int, float]]:
         if char in digits:
             input_number += char
         elif _type == INTEGER and char == ".":
+            if len(input_number) > 12:
+                raise ValueError("Decimal too long.", input_number)
             input_number += char
-            _type = FLOAT
+            _type = DECIMAL
         else:
             input_string = char + input_string
             break
         if _type == INTEGER and len(input_number) > 15:
             raise ValueError("Integer too long.", input_string)
-        if _type == FLOAT and len(input_number) > 16:
-            raise ValueError("Float too long.", input_string)
+        if _type == DECIMAL and len(input_number) > 16:
+            raise ValueError("Decimal too long.", input_string)
     # we diverge from the specified algorithm a bit here to satisfy mypi.
     if _type == INTEGER:
         output_int = int(input_number) * _sign
@@ -58,8 +60,8 @@ def parse_number(input_string: str) -> Tuple[str, Union[int, float]]:
             raise ValueError("Integer outside allowed range.", input_string)
         return input_string, output_int
     if input_number.endswith("."):
-        raise ValueError("Float ends in '.'.", input_string)
-    if len(input_number.split(".", 1)[1]) > 6:
-        raise ValueError("Float fractional component too long", input_string)
+        raise ValueError("Decimal ends in '.'.", input_string)
+    if len(input_number.split(".", 1)[1]) > 3:
+        raise ValueError("Decimal fractional component too long", input_string)
     output_float = Decimal(input_number) * _sign
     return input_string, output_float
