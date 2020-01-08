@@ -6,7 +6,7 @@ from .util import remove_char, discard_ows
 from .integer import parse_number, ser_integer
 from .float import ser_float
 from .string import parse_string, ser_string, DQUOTE
-from .byteseq import parse_byteseq, ser_byteseq
+from .byteseq import parse_byteseq, ser_byteseq, BYTE_DELIMIT
 from .boolean import parse_boolean, ser_boolean
 from .token import parse_token, ser_token, Token
 
@@ -24,7 +24,7 @@ def parse_bare_item(input_string: str) -> Any:
         return parse_number(input_string)
     if input_string.startswith(DQUOTE):
         return parse_string(input_string)
-    if input_string.startswith("*"):
+    if input_string.startswith(BYTE_DELIMIT):
         return parse_byteseq(input_string)
     if input_string.startswith("?"):
         return parse_boolean(input_string)

@@ -2,15 +2,16 @@ import base64
 from string import ascii_letters, digits
 from typing import Tuple
 
+BYTE_DELIMIT = ":"
 
 def parse_byteseq(input_string: str) -> Tuple[str, bytes]:
     if input_string and input_string[0] != "*":
-        raise ValueError("Binary Sequence didn't start with '*'.", input_string)
+        raise ValueError(f"Binary Sequence didn't start with '{BYTE_DELIMIT}'.", input_string)
     input_string = input_string[1:]
     if "*" not in input_string:
-        raise ValueError("Binary Sequence didn't contain ending '*'.", input_string)
-    b64_content = input_string[: input_string.index("*")]
-    input_string = input_string[input_string.index("*") + 1 :]
+        raise ValueError(f"Binary Sequence didn't contain ending '{BYTE_DELIMIT}'.", input_string)
+    b64_content = input_string[: input_string.index(BYTE_DELIMIT)]
+    input_string = input_string[input_string.index(BYTE_DELIMIT) + 1 :]
     if not all(c in ascii_letters + digits + "+/=" for c in b64_content):
         raise ValueError(
             "Binary Sequence contained disallowed character.", input_string
@@ -21,7 +22,7 @@ def parse_byteseq(input_string: str) -> Tuple[str, bytes]:
 
 def ser_byteseq(byteseq: bytes) -> str:
     output = ""
-    output += "*"
+    output += BYTE_DELIMIT
     output += base64.standard_b64encode(byteseq).decode("ascii")
-    output += "*"
+    output += BYTE_DELIMIT
     return output
