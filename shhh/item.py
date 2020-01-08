@@ -47,7 +47,7 @@ def parse_parameters(input_string: str) -> Tuple[str, dict]:
             raise ValueError(
                 f"Duplicate name '{param_name}' in paramemter.", input_string
             )
-        param_value = None
+        param_value = True
         if input_string.startswith("="):
             input_string, char = remove_char(input_string)
             input_string, param_value = parse_bare_item(input_string)
@@ -97,7 +97,7 @@ def ser_parameters(parameters: dict) -> str:
         param_value = parameters[param_name]
         output += ";"
         output += ser_key(param_name)
-        if param_value is not None:
+        if param_value is not True:
             output += "="
             output += ser_bare_item(param_value)
     return output
