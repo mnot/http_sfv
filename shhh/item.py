@@ -43,10 +43,6 @@ def parse_parameters(input_string: str) -> Tuple[str, dict]:
         input_string, char = remove_char(input_string)
         input_string = discard_ows(input_string)
         input_string, param_name = parse_key(input_string)
-        if param_name in parameters:
-            raise ValueError(
-                f"Duplicate name '{param_name}' in paramemter.", input_string
-            )
         param_value = True
         if input_string.startswith("="):
             input_string, char = remove_char(input_string)

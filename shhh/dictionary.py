@@ -9,8 +9,6 @@ def parse_dictionary(input_string: str) -> Tuple[str, dict]:
     dictionary = {}  # type: dict
     while input_string:
         input_string, this_key = parse_key(input_string)
-        if this_key in dictionary:
-            raise ValueError("Duplicate dictionary key.", input_string)
         if input_string.startswith("="):
             input_string, char = remove_char(input_string)
             input_string, member = parse_item_or_inner_list(input_string)
