@@ -10,6 +10,7 @@ from .byteseq import parse_byteseq, ser_byteseq, BYTE_DELIMIT
 from .boolean import parse_boolean, ser_boolean
 from .token import parse_token, ser_token, Token, TOKEN_START_CHARS
 
+KEY_CHARS = ascii_lowercase + digits + "_-*."
 
 def parse_item(input_string: str) -> Tuple[str, Tuple[Any, dict]]:
     input_string, bare_item = parse_bare_item(input_string)
@@ -56,7 +57,7 @@ def parse_key(input_string: str) -> Tuple[str, str]:
         raise ValueError("Key does not begin with lcalpha.", input_string)
     output_string = ""
     while input_string:
-        if input_string[0] not in ascii_lowercase + digits + "_-*":
+        if input_string[0] not in KEY_CHARS:
             return input_string, output_string
         input_string, char = remove_char(input_string)
         output_string += char
@@ -100,7 +101,7 @@ def ser_parameters(parameters: dict) -> str:
 
 
 def ser_key(key: str) -> str:
-    if not all(char in ascii_lowercase + digits + "_-*" for char in key):
+    if not all(char in KEY_CHARS for char in key):
         raise ValueError("Key contains disallowed characters.")
     output = ""
     output += key
