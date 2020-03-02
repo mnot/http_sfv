@@ -18,7 +18,7 @@ def parse_token(input_string: str) -> Tuple[str, str]:
     while input_string:
         input_string, char = remove_char(input_string)
         if not char in TOKEN_CHARS:
-            input_string = char + input_string
+            input_string = "".join([char, input_string])
             return input_string, Token("".join(output_string))
         output_string.append(char)
     return input_string, Token("".join(output_string))
