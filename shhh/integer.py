@@ -7,6 +7,8 @@ from .util import remove_char
 MAX_INT = 999999999999999
 MIN_INT = -999999999999999
 
+NUMBER_START_CHARS = set(digits + "-")
+
 
 def parse_integer(input_string: str) -> Tuple[str, int]:
     return parse_number(input_string)  # type: ignore

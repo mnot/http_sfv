@@ -3,10 +3,11 @@ from string import ascii_letters, digits
 from typing import Tuple
 
 BYTE_DELIMIT = ":"
+B64CONTENT = set(ascii_letters + digits + "+/=")
 
 
 def parse_byteseq(input_string: str) -> Tuple[str, bytes]:
-    if input_string and input_string[0] != BYTE_DELIMIT:
+    if input_string and input_string[0] is not BYTE_DELIMIT:
         raise ValueError(
             f"Binary Sequence didn't start with '{BYTE_DELIMIT}'.", input_string
         )
@@ -17,7 +18,7 @@ def parse_byteseq(input_string: str) -> Tuple[str, bytes]:
         )
     b64_content = input_string[: input_string.index(BYTE_DELIMIT)]
     input_string = input_string[input_string.index(BYTE_DELIMIT) + 1 :]
-    if not all(c in ascii_letters + digits + "+/=" for c in b64_content):
+    if not all(c in B64CONTENT for c in b64_content):
         raise ValueError(
             "Binary Sequence contained disallowed character.", input_string
         )

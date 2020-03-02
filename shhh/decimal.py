@@ -6,6 +6,7 @@ from .integer import parse_number
 INT_DIGITS = 12
 FRAC_DIGITS = 3
 
+
 def parse_decimal(input_string: str) -> Tuple[str, Decimal]:
     return parse_number(input_string)
 
@@ -22,7 +23,7 @@ def ser_decimal(input_decimal: Decimal) -> str:
     output += "."
     fractional_component = str(abs_decimal % 1)[2:]
     if len(fractional_component) > FRAC_DIGITS:
-        fractional_remainder = fractional_component[FRAC_DIGITS + 1]
+        fractional_remainder = int(fractional_component[FRAC_DIGITS + 1])
         if fractional_remainder == 5:
             fractional_tail = fractional_component[FRAC_DIGITS]
             if fractional_tail % 2:

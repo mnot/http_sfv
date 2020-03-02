@@ -3,8 +3,8 @@ from typing import Tuple
 
 from .util import remove_char
 
-TOKEN_START_CHARS = ascii_letters + '*'
-TOKEN_CHARS = ascii_letters + digits + ":/!#$%&'*+-.^_`|~"
+TOKEN_START_CHARS = set(ascii_letters + "*")
+TOKEN_CHARS = set(ascii_letters + digits + ":/!#$%&'*+-.^_`|~")
 
 
 class Token(str):
@@ -14,14 +14,14 @@ class Token(str):
 def parse_token(input_string: str) -> Tuple[str, str]:
     if not input_string or input_string[0] not in TOKEN_START_CHARS:
         raise ValueError("Token didn't start with legal character.", input_string)
-    output_string = ""
+    output_string = []  # type: list
     while input_string:
         input_string, char = remove_char(input_string)
         if not char in TOKEN_CHARS:
             input_string = char + input_string
-            return input_string, Token(output_string)
-        output_string += char
-    return input_string, Token(output_string)
+            return input_string, Token("".join(output_string))
+        output_string.append(char)
+    return input_string, Token("".join(output_string))
 
 
 def ser_token(token: str) -> str:

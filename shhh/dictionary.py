@@ -9,7 +9,7 @@ def parse_dictionary(input_string: str) -> Tuple[str, dict]:
     dictionary = {}  # type: dict
     while input_string:
         input_string, this_key = parse_key(input_string)
-        if input_string.startswith("="):
+        if input_string and input_string[0] is "=":
             input_string, char = remove_char(input_string)
             input_string, member = parse_item_or_inner_list(input_string)
         else:
@@ -19,7 +19,7 @@ def parse_dictionary(input_string: str) -> Tuple[str, dict]:
         if not input_string:
             return input_string, dictionary
         input_string, char = remove_char(input_string)
-        if char != ",":
+        if char is not ",":
             raise ValueError("Dictionary member trailing characters.", input_string)
         input_string = discard_ows(input_string)
         if not input_string:

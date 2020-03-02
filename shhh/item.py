@@ -3,14 +3,15 @@ from string import ascii_letters, ascii_lowercase, digits
 from typing import Any, Tuple
 
 from .util import remove_char, discard_ows
-from .integer import parse_number, ser_integer
+from .integer import parse_number, ser_integer, NUMBER_START_CHARS
 from .decimal import ser_decimal
 from .string import parse_string, ser_string, DQUOTE
 from .byteseq import parse_byteseq, ser_byteseq, BYTE_DELIMIT
 from .boolean import parse_boolean, ser_boolean
 from .token import parse_token, ser_token, Token, TOKEN_START_CHARS
 
-KEY_CHARS = ascii_lowercase + digits + "_-*."
+KEY_CHARS = set(ascii_lowercase + digits + "_-*.")
+
 
 def parse_item(input_string: str) -> Tuple[str, Tuple[Any, dict]]:
     input_string, bare_item = parse_bare_item(input_string)
@@ -21,16 +22,17 @@ def parse_item(input_string: str) -> Tuple[str, Tuple[Any, dict]]:
 def parse_bare_item(input_string: str) -> Any:
     if not input_string:
         raise ValueError("Empty item.", input_string)
-    if input_string[0] in digits + "-":
-        return parse_number(input_string)
-    if input_string.startswith(DQUOTE):
-        return parse_string(input_string)
-    if input_string.startswith(BYTE_DELIMIT):
-        return parse_byteseq(input_string)
-    if input_string.startswith("?"):
-        return parse_boolean(input_string)
-    if input_string[0] in TOKEN_START_CHARS:
+    start_char = input_string[0]
+    if start_char in TOKEN_START_CHARS:
         return parse_token(input_string)
+    if start_char is DQUOTE:
+        return parse_string(input_string)
+    if start_char in NUMBER_START_CHARS:
+        return parse_number(input_string)
+    if start_char is BYTE_DELIMIT:
+        return parse_byteseq(input_string)
+    if start_char is "?":
+        return parse_boolean(input_string)
     raise ValueError(
         "Item starting with '%s' can't be identified." % input_string[0], input_string
     )
@@ -39,13 +41,13 @@ def parse_bare_item(input_string: str) -> Any:
 def parse_parameters(input_string: str) -> Tuple[str, dict]:
     parameters = {}
     while input_string:
-        if input_string[0] != ";":
+        if input_string[0] is not ";":
             break
         input_string, char = remove_char(input_string)
         input_string = discard_ows(input_string)
         input_string, param_name = parse_key(input_string)
         param_value = True
-        if input_string.startswith("="):
+        if input_string and input_string[0] is "=":
             input_string, char = remove_char(input_string)
             input_string, param_value = parse_bare_item(input_string)
         parameters[param_name] = param_value

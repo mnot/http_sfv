@@ -39,9 +39,9 @@ def parse(input_string: str, header_type: str) -> Any:
     input_string = discard_ows(input_string)
     if header_type == "list":
         input_string, output = parse_list(input_string)  # type: ignore
-    if header_type == "dictionary":
+    elif header_type == "dictionary":
         input_string, output = parse_dictionary(input_string)  # type: ignore
-    if header_type == "item":
+    elif header_type == "item":
         input_string, output = parse_item(input_string)  # type: ignore
     input_string = discard_ows(input_string)
     if input_string:
@@ -55,8 +55,8 @@ def serialise(input_data: Any, header_type: str) -> str:
             return None  # Do not serialise this header
     if header_type == "dictionary":
         return ser_dictionary(input_data)
-    if header_type == "list":
+    elif header_type == "list":
         return ser_list(input_data)
-    if header_type == "item":
+    elif header_type == "item":
         return ser_item(input_data[0], input_data[1])
     raise ValueError("Unrecognised header_type.", header_type)

@@ -13,7 +13,7 @@ def parse_list(input_string: str) -> Tuple[str, List]:
         if not input_string:
             return input_string, members
         input_string, char = remove_char(input_string)
-        if char != ",":
+        if char is not ",":
             raise ValueError("Trailing text after item in list.", input_string)
         input_string = discard_ows(input_string)
         if not input_string:
@@ -22,25 +22,25 @@ def parse_list(input_string: str) -> Tuple[str, List]:
 
 
 def parse_item_or_inner_list(input_string: str) -> Tuple[str, Any]:
-    if input_string.startswith("("):
+    if input_string and input_string[0] is "(":
         return parse_inner_list(input_string)
     return parse_item(input_string)
 
 
 def parse_inner_list(input_string: str) -> Tuple[str, Tuple[List, dict]]:
     input_string, char = remove_char(input_string)
-    if char != "(":
+    if char is not "(":
         raise ValueError("First character of inner list is not (.", input_string)
     inner_list = []  # type: List
     while input_string:
         input_string = discard_ows(input_string)
-        if input_string.startswith(")"):
+        if input_string and input_string[0] is ")":
             input_string = input_string[1:]
             input_string, parameters = parse_parameters(input_string)
             return input_string, (inner_list, parameters)
         input_string, item = parse_item(input_string)
         inner_list.append(item)
-        if not (input_string.startswith(" ") or input_string.startswith(")")):
+        if not (input_string and input_string[0] in set(" )")):
             raise ValueError("Inner list bad delimitation.", input_string)
     raise ValueError("End of inner list not found.", input_string)
 
