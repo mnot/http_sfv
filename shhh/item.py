@@ -57,13 +57,13 @@ def parse_parameters(input_string: str) -> Tuple[str, dict]:
 def parse_key(input_string: str) -> Tuple[str, str]:
     if input_string[0] not in ascii_lowercase:
         raise ValueError("Key does not begin with lcalpha.", input_string)
-    output_string = ""
+    output_string = []
     while input_string:
         if input_string[0] not in KEY_CHARS:
-            return input_string, output_string
+            return input_string, "".join(output_string)
         input_string, char = remove_char(input_string)
-        output_string += char
-    return input_string, output_string
+        output_string.append(char)
+    return input_string, "".join(output_string)
 
 
 def ser_item(item: Any, item_parameters: dict) -> str:
