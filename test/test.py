@@ -74,7 +74,7 @@ def test_parse(test: dict) -> Union[bool, Any, str]:
         parsed = parse(", ".join(test["raw"]), test["header_type"])
         parse_success = True
     except ValueError as why:
-        parse_fail_reason = why
+        parse_fail_reason = why.args
     except Exception:
         sys.stderr.write(f"*** TEST ERROR in {test['name']}\n")
         raise
@@ -93,7 +93,7 @@ def test_serialise(test: dict) -> Union[bool, str, str, str]:
     try:
         output = serialise(input_data, test["header_type"])
     except ValueError as why:
-        serialise_fail_reason = why
+        serialise_fail_reason = why.args[0]
     except Exception:
         sys.stderr.write(f"*** TEST ERROR in {test['name']}\n")
         raise

@@ -10,6 +10,7 @@ from .byteseq import parse_byteseq, ser_byteseq, BYTE_DELIMIT
 from .boolean import parse_boolean, ser_boolean
 from .token import parse_token, ser_token, Token, TOKEN_START_CHARS
 
+KEY_START_CHARS = set(ascii_lowercase + "*")
 KEY_CHARS = set(ascii_lowercase + digits + "_-*.")
 
 
@@ -34,7 +35,7 @@ def parse_bare_item(input_string: str) -> Any:
     if start_char is "?":
         return parse_boolean(input_string)
     raise ValueError(
-        "Item starting with '%s' can't be identified." % input_string[0], input_string
+        f"Item starting with '{input_string[0]}' can't be identified at: {input_string[:10]}"
     )
 
 
@@ -55,8 +56,8 @@ def parse_parameters(input_string: str) -> Tuple[str, dict]:
 
 
 def parse_key(input_string: str) -> Tuple[str, str]:
-    if input_string[0] not in ascii_lowercase:
-        raise ValueError("Key does not begin with lcalpha.", input_string)
+    if input_string[0] not in KEY_START_CHARS:
+        raise ValueError(f"Key does not begin with lcalpha or * at: {input_string[:10]}")
     output_string = []
     while input_string:
         if input_string[0] not in KEY_CHARS:
@@ -87,7 +88,7 @@ def ser_bare_item(item: Any) -> str:
         return ser_boolean(item)
     if item_type is bytes:
         return ser_byteseq(item)
-    raise ValueError(f"Can't serialise; unrecognised item with type {item_type}")
+    raise ValueError(f"Can't serialise; unrecognised item with type {item_type} at: {input_string[:10]}")
 
 
 def ser_parameters(parameters: dict) -> str:
@@ -104,7 +105,9 @@ def ser_parameters(parameters: dict) -> str:
 
 def ser_key(key: str) -> str:
     if not all(char in KEY_CHARS for char in key):
-        raise ValueError("Key contains disallowed characters.")
+        raise ValueError(f"Key contains disallowed characters at: {input_string[:10]}")
+    if key[0] not in KEY_START_CHARS:
+        raise ValueError(f"Key does not start with allowed character at: {input_string[:10]}")
     output = ""
     output += key
     return output

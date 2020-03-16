@@ -39,6 +39,12 @@ test/tests:
 typecheck:
 	PYTHONPATH=$(PYTHONPATH) $(PYTHON) -m mypy --config-file=test/mypy.ini $(name)
 
+.PHONY: update-tests
+update-tests:
+	cd test/tests; git pull origin master || exit
+	git add test/tests
+	git commit -m "update tests"
+
 .PHONY: clean
 clean:
 	rm -rf build dist MANIFEST $(name).egg-info

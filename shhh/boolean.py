@@ -3,7 +3,7 @@ from typing import Tuple
 
 def parse_boolean(input_string: str) -> Tuple[str, bool]:
     if not input_string or input_string[0] != "?":
-        raise ValueError("First character of Boolean is not '?'", input_string)
+        raise ValueError(f"First character of Boolean is not '?' at: {input_string[:10]}")
     input_string = input_string[1:]
     if input_string and input_string[0] is "1":
         input_string = input_string[1:]
@@ -11,7 +11,7 @@ def parse_boolean(input_string: str) -> Tuple[str, bool]:
     if input_string and input_string[0] is "0":
         input_string = input_string[1:]
         return input_string, False
-    raise ValueError("No Boolean value found.", input_string)
+    raise ValueError(f"No Boolean value found at: {input_string[:10]}")
 
 
 def ser_boolean(inval: bool) -> str:

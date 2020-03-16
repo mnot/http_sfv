@@ -36,9 +36,9 @@ def parse_number(input_string: str) -> Tuple[str, Union[int, Decimal]]:
         input_string = input_string[1:]
         _sign = -1
     if not input_string:
-        raise ValueError("Number input lacked a number.", input_string)
+        raise ValueError("Number input lacked a number at: {input_string[:10]}")
     if not input_string[0] in digits:
-        raise ValueError("Number doesn't start with a DIGIT.", input_string)
+        raise ValueError("Number doesn't start with a DIGIT at: {input_string[:10]}")
     while input_string:
         input_string, char = remove_char(input_string)
         if char in digits:
@@ -59,11 +59,11 @@ def parse_number(input_string: str) -> Tuple[str, Union[int, Decimal]]:
     if _type == INTEGER:
         output_int = int("".join(input_number)) * _sign
         if not MIN_INT <= output_int <= MAX_INT:
-            raise ValueError("Integer outside allowed range.", input_string)
+            raise ValueError("Integer outside allowed range at: {input_string[:10]}")
         return input_string, output_int
     if input_number and input_number[-1] is ".":
         raise ValueError("Decimal ends in '.'.", input_string)
     if len(input_number) - input_number.index(".") - 1 > 3:
-        raise ValueError("Decimal fractional component too long", input_string)
+        raise ValueError("Decimal fractional component too long at: {input_string[:10]}")
     output_float = Decimal("".join(input_number)) * _sign
     return input_string, output_float

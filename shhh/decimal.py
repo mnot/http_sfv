@@ -5,6 +5,7 @@ from .integer import parse_number
 
 INT_DIGITS = 12
 FRAC_DIGITS = 3
+PRECISION = Decimal(10) ** -FRAC_DIGITS
 
 
 def parse_decimal(input_string: str) -> Tuple[str, Decimal]:
@@ -12,27 +13,21 @@ def parse_decimal(input_string: str) -> Tuple[str, Decimal]:
 
 
 def ser_decimal(input_decimal: Decimal) -> str:
+    if not isinstance(input_decimal, Decimal):
+        raise ValueError("decimal input is not decimal")
+    input_decimal = round(input_decimal, FRAC_DIGITS)
+    abs_decimal = input_decimal.copy_abs()
+    integer_component_s = str(int(abs_decimal))
+    if len(integer_component_s) > INT_DIGITS:
+        raise ValueError(f"decimal with oversize integer component {integer_component_s}")
     output = ""
     if input_decimal < 0:
         output += "-"
-    abs_decimal = abs(input_decimal)
-    integer_component = str(int(abs_decimal))
-    output += integer_component
-    if len(integer_component) > INT_DIGITS:
-        raise ValueError("decimal with oversize integer component", integer_component)
+    output += integer_component_s
     output += "."
-    fractional_component = str(abs_decimal % 1)[2:]
-    if len(fractional_component) > FRAC_DIGITS:
-        fractional_remainder = int(fractional_component[FRAC_DIGITS + 1])
-        if fractional_remainder == 5:
-            fractional_tail = fractional_component[FRAC_DIGITS]
-            if fractional_tail % 2:
-                fractional_remainder = 10
-            else:
-                fractional_remainder = 0
-        if fractional_remainder > 5:
-            fractional_component = str(int(fractional_component[:FRAC_DIGITS]) + 1)
-        elif fractional_remainder < 5:
-            fractional_component = fractional_component[:FRAC_DIGITS]
-    output += fractional_component
+    fractional_component = abs_decimal.quantize(PRECISION).normalize() % 1
+    if fractional_component == 0:
+        output += "0"
+    else:
+        output += str(fractional_component)[2:]
     return output

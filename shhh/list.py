@@ -14,10 +14,10 @@ def parse_list(input_string: str) -> Tuple[str, List]:
             return input_string, members
         input_string, char = remove_char(input_string)
         if char is not ",":
-            raise ValueError("Trailing text after item in list.", input_string)
+            raise ValueError(f"Trailing text after item in list at: {input_string[:10]}")
         input_string = discard_ows(input_string)
         if not input_string:
-            raise ValueError("Trailing comma at end of list.", input_string)
+            raise ValueError(f"Trailing comma at end of list at: {input_string[:10]}")
     return input_string, members
 
 
@@ -30,7 +30,7 @@ def parse_item_or_inner_list(input_string: str) -> Tuple[str, Any]:
 def parse_inner_list(input_string: str) -> Tuple[str, Tuple[List, dict]]:
     input_string, char = remove_char(input_string)
     if char is not "(":
-        raise ValueError("First character of inner list is not (.", input_string)
+        raise ValueError(f"First character of inner list is not '(' at: {input_string[:10]}")
     inner_list = []  # type: List
     while input_string:
         input_string = discard_ows(input_string)
@@ -41,8 +41,8 @@ def parse_inner_list(input_string: str) -> Tuple[str, Tuple[List, dict]]:
         input_string, item = parse_item(input_string)
         inner_list.append(item)
         if not (input_string and input_string[0] in set(" )")):
-            raise ValueError("Inner list bad delimitation.", input_string)
-    raise ValueError("End of inner list not found.", input_string)
+            raise ValueError(f"Inner list bad delimitation at: {input_string[:10]}")
+    raise ValueError(f"End of inner list not found at: {input_string[:10]}")
 
 
 def ser_list(input_list: List) -> str:

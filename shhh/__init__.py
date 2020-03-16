@@ -45,7 +45,7 @@ def parse(input_string: str, header_type: str) -> Any:
         input_string, output = parse_item(input_string)  # type: ignore
     input_string = discard_ows(input_string)
     if input_string:
-        raise ValueError("Trailing text after parsed value.", input_string)
+        raise ValueError(f"Trailing text after parsed value at: {input_string[:10]}")
     return output
 
 
@@ -59,4 +59,4 @@ def serialise(input_data: Any, header_type: str) -> str:
         return ser_list(input_data)
     elif header_type == "item":
         return ser_item(input_data[0], input_data[1])
-    raise ValueError("Unrecognised header_type.", header_type)
+    raise ValueError(f"Unrecognised header_type {header_type}")
