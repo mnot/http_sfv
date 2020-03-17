@@ -35,28 +35,30 @@ from .list import parse_list, ser_list
 from .item import parse_item, ser_item
 
 
-def parse(input_string: str, header_type: str) -> Any:
+def parse(input_string: str, field_type: str) -> Any:
     input_string = discard_ows(input_string)
-    if header_type == "list":
+    if field_type == "list":
         input_string, output = parse_list(input_string)  # type: ignore
-    elif header_type == "dictionary":
+    elif field_type == "dictionary":
         input_string, output = parse_dictionary(input_string)  # type: ignore
-    elif header_type == "item":
+    elif field_type == "item":
         input_string, output = parse_item(input_string)  # type: ignore
+    else:
+        raise ValueError(f"Unrecognised field type '{field_type}'")
     input_string = discard_ows(input_string)
     if input_string:
         raise ValueError(f"Trailing text after parsed value at: {input_string[:10]}")
     return output
 
 
-def serialise(input_data: Any, header_type: str) -> str:
-    if header_type in ["list", "dictionary"]:
+def serialise(input_data: Any, field_type: str) -> str:
+    if field_type in ["list", "dictionary"]:
         if not input_data:
             return None  # Do not serialise this header
-    if header_type == "dictionary":
+    if field_type == "dictionary":
         return ser_dictionary(input_data)
-    elif header_type == "list":
+    elif field_type == "list":
         return ser_list(input_data)
-    elif header_type == "item":
+    elif field_type == "item":
         return ser_item(input_data[0], input_data[1])
-    raise ValueError(f"Unrecognised header_type {header_type}")
+    raise ValueError(f"Unrecognised field_type {field_type}")
