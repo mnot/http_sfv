@@ -5,4 +5,4 @@ MANIFEST
 .coverage
 __pycache__
 .mypy_cache
-shhh.egg-info
+*.egg-info
