@@ -57,7 +57,9 @@ def parse_parameters(input_string: str) -> Tuple[str, dict]:
 
 def parse_key(input_string: str) -> Tuple[str, str]:
     if input_string[0] not in KEY_START_CHARS:
-        raise ValueError(f"Key does not begin with lcalpha or * at: {input_string[:10]}")
+        raise ValueError(
+            f"Key does not begin with lcalpha or * at: {input_string[:10]}"
+        )
     output_string = []
     while input_string:
         if input_string[0] not in KEY_CHARS:
@@ -88,7 +90,9 @@ def ser_bare_item(item: Any) -> str:
         return ser_boolean(item)
     if item_type is bytes:
         return ser_byteseq(item)
-    raise ValueError(f"Can't serialise; unrecognised item with type {item_type} at: {input_string[:10]}")
+    raise ValueError(
+        f"Can't serialise; unrecognised item with type {item_type} at: {input_string[:10]}"
+    )
 
 
 def ser_parameters(parameters: dict) -> str:
@@ -107,7 +111,9 @@ def ser_key(key: str) -> str:
     if not all(char in KEY_CHARS for char in key):
         raise ValueError(f"Key contains disallowed characters at: {input_string[:10]}")
     if key[0] not in KEY_START_CHARS:
-        raise ValueError(f"Key does not start with allowed character at: {input_string[:10]}")
+        raise ValueError(
+            f"Key does not start with allowed character at: {input_string[:10]}"
+        )
     output = ""
     output += key
     return output

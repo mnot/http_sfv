@@ -21,7 +21,9 @@ def parse_dictionary(input_string: str) -> Tuple[str, dict]:
             return input_string, dictionary
         input_string, char = remove_char(input_string)
         if char is not ",":
-            raise ValueError(f"Dictionary member trailing characters at: {input_string[:10]}")
+            raise ValueError(
+                f"Dictionary member trailing characters at: {input_string[:10]}"
+            )
         input_string = discard_ows(input_string)
         if not input_string:
             raise ValueError(f"Dictionary has trailing comma at: {input_string[:10]}")

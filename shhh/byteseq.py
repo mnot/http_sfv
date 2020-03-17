@@ -14,7 +14,8 @@ def parse_byteseq(input_string: str) -> Tuple[str, bytes]:
     input_string = input_string[1:]
     if BYTE_DELIMIT not in input_string:
         raise ValueError(
-            f"Binary Sequence didn't contain ending '{BYTE_DELIMIT}' at: {input_string[:10]}"        )
+            f"Binary Sequence didn't contain ending '{BYTE_DELIMIT}' at: {input_string[:10]}"
+        )
     b64_content = input_string[: input_string.index(BYTE_DELIMIT)]
     input_string = input_string[input_string.index(BYTE_DELIMIT) + 1 :]
     if not all(c in B64CONTENT for c in b64_content):

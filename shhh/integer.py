@@ -64,6 +64,8 @@ def parse_number(input_string: str) -> Tuple[str, Union[int, Decimal]]:
     if input_number and input_number[-1] is ".":
         raise ValueError("Decimal ends in '.'.", input_string)
     if len(input_number) - input_number.index(".") - 1 > 3:
-        raise ValueError("Decimal fractional component too long at: {input_string[:10]}")
+        raise ValueError(
+            "Decimal fractional component too long at: {input_string[:10]}"
+        )
     output_float = Decimal("".join(input_number)) * _sign
     return input_string, output_float

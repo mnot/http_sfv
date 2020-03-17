@@ -13,7 +13,9 @@ class Token(str):
 
 def parse_token(input_string: str) -> Tuple[str, str]:
     if not input_string or input_string[0] not in TOKEN_START_CHARS:
-        raise ValueError(f"Token didn't start with legal character at: {input_string[:10]}")
+        raise ValueError(
+            f"Token didn't start with legal character at: {input_string[:10]}"
+        )
     output_string = []  # type: list
     while input_string:
         input_string, char = remove_char(input_string)

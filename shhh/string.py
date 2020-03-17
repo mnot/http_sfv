@@ -10,7 +10,9 @@ DQUOTEBACKSLASH = set(DQUOTE + BACKSLASH)
 def parse_string(input_string: str) -> Tuple[str, str]:
     output_string = []
     if not input_string or input_string[0] is not DQUOTE:
-        raise ValueError(f"First character of string is not DQUOTE at: {input_string[:10]}")
+        raise ValueError(
+            f"First character of string is not DQUOTE at: {input_string[:10]}"
+        )
     input_string = input_string[1:]
     while input_string:
         input_string, char = remove_char(input_string)
@@ -21,12 +23,16 @@ def parse_string(input_string: str) -> Tuple[str, str]:
                 )
             input_string, next_char = remove_char(input_string)
             if next_char not in DQUOTEBACKSLASH:
-                raise ValueError(f"Backslash before disallowed character at: {input_string[:10]}")
+                raise ValueError(
+                    f"Backslash before disallowed character at: {input_string[:10]}"
+                )
             output_string.append(next_char)
         elif char == DQUOTE:
             return input_string, "".join(output_string)
         elif not 31 < ord(char) < 127:
-            raise ValueError(f"String contains disallowed character at: {input_string[:10]}")
+            raise ValueError(
+                f"String contains disallowed character at: {input_string[:10]}"
+            )
         else:
             output_string.append(char)
     raise ValueError(

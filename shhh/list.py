@@ -14,7 +14,9 @@ def parse_list(input_string: str) -> Tuple[str, List]:
             return input_string, members
         input_string, char = remove_char(input_string)
         if char is not ",":
-            raise ValueError(f"Trailing text after item in list at: {input_string[:10]}")
+            raise ValueError(
+                f"Trailing text after item in list at: {input_string[:10]}"
+            )
         input_string = discard_ows(input_string)
         if not input_string:
             raise ValueError(f"Trailing comma at end of list at: {input_string[:10]}")
@@ -30,7 +32,9 @@ def parse_item_or_inner_list(input_string: str) -> Tuple[str, Any]:
 def parse_inner_list(input_string: str) -> Tuple[str, Tuple[List, dict]]:
     input_string, char = remove_char(input_string)
     if char is not "(":
-        raise ValueError(f"First character of inner list is not '(' at: {input_string[:10]}")
+        raise ValueError(
+            f"First character of inner list is not '(' at: {input_string[:10]}"
+        )
     inner_list = []  # type: List
     while input_string:
         input_string = discard_ows(input_string)

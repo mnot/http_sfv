@@ -19,7 +19,9 @@ def ser_decimal(input_decimal: Decimal) -> str:
     abs_decimal = input_decimal.copy_abs()
     integer_component_s = str(int(abs_decimal))
     if len(integer_component_s) > INT_DIGITS:
-        raise ValueError(f"decimal with oversize integer component {integer_component_s}")
+        raise ValueError(
+            f"decimal with oversize integer component {integer_component_s}"
+        )
     output = ""
     if input_decimal < 0:
         output += "-"

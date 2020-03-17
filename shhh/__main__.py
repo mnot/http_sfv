@@ -8,6 +8,7 @@ from typing import Any
 from . import parse
 from .token import Token
 
+
 def py2json(thing: Any) -> Any:
     out = thing
     if isinstance(thing, dict):
@@ -19,6 +20,7 @@ def py2json(thing: Any) -> Any:
     if isinstance(thing, Token):
         out = {"__type": "token", "value": thing}
     return out
+
 
 parser = argparse.ArgumentParser(
     description="Validate and show data model of a Structured Field Value."
@@ -48,7 +50,10 @@ group.add_argument(
     const="item",
     help="Item field",
 )
-parser.add_argument("input_string", help="The (textual) structured field value. Do not include the field name.")
+parser.add_argument(
+    "input_string",
+    help="The (textual) structured field value. Do not include the field name.",
+)
 args = parser.parse_args()
 
 try:
