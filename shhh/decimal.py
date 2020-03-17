@@ -9,7 +9,7 @@ PRECISION = Decimal(10) ** -FRAC_DIGITS
 
 
 def parse_decimal(input_string: str) -> Tuple[str, Decimal]:
-    return parse_number(input_string)
+    return parse_number(input_string)  # type: ignore
 
 
 def ser_decimal(input_decimal: Decimal) -> str:

@@ -1,6 +1,6 @@
 from decimal import Decimal
 from string import ascii_lowercase, digits
-from typing import Any, Tuple
+from typing import Any, Tuple, List
 
 from .util import remove_char, discard_ows
 from .integer import parse_number, ser_integer, NUMBER_START_CHARS
@@ -60,7 +60,7 @@ def parse_key(input_string: str) -> Tuple[str, str]:
         raise ValueError(
             f"Key does not begin with lcalpha or * at: {input_string[:10]}"
         )
-    output_string = []
+    output_string = []  # type: List[str]
     while input_string:
         if input_string[0] not in KEY_CHARS:
             return input_string, "".join(output_string)
