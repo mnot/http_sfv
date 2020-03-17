@@ -11,7 +11,7 @@ _Currently, this implements draft 17 of the specification._
 
 ## Command Line Use
 
-You can validate and examine the data model of a field value by calling the library on the command line, using `-d`, `-l` and `i` to denote dictionaries, lists and items respectively; e.g.,
+You can validate and examine the data model of a field value by calling the library on the command line, using `-d`, `-l` and `-i` to denote dictionaries, lists or items respectively; e.g.,
 
 ~~~ example
 > python3 -m http_sfv -i "foo;bar=baz"
