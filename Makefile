@@ -1,7 +1,7 @@
 PYTHON=python3
 PYTHONPATH=./
 TESTS=test/tests/*.json
-name=shhh
+name=http_sfv
 version=$(shell PYTHONPATH=$(PYTHONPATH) $(PYTHON) -c "import $(name); print($(name).__version__)")
 
 # for running from IDEs (e.g., TextMate)

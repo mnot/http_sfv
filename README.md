@@ -14,7 +14,7 @@ _Currently, this implements draft 17 of the specification._
 You can validate and examine the data model of a field value by calling the library on the command line, using `-d`, `-l` and `i` to denote dictionaries, lists and items respectively; e.g.,
 
 ~~~ example
-> python3 -m shhh -i "foo;bar=baz"
+> python3 -m http_sfv -i "foo;bar=baz"
 [
     {
         "__type": "token",
@@ -32,7 +32,7 @@ You can validate and examine the data model of a field value by calling the libr
 or:
 
 ~~~ example
-> python3 -m shhh -i "foo;&bar=baz"
+> python3 -m http_sfv -i "foo;&bar=baz"
 FAIL: Key does not begin with lcalpha or * at: &bar=baz
 ~~~
 

@@ -8,8 +8,8 @@ from pathlib import Path
 import sys
 from typing import Any, List, Union
 
-from shhh import parse, serialise
-from shhh.token import Token
+from http_sfv import parse, serialise
+from http_sfv.token import Token
 
 FAIL = "\033[91m"
 WARN = "\033[93m"
@@ -136,7 +136,7 @@ def json2py(thing: Any) -> Any:
 
 if __name__ == "__main__":
     import argparse
-    argparser = argparse.ArgumentParser(description='Test shhh.')
+    argparser = argparse.ArgumentParser(description='Run tests.')
     argparser.add_argument('files', metavar='filename', type=str, nargs='*',
                         help='a JSON file containing tests')
     args = argparser.parse_args()

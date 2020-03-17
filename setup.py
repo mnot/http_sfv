@@ -1,21 +1,21 @@
 #!/usr/bin/env python
 
 from setuptools import setup, find_packages
-import shhh
+import http_sfv
 
 setup(
-  name = 'shhh',
-  version = shhh.__version__,
+  name = 'http_sfv',
+  version = http_sfv.__version__,
   description = 'Structured HTTP Headers (handily)',
   long_description=open("README.md").read(),
   long_description_content_type="text/markdown",
   author = 'Mark Nottingham',
   author_email = 'mnot@mnot.net',
   license = "MIT",
-  url = 'http://github.com/mnot/shhh/',
-  download_url = 'http://github.com/mnot/thor/tarball/shhh-%s' % shhh.__version__,
+  url = 'http://github.com/mnot/http_sfv/',
+  download_url = 'http://github.com/mnot/http_sfv/tarball/http_sfv-%s' % http_sfv.__version__,
   packages = find_packages(),
-  provides = ['shhh'],
+  provides = ['http_sfv'],
   python_requires=">=3.7",
   extras_require={
       'dev': [
