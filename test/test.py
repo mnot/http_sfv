@@ -34,26 +34,28 @@ def run_suite(suite_name: str, suite: List) -> None:
     for test in suite:
         suite_tests += 1
         parse_success, parsed, parse_fail_reason = test_parse(test)
-        ser_success = True
+        if parse_success:
+            suite_passed += 1
+        else:
+            if test.get("can_fail", False):
+                print(f"{WARN}  * {test['name']}: PARSE FAIL (non-critical){ENDC}")
+                suite_passed += 1
+            else:
+                print(f"{FAIL}  * {test['name']}: PARSE FAIL{ENDC}")
+            print(f"    -      raw: {test['raw']}")
+            print(f"    - expected: {test.get('expected', 'FAIL')}")
+            print(f"    -      got: {py2json(parsed)}")
+            if parse_fail_reason:
+                print(f"    -   reason: {parse_fail_reason}")
+
         if not test.get("must_fail", False):
+            suite_tests += 1
             ser_success, serialised, ser_expected, ser_fail_reason = test_serialise(
                 test
             )
-
-        if parse_success and ser_success:
-            suite_passed += 1
-        else:
-            if not parse_success:
-                if test.get("can_fail", False):
-                    print(f"{WARN}  * {test['name']}: PARSE FAIL (non-critical){ENDC}")
-                else:
-                    print(f"{FAIL}  * {test['name']}: PARSE FAIL{ENDC}")
-                print(f"    -      raw: {test['raw']}")
-                print(f"    - expected: {test.get('expected', 'FAIL')}")
-                print(f"    -      got: {py2json(parsed)}")
-                if parse_fail_reason:
-                    print(f"    -   reason: {parse_fail_reason}")
-            if not ser_success:
+            if ser_success:
+                suite_passed += 1
+            else:
                 print(f"{FAIL} * {test['name']}: SERIALISE FAIL{ENDC}")
                 print(f"    - expected: {ser_expected}")
                 print(f"    -      got: ['{serialised}']")
@@ -136,9 +138,15 @@ def json2py(thing: Any) -> Any:
 
 if __name__ == "__main__":
     import argparse
-    argparser = argparse.ArgumentParser(description='Run tests.')
-    argparser.add_argument('files', metavar='filename', type=str, nargs='*',
-                        help='a JSON file containing tests')
+
+    argparser = argparse.ArgumentParser(description="Run tests.")
+    argparser.add_argument(
+        "files",
+        metavar="filename",
+        type=str,
+        nargs="*",
+        help="a JSON file containing tests",
+    )
     args = argparser.parse_args()
     suites = load_tests(args.files)
     total_tests = 0
