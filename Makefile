@@ -26,7 +26,7 @@ lint:
 
 .PHONY: black
 black:
-	PYTHONPATH=$(PYTHONPATH) black shhh/*.py
+	PYTHONPATH=$(PYTHONPATH) black $(name)/*.py
 
 .PHONY: test
 test: $(TESTS)
