@@ -37,3 +37,5 @@ or:
 > python3 -m shhh -i "foo;&bar=baz"
 FAIL: Key does not begin with lcalpha or * at: &bar=baz
 ~~~
+
+Note that if successful, the output is in the JSON format used by the [test suite](https://github.com/httpwg/structured-header-tests/).
