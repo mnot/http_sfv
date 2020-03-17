@@ -43,7 +43,7 @@ def parse_number(input_string: str) -> Tuple[str, Union[int, Decimal]]:
         input_string, char = remove_char(input_string)
         if char in digits:
             input_number.append(char)
-        elif _type is INTEGER and char is ".":
+        elif _type is INTEGER and char == ".":
             if len(input_number) > 12:
                 raise ValueError("Decimal too long.", "".join(input_number))
             input_number.append(char)
@@ -61,7 +61,7 @@ def parse_number(input_string: str) -> Tuple[str, Union[int, Decimal]]:
         if not MIN_INT <= output_int <= MAX_INT:
             raise ValueError("Integer outside allowed range at: {input_string[:10]}")
         return input_string, output_int
-    if input_number and input_number[-1] is ".":
+    if input_number and input_number[-1] == ".":
         raise ValueError("Decimal ends in '.'.", input_string)
     if len(input_number) - input_number.index(".") - 1 > 3:
         raise ValueError(

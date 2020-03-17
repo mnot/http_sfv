@@ -1,5 +1,5 @@
 from decimal import Decimal
-from string import ascii_letters, ascii_lowercase, digits
+from string import ascii_lowercase, digits
 from typing import Any, Tuple
 
 from .util import remove_char, discard_ows
@@ -32,7 +32,7 @@ def parse_bare_item(input_string: str) -> Any:
         return parse_number(input_string)
     if start_char is BYTE_DELIMIT:
         return parse_byteseq(input_string)
-    if start_char is "?":
+    if start_char == "?":
         return parse_boolean(input_string)
     raise ValueError(
         f"Item starting with '{input_string[0]}' can't be identified at: {input_string[:10]}"
@@ -42,13 +42,13 @@ def parse_bare_item(input_string: str) -> Any:
 def parse_parameters(input_string: str) -> Tuple[str, dict]:
     parameters = {}
     while input_string:
-        if input_string[0] is not ";":
+        if input_string[0] != ";":
             break
         input_string, char = remove_char(input_string)
         input_string = discard_ows(input_string)
         input_string, param_name = parse_key(input_string)
         param_value = True
-        if input_string and input_string[0] is "=":
+        if input_string and input_string[0] == "=":
             input_string, char = remove_char(input_string)
             input_string, param_value = parse_bare_item(input_string)
         parameters[param_name] = param_value
@@ -90,9 +90,7 @@ def ser_bare_item(item: Any) -> str:
         return ser_boolean(item)
     if item_type is bytes:
         return ser_byteseq(item)
-    raise ValueError(
-        f"Can't serialise; unrecognised item with type {item_type} at: {input_string[:10]}"
-    )
+    raise ValueError(f"Can't serialise; unrecognised item with type {item_type}")
 
 
 def ser_parameters(parameters: dict) -> str:
@@ -109,11 +107,9 @@ def ser_parameters(parameters: dict) -> str:
 
 def ser_key(key: str) -> str:
     if not all(char in KEY_CHARS for char in key):
-        raise ValueError(f"Key contains disallowed characters at: {input_string[:10]}")
+        raise ValueError(f"Key contains disallowed characters")
     if key[0] not in KEY_START_CHARS:
-        raise ValueError(
-            f"Key does not start with allowed character at: {input_string[:10]}"
-        )
+        raise ValueError(f"Key does not start with allowed character")
     output = ""
     output += key
     return output

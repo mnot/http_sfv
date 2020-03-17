@@ -7,10 +7,10 @@ def parse_boolean(input_string: str) -> Tuple[str, bool]:
             f"First character of Boolean is not '?' at: {input_string[:10]}"
         )
     input_string = input_string[1:]
-    if input_string and input_string[0] is "1":
+    if input_string and input_string[0] == "1":
         input_string = input_string[1:]
         return input_string, True
-    if input_string and input_string[0] is "0":
+    if input_string and input_string[0] == "0":
         input_string = input_string[1:]
         return input_string, False
     raise ValueError(f"No Boolean value found at: {input_string[:10]}")

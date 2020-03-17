@@ -57,8 +57,8 @@ def serialise(input_data: Any, field_type: str) -> str:
             return None  # Do not serialise this header
     if field_type == "dictionary":
         return ser_dictionary(input_data)
-    elif field_type == "list":
+    if field_type == "list":
         return ser_list(input_data)
-    elif field_type == "item":
+    if field_type == "item":
         return ser_item(input_data[0], input_data[1])
     raise ValueError(f"Unrecognised field_type {field_type}")
