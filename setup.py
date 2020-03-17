@@ -6,7 +6,7 @@ import http_sfv
 setup(
   name = 'http_sfv',
   version = http_sfv.__version__,
-  description = 'Structured HTTP Headers (handily)',
+  description = 'Parse and serialise HTTP Structured Field Values',
   long_description=open("README.md").read(),
   long_description_content_type="text/markdown",
   author = 'Mark Nottingham',
