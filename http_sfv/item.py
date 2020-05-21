@@ -56,7 +56,7 @@ def parse_parameters(input_string: str) -> Tuple[str, dict]:
 
 
 def parse_key(input_string: str) -> Tuple[str, str]:
-    if input_string[0] not in KEY_START_CHARS:
+    if input_string and input_string[0] not in KEY_START_CHARS:
         raise ValueError(
             f"Key does not begin with lcalpha or * at: {input_string[:10]}"
         )
