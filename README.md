@@ -9,7 +9,7 @@ The library's initial purpose is to prove the algorithms in the specification; a
 
 The top-level `parse` and `serialise` functions are the ones your code should call.
 
-_Currently, this implements draft 17 of the specification._
+_Currently, this implements draft 19 of the specification._
 
 ## Command Line Use
 
