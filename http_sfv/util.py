@@ -13,3 +13,8 @@ def remove_char(input_string: str) -> Tuple[str, str]:
 def discard_ows(input_string: str) -> str:
     "Remove leading space from input_string."
     return input_string.lstrip(" ")
+
+
+def discard_http_ows(input_string: str) -> str:
+    "remove leading space or HTAB from input_string."
+    return input_string.lstrip(" \t")

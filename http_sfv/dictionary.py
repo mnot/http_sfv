@@ -2,7 +2,7 @@ from typing import Tuple
 
 from .item import ser_item, ser_key, parse_key, parse_parameters, ser_parameters
 from .list import ser_inner_list, parse_item_or_inner_list
-from .util import remove_char, discard_ows
+from .util import remove_char, discard_http_ows
 
 
 def parse_dictionary(input_string: str) -> Tuple[str, dict]:
@@ -16,7 +16,7 @@ def parse_dictionary(input_string: str) -> Tuple[str, dict]:
             input_string, parameters = parse_parameters(input_string)
             member = (True, parameters)
         dictionary[this_key] = member
-        input_string = discard_ows(input_string)
+        input_string = discard_http_ows(input_string)
         if not input_string:
             return input_string, dictionary
         input_string, char = remove_char(input_string)
@@ -24,7 +24,7 @@ def parse_dictionary(input_string: str) -> Tuple[str, dict]:
             raise ValueError(
                 f"Dictionary member trailing characters at: {input_string[:10]}"
             )
-        input_string = discard_ows(input_string)
+        input_string = discard_http_ows(input_string)
         if not input_string:
             raise ValueError(f"Dictionary has trailing comma at: {input_string[:10]}")
     return input_string, dictionary

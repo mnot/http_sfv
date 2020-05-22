@@ -1,7 +1,7 @@
 from typing import List, Tuple, Any
 
 from .item import parse_item, ser_item, parse_parameters, ser_parameters
-from .util import discard_ows, remove_char
+from .util import discard_http_ows, discard_ows, remove_char
 
 
 def parse_list(input_string: str) -> Tuple[str, List]:
@@ -9,7 +9,7 @@ def parse_list(input_string: str) -> Tuple[str, List]:
     while input_string:
         input_string, member = parse_item_or_inner_list(input_string)
         members.append(member)
-        input_string = discard_ows(input_string)
+        input_string = discard_http_ows(input_string)
         if not input_string:
             return input_string, members
         input_string, char = remove_char(input_string)
@@ -17,7 +17,7 @@ def parse_list(input_string: str) -> Tuple[str, List]:
             raise ValueError(
                 f"Trailing text after item in list at: {input_string[:10]}"
             )
-        input_string = discard_ows(input_string)
+        input_string = discard_http_ows(input_string)
         if not input_string:
             raise ValueError(f"Trailing comma at end of list at: {input_string[:10]}")
     return input_string, members
