@@ -24,7 +24,7 @@ def parse_string(input_string: str) -> Tuple[str, str]:
             input_string, next_char = remove_char(input_string)
             if next_char not in DQUOTEBACKSLASH:
                 raise ValueError(
-                    f"Backslash before disallowed character at: {input_string[:10]}"
+                    f"Backslash before disallowed character '{next_char}' at: {input_string[:10]}"
                 )
             output_string.append(next_char)
         elif char == DQUOTE:
