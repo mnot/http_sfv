@@ -79,6 +79,6 @@ try:
     result = parse(input_string.strip(), args.field_type)
     print(json.dumps(py2json(result), sort_keys=True, indent=4))
 except ValueError as why:
-    sys.stderr.write(f"FAIL: {why}\n")
     sys.stderr.write(f"VALUE: {input_string.strip()}\n")
+    sys.stderr.write(f"FAIL: {why}\n")
     sys.exit(1)
