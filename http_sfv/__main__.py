@@ -2,6 +2,7 @@
 
 import argparse
 import base64
+from decimal import Decimal
 import json
 import sys
 from typing import Any
@@ -20,6 +21,8 @@ def py2json(thing: Any) -> Any:
         out = {"__type": "binary", "value": base64.b32encode(thing).decode("ascii")}
     if isinstance(thing, Token):
         out = {"__type": "token", "value": thing}
+    if isinstance(thing, Decimal):
+        out = float(thing)
     return out
 
 
@@ -77,4 +80,5 @@ try:
     print(json.dumps(py2json(result), sort_keys=True, indent=4))
 except ValueError as why:
     sys.stderr.write(f"FAIL: {why}\n")
+    sys.stderr.write(f"VALUE: {input_string.strip()}\n")
     sys.exit(1)
