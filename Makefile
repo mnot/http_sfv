@@ -1,5 +1,6 @@
 PYTHON=python3
 PYTHONPATH=./
+BLAB=blab
 TESTS=test/tests/*.json
 name=http_sfv
 version=$(shell PYTHONPATH=$(PYTHONPATH) $(PYTHON) -c "import $(name); print($(name).__version__)")
@@ -38,6 +39,10 @@ test/tests:
 .PHONY: typecheck
 typecheck:
 	PYTHONPATH=$(PYTHONPATH) $(PYTHON) -m mypy --config-file=test/mypy.ini $(name)
+
+.PHONY: fuzz
+fuzz-%:
+	$(BLAB) -l test/ -e "sf.sf-$*" | PYTHONPATH=$(PYTHONPATH) $(PYTHON) -m http_sfv --$* --stdin
 
 .PHONY: update-tests
 update-tests:
