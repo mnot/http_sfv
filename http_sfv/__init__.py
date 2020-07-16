@@ -30,35 +30,43 @@ __version__ = "0.8.3"
 from typing import Any
 
 from .util import discard_ows
-from .dictionary import parse_dictionary, ser_dictionary
-from .list import parse_list, ser_list
-from .item import parse_item, ser_item
+from .dictionary import Dictionary
+from .list import List
+from .item import Item
 
 
-def parse(input_string: str, field_type: str) -> Any:
-    input_string = discard_ows(input_string)
-    if field_type == "list":
-        input_string, output = parse_list(input_string)  # type: ignore
-    elif field_type == "dictionary":
-        input_string, output = parse_dictionary(input_string)  # type: ignore
-    elif field_type == "item":
-        input_string, output = parse_item(input_string)  # type: ignore
-    else:
-        raise ValueError(f"Unrecognised field type '{field_type}'")
-    input_string = discard_ows(input_string)
-    if input_string:
-        raise ValueError(f"Trailing text after parsed value at: {input_string[:10]}")
-    return output
+class StructuredFieldValue:
+    def __init__(self, field_type: str) -> None:
+        self.field_type = field_type
+        if self.field_type == "list":
+            self.value = List()  # type: ignore
+        elif self.field_type == "dictionary":
+            self.value = Dictionary()  # type: ignore
+        elif self.field_type == "item":
+            self.value = Item()  # type: ignore
+        else:
+            raise ValueError(f"Unrecognised field type '{self.field_type}'")
+        self.raw_value = None  # type: str
 
+    def parse(self, input_string: str) -> None:
+        self.raw_value = input_string
+        input_string = discard_ows(input_string)
 
-def serialise(input_data: Any, field_type: str) -> str:
-    if field_type in ["list", "dictionary"]:
-        if not input_data:
-            return None  # Do not serialise this header
-    if field_type == "dictionary":
-        return ser_dictionary(input_data)
-    if field_type == "list":
-        return ser_list(input_data)
-    if field_type == "item":
-        return ser_item(input_data[0], input_data[1])
-    raise ValueError(f"Unrecognised field_type {field_type}")
+        input_string = self.value.parse(input_string)  # type: ignore
+        input_string = discard_ows(input_string)
+        if input_string:
+            raise ValueError(
+                f"Trailing text after parsed value at: {input_string[:10]}"
+            )
+
+    def __str__(self) -> str:
+        if self.field_type in ["list", "dictionary"]:
+            if not self.value:
+                return ""  # Do not serialise this header
+        return str(self.value)
+
+    def to_json(self) -> Any:
+        return self.value.to_json()  # type: ignore
+
+    def from_json(self, json_data: Any) -> None:
+        self.value.from_json(json_data)  # type: ignore

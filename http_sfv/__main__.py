@@ -7,7 +7,7 @@ import json
 import sys
 from typing import Any
 
-from . import parse
+from . import StructuredFieldValue as sfv
 from .token import Token
 
 
@@ -76,8 +76,9 @@ else:
     input_string = args.input_string
 
 try:
-    result = parse(input_string.strip(), args.field_type)
-    print(json.dumps(py2json(result), sort_keys=True, indent=4))
+    field = sfv(args.field_type)
+    field.parse(input_string.strip())
+    print(json.dumps(py2json(field.value), sort_keys=True, indent=4))
 except ValueError as why:
     sys.stderr.write(f"VALUE: {input_string.strip()}\n")
     sys.stderr.write(f"FAIL: {why}\n")
