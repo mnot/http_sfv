@@ -31,15 +31,7 @@ class Item:
         return output
 
     def to_json(self) -> Any:
-        if isinstance(self.value, bytes):
-            value = {
-                "__type": "binary",
-                "value": base64.b32encode(self.value).decode("ascii"),
-            }
-        elif isinstance(self.value, Token):
-            value = {"__type": "token", "value": self.value}
-        else:
-            value = self.value
+        value = value_to_json(self.value)
         return [value, self.params.to_json()]
 
     def from_json(self, json_data: Any) -> None:
@@ -77,7 +69,7 @@ class Parameters(dict):
         return output
 
     def to_json(self) -> Any:
-        return self
+        return {k:value_to_json(v) for (k,v) in self.items()}
 
     def from_json(self, json_data: Any) -> None:
         for name, value in json_data.items():
@@ -143,6 +135,16 @@ def ser_key(key: str) -> str:
     output += key
     return output
 
+def value_to_json(value: Any) -> Any:
+    if isinstance(value, bytes):
+        return {
+            "__type": "binary",
+            "value": base64.b32encode(value).decode("ascii"),
+        }
+    elif isinstance(value, Token):
+        return {"__type": "token", "value": value}
+    else:
+        return value
 
 def value_from_json(value: Any) -> Any:
     if isinstance(value, dict):
