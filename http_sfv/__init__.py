@@ -31,5 +31,6 @@ __version__ = "0.8.3"
 from .dictionary import Dictionary
 from .list import List
 from .item import Item
+from .token import Token
 
 structures = {"dictionary": Dictionary, "list": List, "item": Item}
