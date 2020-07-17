@@ -1,18 +1,14 @@
-import base64
 from decimal import Decimal
-from string import ascii_lowercase, digits
-from typing import Any, Tuple, List
+from typing import Any, List
 
-from .util import StructuredFieldValue, remove_char, discard_ows
-from .integer import parse_number, ser_integer, NUMBER_START_CHARS
-from .decimal import ser_decimal
-from .string import parse_string, ser_string, DQUOTE
-from .byteseq import parse_byteseq, ser_byteseq, BYTE_DELIMIT
 from .boolean import parse_boolean, ser_boolean
+from .byteseq import parse_byteseq, ser_byteseq, BYTE_DELIMIT
+from .decimal import ser_decimal
+from .integer import parse_number, ser_integer, NUMBER_START_CHARS
+from .string import parse_string, ser_string, DQUOTE
 from .token import parse_token, ser_token, Token, TOKEN_START_CHARS
-
-KEY_START_CHARS = set(ascii_lowercase + "*")
-KEY_CHARS = set(ascii_lowercase + digits + "_-*.")
+from .util import StructuredFieldValue, remove_char, discard_ows, parse_key, ser_key
+from .util_json import value_to_json, value_from_json
 
 
 class Item(StructuredFieldValue):
@@ -111,50 +107,3 @@ def ser_bare_item(item: Any) -> str:
     if item_type is bytes:
         return ser_byteseq(item)
     raise ValueError(f"Can't serialise; unrecognised item with type {item_type}")
-
-
-def parse_key(input_string: str) -> Tuple[str, str]:
-    if input_string and input_string[0] not in KEY_START_CHARS:
-        raise ValueError(
-            f"Key does not begin with lcalpha or * at: {input_string[:10]}"
-        )
-    output_string = []  # type: List[str]
-    while input_string:
-        if input_string[0] not in KEY_CHARS:
-            return input_string, "".join(output_string)
-        input_string, char = remove_char(input_string)
-        output_string.append(char)
-    return input_string, "".join(output_string)
-
-
-def ser_key(key: str) -> str:
-    if not all(char in KEY_CHARS for char in key):
-        raise ValueError(f"Key contains disallowed characters")
-    if key[0] not in KEY_START_CHARS:
-        raise ValueError(f"Key does not start with allowed character")
-    output = ""
-    output += key
-    return output
-
-
-def value_to_json(value: Any) -> Any:
-    if isinstance(value, bytes):
-        return {
-            "__type": "binary",
-            "value": base64.b32encode(value).decode("ascii"),
-        }
-    if isinstance(value, Token):
-        return {"__type": "token", "value": value}
-    return value
-
-
-def value_from_json(value: Any) -> Any:
-    if isinstance(value, dict):
-        if "__type" in value:
-            if value["__type"] == "token":
-                return Token(value["value"])
-            if value["__type"] == "binary":
-                return base64.b32decode(value["value"])
-            raise Exception(f"Unrecognised data type {value['__type']}")
-        raise Exception(f"Dictionary as Item")
-    return value

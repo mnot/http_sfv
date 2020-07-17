@@ -1,8 +1,15 @@
 from typing import Any
 
-from .item import Item, Parameters, ser_key, parse_key
-from .list import InnerList, parse_item_or_inner_list
-from .util import StructuredFieldValue, remove_char, discard_http_ows
+from .innerlist import InnerList
+from .item import Item, Parameters
+from .list import parse_item_or_inner_list
+from .util import (
+    StructuredFieldValue,
+    remove_char,
+    discard_http_ows,
+    ser_key,
+    parse_key,
+)
 
 
 class Dictionary(dict, StructuredFieldValue):
