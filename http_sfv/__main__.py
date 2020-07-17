@@ -1,29 +1,10 @@
 #!/usr/bin/env python3
 
 import argparse
-import base64
-from decimal import Decimal
 import json
 import sys
-from typing import Any
 
 from . import StructuredFieldValue as sfv
-from .token import Token
-
-
-def py2json(thing: Any) -> Any:
-    out = thing
-    if isinstance(thing, dict):
-        out = {k: py2json(thing[k]) for k in thing}
-    if type(thing) in [list, tuple]:
-        out = [py2json(i) for i in thing]
-    if isinstance(thing, bytes):
-        out = {"__type": "binary", "value": base64.b32encode(thing).decode("ascii")}
-    if isinstance(thing, Token):
-        out = {"__type": "token", "value": thing}
-    if isinstance(thing, Decimal):
-        out = float(thing)
-    return out
 
 
 parser = argparse.ArgumentParser(
@@ -78,7 +59,7 @@ else:
 try:
     field = sfv(args.field_type)
     field.parse(input_string.strip())
-    print(json.dumps(py2json(field.value), sort_keys=True, indent=4))
+    print(json.dumps(field.to_json(), sort_keys=True, indent=4))
 except ValueError as why:
     sys.stderr.write(f"VALUE: {input_string.strip()}\n")
     sys.stderr.write(f"FAIL: {why}\n")

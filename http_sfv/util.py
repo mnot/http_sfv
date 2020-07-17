@@ -1,4 +1,4 @@
-from typing import Any, Tuple
+from typing import Tuple
 
 
 def remove_char(input_string: str) -> Tuple[str, str]:

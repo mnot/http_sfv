@@ -48,12 +48,12 @@ class Parameters(dict):
         while input_string:
             if input_string[0] != ";":
                 break
-            input_string, char = remove_char(input_string)
+            input_string, _ = remove_char(input_string)
             input_string = discard_ows(input_string)
             input_string, param_name = parse_key(input_string)
             param_value = True
             if input_string and input_string[0] == "=":
-                input_string, char = remove_char(input_string)
+                input_string, _ = remove_char(input_string)
                 input_string, param_value = parse_bare_item(input_string)
             self[param_name] = param_value
         return input_string
@@ -69,7 +69,7 @@ class Parameters(dict):
         return output
 
     def to_json(self) -> Any:
-        return {k:value_to_json(v) for (k,v) in self.items()}
+        return {k: value_to_json(v) for (k, v) in self.items()}
 
     def from_json(self, json_data: Any) -> None:
         for name, value in json_data.items():
@@ -135,16 +135,17 @@ def ser_key(key: str) -> str:
     output += key
     return output
 
+
 def value_to_json(value: Any) -> Any:
     if isinstance(value, bytes):
         return {
             "__type": "binary",
             "value": base64.b32encode(value).decode("ascii"),
         }
-    elif isinstance(value, Token):
+    if isinstance(value, Token):
         return {"__type": "token", "value": value}
-    else:
-        return value
+    return value
+
 
 def value_from_json(value: Any) -> Any:
     if isinstance(value, dict):
