@@ -58,8 +58,8 @@ def parse_item_or_inner_list(input_string: str) -> Tuple[str, Any]:
 
 
 class InnerList(list):
-    def __init__(self) -> None:
-        list.__init__(self)
+    def __init__(self, values: list = None) -> None:
+        list.__init__(self, values or [])
         self.params = Parameters()
 
     def parse(self, input_string: str) -> str:
