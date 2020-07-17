@@ -16,9 +16,9 @@ KEY_CHARS = set(ascii_lowercase + digits + "_-*.")
 
 
 class Item(StructuredFieldValue):
-    def __init__(self) -> None:
+    def __init__(self, value: Any = None) -> None:
         StructuredFieldValue.__init__(self)
-        self.value = None
+        self.value = value
         self.params = Parameters()
 
     def parse_content(self, input_string: str) -> str:
