@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-"Structured HTTP Headers"
+"Structured HTTP Field Values"
 
 __author__ = "Mark Nottingham <mnot@mnot.net>"
 __copyright__ = """\
