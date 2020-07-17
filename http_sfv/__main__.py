@@ -4,7 +4,7 @@ import argparse
 import json
 import sys
 
-from . import StructuredFieldValue as sfv
+from . import structures
 
 
 parser = argparse.ArgumentParser(
@@ -57,7 +57,7 @@ else:
     input_string = args.input_string
 
 try:
-    field = sfv(args.field_type)
+    field = structures[args.field_type]()
     field.parse(input_string.strip())
     print(json.dumps(field.to_json(), sort_keys=True, indent=4))
 except ValueError as why:

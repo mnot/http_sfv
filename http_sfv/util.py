@@ -18,3 +18,22 @@ def discard_ows(input_string: str) -> str:
 def discard_http_ows(input_string: str) -> str:
     "remove leading space or HTAB from input_string."
     return input_string.lstrip(" \t")
+
+
+class StructuredFieldValue:
+    def __init__(self) -> None:
+        self.raw_value = None  # type: str
+
+    def parse(self, input_string: str) -> None:
+        self.raw_value = input_string
+        input_string = discard_ows(input_string)
+
+        input_string = self.parse_content(input_string)  # type: ignore
+        input_string = discard_ows(input_string)
+        if input_string:
+            raise ValueError(
+                f"Trailing text after parsed value at: {input_string[:10]}"
+            )
+
+    def parse_content(self, input_string: str) -> str:
+        raise NotImplementedError

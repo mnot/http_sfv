@@ -2,11 +2,11 @@ from typing import Any
 
 from .item import Item, Parameters, ser_key, parse_key
 from .list import InnerList, parse_item_or_inner_list
-from .util import remove_char, discard_http_ows
+from .util import StructuredFieldValue, remove_char, discard_http_ows
 
 
-class Dictionary(dict):
-    def parse(self, input_string: str) -> str:
+class Dictionary(dict, StructuredFieldValue):
+    def parse_content(self, input_string: str) -> str:
         while input_string:
             input_string, this_key = parse_key(input_string)
             if input_string and input_string[0] == "=":

@@ -8,7 +8,7 @@ from pathlib import Path
 import sys
 from typing import Any, List, Union
 
-from http_sfv import StructuredFieldValue
+from http_sfv import structures
 
 FAIL = "\033[91m"
 WARN = "\033[93m"
@@ -71,7 +71,7 @@ def test_parse(test: dict) -> Union[bool, Any, str]:
     parse_success = False
     parse_fail_reason = None
     test_success = False
-    field = StructuredFieldValue(test["header_type"])
+    field = structures[test["header_type"]]()
     try:
         field.parse(", ".join(test["raw"]))
         parse_success = True
@@ -91,7 +91,7 @@ def test_serialise(test: dict) -> Union[bool, str, str, str]:
     expected = test.get("canonical", test["raw"])
     output = None
     serialise_fail_reason = None
-    field = StructuredFieldValue(test["header_type"])
+    field = structures[test["header_type"]]()
     field.from_json(test["expected"])
     try:
         output = str(field)

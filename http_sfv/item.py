@@ -3,7 +3,7 @@ from decimal import Decimal
 from string import ascii_lowercase, digits
 from typing import Any, Tuple, List
 
-from .util import remove_char, discard_ows
+from .util import StructuredFieldValue, remove_char, discard_ows
 from .integer import parse_number, ser_integer, NUMBER_START_CHARS
 from .decimal import ser_decimal
 from .string import parse_string, ser_string, DQUOTE
@@ -15,12 +15,13 @@ KEY_START_CHARS = set(ascii_lowercase + "*")
 KEY_CHARS = set(ascii_lowercase + digits + "_-*.")
 
 
-class Item:
+class Item(StructuredFieldValue):
     def __init__(self) -> None:
+        StructuredFieldValue.__init__(self)
         self.value = None
         self.params = Parameters()
 
-    def parse(self, input_string: str) -> str:
+    def parse_content(self, input_string: str) -> str:
         input_string, self.value = parse_bare_item(input_string)
         return self.params.parse(input_string)
 

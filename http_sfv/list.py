@@ -1,11 +1,11 @@
 from typing import Tuple, Any
 
 from .item import Item, Parameters
-from .util import discard_http_ows, discard_ows, remove_char
+from .util import StructuredFieldValue, discard_http_ows, discard_ows, remove_char
 
 
-class List(list):
-    def parse(self, input_string: str) -> str:
+class List(list, StructuredFieldValue):
+    def parse_content(self, input_string: str) -> str:
         while input_string:
             input_string, member = parse_item_or_inner_list(input_string)
             self.append(member)
@@ -51,7 +51,7 @@ def parse_item_or_inner_list(input_string: str) -> Tuple[str, Any]:
         input_string = inner_list.parse(input_string)
         return input_string, inner_list
     item = Item()
-    input_string = item.parse(input_string)
+    input_string = item.parse_content(input_string)
     return input_string, item
 
 
@@ -72,7 +72,7 @@ class InnerList(list):
                 input_string = input_string[1:]
                 return self.params.parse(input_string)
             item = Item()
-            input_string = item.parse(input_string)
+            input_string = item.parse_content(input_string)
             self.append(item)
             if not (input_string and input_string[0] in set(" )")):
                 raise ValueError(f"Inner list bad delimitation at: {input_string[:10]}")
