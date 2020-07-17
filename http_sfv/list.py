@@ -25,8 +25,8 @@ class List(list, StructuredFieldValue):
         return input_string
 
     def __str__(self) -> str:
-        if not len(self):
-            raise ValueError('No contents; field should not be emitted')
+        if len(self) == 0:
+            raise ValueError("No contents; field should not be emitted")
         output = ""
         count = len(self)
         for x in range(0, count):

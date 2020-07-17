@@ -34,8 +34,8 @@ class Dictionary(dict, StructuredFieldValue):
         return input_string
 
     def __str__(self) -> str:
-        if not len(self):
-            raise ValueError('No contents; field should not be emitted')
+        if len(self) == 0:
+            raise ValueError("No contents; field should not be emitted")
         output = ""
         count = len(self)
         i = 0
