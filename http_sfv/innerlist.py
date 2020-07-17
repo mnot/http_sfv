@@ -1,12 +1,12 @@
 from typing import Any
 
-from .item import Item, Parameters
+from .item import Item, Parameters, itemise
 from .util import remove_char, discard_ows
 
 
 class InnerList(list):
     def __init__(self, values: list = None) -> None:
-        list.__init__(self, values or [])
+        list.__init__(self, [itemise(v) for v in values or []])
         self.params = Parameters()
 
     def parse(self, input_string: str) -> str:

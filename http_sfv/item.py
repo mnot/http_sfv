@@ -107,3 +107,9 @@ def ser_bare_item(item: Any) -> str:
     if item_type is bytes:
         return ser_byteseq(item)
     raise ValueError(f"Can't serialise; unrecognised item with type {item_type}")
+
+
+def itemise(thing: Any) -> Item:
+    if not isinstance(thing, Item):
+        return Item(thing)
+    return thing
