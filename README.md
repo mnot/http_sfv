@@ -7,9 +7,79 @@ This is a [Python 3](https://python.org/) library implementing parsing and seria
 
 The library's initial purpose is to prove the algorithms in the specification; as a result, it is not at all optimised. It tracks the specification closely, but since it is not yet an RFC, may change at any time.
 
-The top-level `parse` and `serialise` functions are the ones your code should call.
-
 _Currently, this implements draft 19 of the specification._
+
+## Python API
+
+There are three top-level types for Structured Field Values; `Dictionary`, `List` and `Item`. After instantiation, each can be used to parse a string HTTP header field value by calling `.parse()`:
+
+~~~ python
+>>> from http_sfv import List
+>>> my_list = List()
+>>> my_list.parse("foo; a=1, bar; b=2")
+~~~
+
+Members of Lists and Dictionaries are available by normal Pythonic list and dictionary methods, respectively:
+
+~~~ python
+>>> my_list
+[<http_sfv.item.Item object at 0x106d25190>, <http_sfv.item.Item object at 0x106d25210>]
+>>> my_list[0]
+<http_sfv.item.Item object at 0x106d25190>
+~~~
+
+Items (whether top-level or inside a list or dictionary value) can have their values accessed with the `.value` property:
+
+~~~ python
+>>> my_list[0].value
+'foo'
+~~~
+
+Parameters on Items (and Inner Lists) can be accessed using the `.params` property, which is a dictionary:
+
+~~~ python
+>>> my_list[0].params['a']
+1
+~~~
+
+Note that Tokens and Strings both evaluate as Python strings, but Tokens have a different class:
+
+~~~ python
+>>> type(my_list[0].value)
+<class 'http_sfv.token.Token'>
+~~~
+
+That means that you need to create Tokens explicitly:
+
+~~~ python
+>>> from http_sfv import Token
+>>> my_list.append(Token('bar'))
+>>> my_list[-1]
+'bar'
+~~~
+
+Note that Dictionaries, Lists, and Items can be instantiated with a value:
+
+~~~ python
+>>> from http_sfv import Dictionary
+>>> my_dictionary = Dictionary({'a': '1', 'b': 2, 'c': Token('foo')})
+>>> my_dictionary
+{'a': '1', 'b': 2, 'c': 'foo'}
+~~~
+
+Once instantiated, parameters can then be accessed:
+
+~~~ python
+>>> f['b'].params['1'] = 2.0
+~~~
+
+Finally, to serialise a field value, just evaluate it as a string:
+
+~~~ python
+>>> print(my_dictionary)
+a=1, b=2;b1=2.0, c=foo
+~~~
+
 
 ## Command Line Use
 
