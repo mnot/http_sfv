@@ -1,7 +1,7 @@
+from collections import UserDict
 from typing import Any
 
-from .innerlist import InnerList
-from .item import Item, Parameters
+from .item import Item, InnerList, Parameters, itemise
 from .list import parse_item_or_inner_list
 from .util import (
     StructuredFieldValue,
@@ -12,7 +12,7 @@ from .util import (
 )
 
 
-class Dictionary(dict, StructuredFieldValue):
+class Dictionary(UserDict, StructuredFieldValue):
     def parse_content(self, input_string: str) -> str:
         while input_string:
             input_string, this_key = parse_key(input_string)
@@ -39,6 +39,9 @@ class Dictionary(dict, StructuredFieldValue):
                     f"Dictionary has trailing comma at: {input_string[:10]}"
                 )
         return input_string
+
+    def __setitem__(self, key: str, value: Any) -> None:
+        self.data[key] = itemise(value)
 
     def __str__(self) -> str:
         if len(self) == 0:

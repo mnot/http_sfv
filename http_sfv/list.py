@@ -1,11 +1,11 @@
-from typing import Tuple, Any
+from collections import UserList
+from typing import Tuple, Any, Union, Iterable
 
-from .innerlist import InnerList
-from .item import Item
+from .item import Item, InnerList, itemise
 from .util import StructuredFieldValue, discard_http_ows, remove_char
 
 
-class List(list, StructuredFieldValue):
+class List(UserList, StructuredFieldValue):
     def parse_content(self, input_string: str) -> str:
         while input_string:
             input_string, member = parse_item_or_inner_list(input_string)
@@ -24,6 +24,14 @@ class List(list, StructuredFieldValue):
                     f"Trailing comma at end of list at: {input_string[:10]}"
                 )
         return input_string
+
+    def __setitem__(
+        self, index: Union[int, slice], value: Union[Any, Iterable[Any]]
+    ) -> None:
+        if isinstance(index, slice):
+            self.data[index] = [itemise(v) for v in value]
+        else:
+            self.data[index] = itemise(value)
 
     def __str__(self) -> str:
         if len(self) == 0:

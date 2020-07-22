@@ -1,5 +1,5 @@
 from decimal import Decimal
-from typing import Any, List
+from typing import Any, List, Union
 
 from .boolean import parse_boolean, ser_boolean
 from .byteseq import parse_byteseq, ser_byteseq, BYTE_DELIMIT
@@ -73,6 +73,54 @@ class Parameters(dict):
             self[name] = value_from_json(value)
 
 
+class InnerList(list):
+    def __init__(self, values: list = None) -> None:
+        list.__init__(self, [itemise(v) for v in values or []])
+        self.params = Parameters()
+
+    def parse(self, input_string: str) -> str:
+        input_string, char = remove_char(input_string)
+        if char != "(":
+            raise ValueError(
+                f"First character of inner list is not '(' at: {input_string[:10]}"
+            )
+        while input_string:
+            input_string = discard_ows(input_string)
+            if input_string and input_string[0] == ")":
+                input_string = input_string[1:]
+                return self.params.parse(input_string)
+            item = Item()
+            input_string = item.parse_content(input_string)
+            self.append(item)
+            if not (input_string and input_string[0] in set(" )")):
+                raise ValueError(f"Inner list bad delimitation at: {input_string[:10]}")
+        raise ValueError(f"End of inner list not found at: {input_string[:10]}")
+
+    def __str__(self) -> str:
+        output = "("
+        count = len(self)
+        for x in range(0, count):
+            output += str(self[x])
+            if x + 1 < count:
+                output += " "
+        output += ")"
+        output += str(self.params)
+        return output
+
+    def to_json(self) -> Any:
+        return [[i.to_json() for i in self], self.params.to_json()]
+
+    def from_json(self, json_data: Any) -> None:
+        try:
+            values, params = json_data
+        except ValueError:
+            raise ValueError(json_data)
+        for i in values:
+            self.append(Item())
+            self[-1].from_json(i)
+        self.params.from_json(params)
+
+
 def parse_bare_item(input_string: str) -> Any:
     if not input_string:
         raise ValueError("Empty item.", input_string)
@@ -96,7 +144,7 @@ def ser_bare_item(item: Any) -> str:
     item_type = type(item)
     if item_type is int:
         return ser_integer(item)
-    if isinstance(item, Decimal):
+    if isinstance(item, (Decimal, float)):
         return ser_decimal(item)
     if isinstance(item, Token):
         return ser_token(item)
@@ -109,7 +157,9 @@ def ser_bare_item(item: Any) -> str:
     raise ValueError(f"Can't serialise; unrecognised item with type {item_type}")
 
 
-def itemise(thing: Any) -> Item:
-    if not isinstance(thing, Item):
-        return Item(thing)
-    return thing
+def itemise(thing: Any) -> Union[InnerList, Item]:
+    if isinstance(thing, (Item, InnerList)):
+        return thing
+    if isinstance(thing, list):
+        return InnerList(thing)
+    return Item(thing)
