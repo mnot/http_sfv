@@ -82,13 +82,13 @@ Dictionaries, Lists, and Items can be instantiated with a value:
 >>> from http_sfv import Dictionary
 >>> my_dictionary = Dictionary({'a': '1', 'b': 2, 'c': Token('foo')})
 >>> my_dictionary
-{'a': '1', 'b': 2, 'c': 'foo'}
+{'a': <http_sfv.item.Item object at 0x106a94c40>, 'b': <http_sfv.item.Item object at 0x106a94d00>, 'c': <http_sfv.item.Item object at 0x106a94dc0>}
 ~~~
 
 Once instantiated, parameters can then be accessed:
 
 ~~~ python
->>> f['b'].params['1'] = 2.0
+>>> my_dictionary['b'].params['1'] = 2.0
 ~~~
 
 Finally, to serialise a field value, just evaluate it as a string:
