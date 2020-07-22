@@ -41,9 +41,9 @@ def parse_key(input_string: str) -> Tuple[str, str]:
 
 def ser_key(key: str) -> str:
     if not all(char in KEY_CHARS for char in key):
-        raise ValueError(f"Key contains disallowed characters")
+        raise ValueError("Key contains disallowed characters")
     if key[0] not in KEY_START_CHARS:
-        raise ValueError(f"Key does not start with allowed character")
+        raise ValueError("Key does not start with allowed character")
     output = ""
     output += key
     return output

@@ -23,5 +23,5 @@ def value_from_json(value: Any) -> Any:
             if value["__type"] == "binary":
                 return base64.b32decode(value["value"])
             raise Exception(f"Unrecognised data type {value['__type']}")
-        raise Exception(f"Dictionary as Item")
+        raise Exception("Dictionary as Item")
     return value
