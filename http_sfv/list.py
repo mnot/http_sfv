@@ -26,14 +26,6 @@ class List(UserList, StructuredFieldValue):
                 )
         return input_string
 
-    def __setitem__(
-        self, index: Union[int, slice], value: Union[AllItemType, Iterable[AllItemType]]
-    ) -> None:
-        if isinstance(index, slice):
-            self.data[index] = [itemise(v) for v in value]  # type: ignore
-        else:
-            self.data[index] = itemise(cast(AllItemType, value))
-
     def __str__(self) -> str:
         if len(self) == 0:
             raise ValueError("No contents; field should not be emitted")
@@ -44,6 +36,14 @@ class List(UserList, StructuredFieldValue):
             if x + 1 < count:
                 output += ", "
         return output
+
+    def __setitem__(
+        self, index: Union[int, slice], value: Union[AllItemType, Iterable[AllItemType]]
+    ) -> None:
+        if isinstance(index, slice):
+            self.data[index] = [itemise(v) for v in value]  # type: ignore
+        else:
+            self.data[index] = itemise(cast(AllItemType, value))
 
     def append(self, item: AllItemType) -> None:
         self.data.append(itemise(item))
