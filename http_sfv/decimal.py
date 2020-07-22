@@ -1,5 +1,5 @@
 from decimal import Decimal
-from typing import Tuple
+from typing import Tuple, Union
 
 from .integer import parse_number
 
@@ -12,7 +12,9 @@ def parse_decimal(input_string: str) -> Tuple[str, Decimal]:
     return parse_number(input_string)  # type: ignore
 
 
-def ser_decimal(input_decimal: Decimal) -> str:
+def ser_decimal(input_decimal: Union[Decimal, float]) -> str:
+    if isinstance(input_decimal, float):
+        input_decimal = Decimal(input_decimal)
     if not isinstance(input_decimal, Decimal):
         raise ValueError("decimal input is not decimal")
     input_decimal = round(input_decimal, FRAC_DIGITS)

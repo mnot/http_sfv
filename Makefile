@@ -32,6 +32,7 @@ black:
 .PHONY: test
 test: $(TESTS)
 	PYTHONPATH=$(PYTHONPATH) $(PYTHON) test/test.py $(TESTS)
+	PYTHONPATH=$(PYTHONPATH) $(PYTHON) test/test_api.py
 
 test/tests:
 	git submodule update --init --recursive

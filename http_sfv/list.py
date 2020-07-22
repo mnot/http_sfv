@@ -1,77 +1,73 @@
-from typing import List, Tuple, Any
+from collections import UserList
+from typing import Tuple, Union, Iterable, cast
 
-from .item import parse_item, ser_item, parse_parameters, ser_parameters
-from .util import discard_http_ows, discard_ows, remove_char
-
-
-def parse_list(input_string: str) -> Tuple[str, List]:
-    members = []
-    while input_string:
-        input_string, member = parse_item_or_inner_list(input_string)
-        members.append(member)
-        input_string = discard_http_ows(input_string)
-        if not input_string:
-            return input_string, members
-        input_string, char = remove_char(input_string)
-        if char != ",":
-            raise ValueError(
-                f"Trailing text after item in list at: {input_string[:10]}"
-            )
-        input_string = discard_http_ows(input_string)
-        if not input_string:
-            raise ValueError(f"Trailing comma at end of list at: {input_string[:10]}")
-    return input_string, members
+from .item import Item, InnerList, itemise, AllItemType
+from .types import JsonType
+from .util import StructuredFieldValue, discard_http_ows, remove_char
 
 
-def parse_item_or_inner_list(input_string: str) -> Tuple[str, Any]:
-    if input_string and input_string[0] == "(":
-        return parse_inner_list(input_string)
-    return parse_item(input_string)
+class List(UserList, StructuredFieldValue):
+    def parse_content(self, input_string: str) -> str:
+        while input_string:
+            input_string, member = parse_item_or_inner_list(input_string)
+            self.append(member)
+            input_string = discard_http_ows(input_string)
+            if not input_string:
+                return input_string
+            input_string, char = remove_char(input_string)
+            if char != ",":
+                raise ValueError(
+                    f"Trailing text after item in list at: {input_string[:10]}"
+                )
+            input_string = discard_http_ows(input_string)
+            if not input_string:
+                raise ValueError(
+                    f"Trailing comma at end of list at: {input_string[:10]}"
+                )
+        return input_string
 
+    def __str__(self) -> str:
+        if len(self) == 0:
+            raise ValueError("No contents; field should not be emitted")
+        output = ""
+        count = len(self)
+        for x in range(0, count):
+            output += str(self[x])
+            if x + 1 < count:
+                output += ", "
+        return output
 
-def parse_inner_list(input_string: str) -> Tuple[str, Tuple[List, dict]]:
-    input_string, char = remove_char(input_string)
-    if char != "(":
-        raise ValueError(
-            f"First character of inner list is not '(' at: {input_string[:10]}"
-        )
-    inner_list = []  # type: List
-    while input_string:
-        input_string = discard_ows(input_string)
-        if input_string and input_string[0] == ")":
-            input_string = input_string[1:]
-            input_string, parameters = parse_parameters(input_string)
-            return input_string, (inner_list, parameters)
-        input_string, item = parse_item(input_string)
-        inner_list.append(item)
-        if not (input_string and input_string[0] in set(" )")):
-            raise ValueError(f"Inner list bad delimitation at: {input_string[:10]}")
-    raise ValueError(f"End of inner list not found at: {input_string[:10]}")
-
-
-def ser_list(input_list: List) -> str:
-    output = ""
-    count = len(input_list)
-    for x in range(0, count):
-        member_value, parameters = input_list[x]
-        if isinstance(member_value, list):
-            output += ser_inner_list(member_value, parameters)
+    def __setitem__(
+        self, index: Union[int, slice], value: Union[AllItemType, Iterable[AllItemType]]
+    ) -> None:
+        if isinstance(index, slice):
+            self.data[index] = [itemise(v) for v in value]  # type: ignore
         else:
-            output += ser_item(member_value, parameters)
-        if x + 1 < count:
-            output += ","
-            output += " "
-    return output
+            self.data[index] = itemise(cast(AllItemType, value))
+
+    def append(self, item: AllItemType) -> None:
+        self.data.append(itemise(item))
+
+    def insert(self, i: int, item: AllItemType) -> None:
+        self.data.insert(i, itemise(item))
+
+    def to_json(self) -> JsonType:
+        return [i.to_json() for i in self]
+
+    def from_json(self, json_data: JsonType) -> None:
+        for i in json_data:
+            if isinstance(i[0], list):
+                self.append(InnerList())
+            else:
+                self.append(Item())
+            self[-1].from_json(i)
 
 
-def ser_inner_list(inner_list: List, list_parameters: dict) -> str:
-    output = "("
-    count = len(inner_list)
-    for x in range(0, count):
-        (member_value, parameters) = inner_list[x]
-        output += ser_item(member_value, parameters)
-        if x + 1 < count:
-            output += " "
-    output += ")"
-    output += ser_parameters(list_parameters)
-    return output
+def parse_item_or_inner_list(input_string: str) -> Tuple[str, Union[Item, InnerList]]:
+    if input_string and input_string[0] == "(":
+        inner_list = InnerList()
+        input_string = inner_list.parse(input_string)
+        return input_string, inner_list
+    item = Item()
+    input_string = item.parse_content(input_string)
+    return input_string, item

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-"Structured HTTP Headers"
+"Structured HTTP Field Values"
 
 __author__ = "Mark Nottingham <mnot@mnot.net>"
 __copyright__ = """\
@@ -27,38 +27,11 @@ THE SOFTWARE.
 
 __version__ = "0.8.3"
 
-from typing import Any
 
-from .util import discard_ows
-from .dictionary import parse_dictionary, ser_dictionary
-from .list import parse_list, ser_list
-from .item import parse_item, ser_item
+# Top-level structures
+from .dictionary import Dictionary
+from .list import List
+from .item import Item, InnerList
+from .token import Token
 
-
-def parse(input_string: str, field_type: str) -> Any:
-    input_string = discard_ows(input_string)
-    if field_type == "list":
-        input_string, output = parse_list(input_string)  # type: ignore
-    elif field_type == "dictionary":
-        input_string, output = parse_dictionary(input_string)  # type: ignore
-    elif field_type == "item":
-        input_string, output = parse_item(input_string)  # type: ignore
-    else:
-        raise ValueError(f"Unrecognised field type '{field_type}'")
-    input_string = discard_ows(input_string)
-    if input_string:
-        raise ValueError(f"Trailing text after parsed value at: {input_string[:10]}")
-    return output
-
-
-def serialise(input_data: Any, field_type: str) -> str:
-    if field_type in ["list", "dictionary"]:
-        if not input_data:
-            return None  # Do not serialise this header
-    if field_type == "dictionary":
-        return ser_dictionary(input_data)
-    if field_type == "list":
-        return ser_list(input_data)
-    if field_type == "item":
-        return ser_item(input_data[0], input_data[1])
-    raise ValueError(f"Unrecognised field_type {field_type}")
+structures = {"dictionary": Dictionary, "list": List, "item": Item}

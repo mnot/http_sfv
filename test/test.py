@@ -8,8 +8,7 @@ from pathlib import Path
 import sys
 from typing import Any, List, Union
 
-from http_sfv import parse, serialise
-from http_sfv.token import Token
+from http_sfv import structures
 
 FAIL = "\033[91m"
 WARN = "\033[93m"
@@ -44,7 +43,7 @@ def run_suite(suite_name: str, suite: List) -> None:
                 print(f"{FAIL}  * {test['name']}: PARSE FAIL{ENDC}")
             print(f"    -      raw: {test['raw']}")
             print(f"    - expected: {test.get('expected', 'FAIL')}")
-            print(f"    -      got: {py2json(parsed)}")
+            print(f"    -      got: {parsed}")
             if parse_fail_reason:
                 print(f"    -   reason: {parse_fail_reason}")
 
@@ -72,8 +71,9 @@ def test_parse(test: dict) -> Union[bool, Any, str]:
     parse_success = False
     parse_fail_reason = None
     test_success = False
+    field = structures[test["header_type"]]()
     try:
-        parsed = parse(", ".join(test["raw"]), test["header_type"])
+        field.parse(", ".join(test["raw"]))
         parse_success = True
     except ValueError as why:
         parse_fail_reason = why.args
@@ -83,17 +83,18 @@ def test_parse(test: dict) -> Union[bool, Any, str]:
     if test.get("must_fail", False):
         test_success = not parse_success
     else:
-        test_success = test["expected"] == py2json(parsed)
-    return test_success, parsed, parse_fail_reason
+        test_success = test["expected"] == field.to_json()
+    return test_success, field.to_json(), parse_fail_reason
 
 
 def test_serialise(test: dict) -> Union[bool, str, str, str]:
     expected = test.get("canonical", test["raw"])
     output = None
     serialise_fail_reason = None
-    input_data = json2py(test["expected"])
+    field = structures[test["header_type"]]()
+    field.from_json(test["expected"])
     try:
-        output = serialise(input_data, test["header_type"])
+        output = str(field)
     except ValueError as why:
         serialise_fail_reason = why.args[0]
     except Exception:
@@ -104,36 +105,6 @@ def test_serialise(test: dict) -> Union[bool, str, str, str]:
     else:
         test_success = expected == [output]
     return test_success, output, expected, serialise_fail_reason
-
-
-def py2json(thing: Any) -> Any:
-    out = thing
-    if isinstance(thing, dict):
-        out = {k: py2json(thing[k]) for k in thing}
-    if type(thing) in [list, tuple]:
-        out = [py2json(i) for i in thing]
-    if isinstance(thing, bytes):
-        out = {"__type": "binary", "value": base64.b32encode(thing).decode("ascii")}
-    if isinstance(thing, Token):
-        out = {"__type": "token", "value": thing}
-    return out
-
-
-def json2py(thing: Any) -> Any:
-    out = thing
-    if isinstance(thing, dict):
-        if "__type" in thing:
-            if thing["__type"] == "token":
-                out = Token(thing["value"])
-            elif thing["__type"] == "binary":
-                out = base64.b32decode(thing["value"])
-            else:
-                raise Exception(f"Unrecognised data type {thing['__type']}")
-        else:
-            out = {k: json2py(thing[k]) for k in thing}
-    elif isinstance(thing, list):
-        out = [json2py(i) for i in thing]
-    return out
 
 
 if __name__ == "__main__":
