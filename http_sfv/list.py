@@ -1,7 +1,8 @@
 from collections import UserList
-from typing import Tuple, Any, Union, Iterable
+from typing import Tuple, Union, Iterable, cast
 
-from .item import Item, InnerList, itemise
+from .item import Item, InnerList, itemise, AllItemType
+from .types import JsonType
 from .util import StructuredFieldValue, discard_http_ows, remove_char
 
 
@@ -26,12 +27,12 @@ class List(UserList, StructuredFieldValue):
         return input_string
 
     def __setitem__(
-        self, index: Union[int, slice], value: Union[Any, Iterable[Any]]
+        self, index: Union[int, slice], value: Union[AllItemType, Iterable[AllItemType]]
     ) -> None:
         if isinstance(index, slice):
-            self.data[index] = [itemise(v) for v in value]
+            self.data[index] = [itemise(v) for v in value]  # type: ignore
         else:
-            self.data[index] = itemise(value)
+            self.data[index] = itemise(cast(AllItemType, value))
 
     def __str__(self) -> str:
         if len(self) == 0:
@@ -44,10 +45,16 @@ class List(UserList, StructuredFieldValue):
                 output += ", "
         return output
 
-    def to_json(self) -> Any:
+    def append(self, item: AllItemType) -> None:
+        self.data.append(itemise(item))
+
+    def insert(self, i: int, item: AllItemType) -> None:
+        self.data.insert(i, itemise(item))
+
+    def to_json(self) -> JsonType:
         return [i.to_json() for i in self]
 
-    def from_json(self, json_data: Any) -> None:
+    def from_json(self, json_data: JsonType) -> None:
         for i in json_data:
             if isinstance(i[0], list):
                 self.append(InnerList())
@@ -56,7 +63,7 @@ class List(UserList, StructuredFieldValue):
             self[-1].from_json(i)
 
 
-def parse_item_or_inner_list(input_string: str) -> Tuple[str, Any]:
+def parse_item_or_inner_list(input_string: str) -> Tuple[str, Union[Item, InnerList]]:
     if input_string and input_string[0] == "(":
         inner_list = InnerList()
         input_string = inner_list.parse(input_string)

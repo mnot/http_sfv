@@ -1,5 +1,5 @@
 from decimal import Decimal
-from typing import Any, List, Union
+from typing import List as _List, Tuple, Union, Any, cast
 
 from .boolean import parse_boolean, ser_boolean
 from .byteseq import parse_byteseq, ser_byteseq, BYTE_DELIMIT
@@ -7,12 +7,13 @@ from .decimal import ser_decimal
 from .integer import parse_number, ser_integer, NUMBER_START_CHARS
 from .string import parse_string, ser_string, DQUOTE
 from .token import parse_token, ser_token, Token, TOKEN_START_CHARS
+from .types import BareItemType, JsonType
 from .util import StructuredFieldValue, remove_char, discard_ows, parse_key, ser_key
 from .util_json import value_to_json, value_from_json
 
 
 class Item(StructuredFieldValue):
-    def __init__(self, value: Any = None) -> None:
+    def __init__(self, value: BareItemType = None) -> None:
         StructuredFieldValue.__init__(self)
         self.value = value
         self.params = Parameters()
@@ -27,11 +28,16 @@ class Item(StructuredFieldValue):
         output += str(self.params)
         return output
 
-    def to_json(self) -> Any:
+    def __eq__(self, other: Any) -> bool:
+        if isinstance(other, Item):
+            return self.value == other.value
+        return self.value == other
+
+    def to_json(self) -> JsonType:
         value = value_to_json(self.value)
         return [value, self.params.to_json()]
 
-    def from_json(self, json_data: Any) -> None:
+    def from_json(self, json_data: JsonType) -> None:
         try:
             value, params = json_data
         except ValueError:
@@ -48,7 +54,7 @@ class Parameters(dict):
             input_string, _ = remove_char(input_string)
             input_string = discard_ows(input_string)
             input_string, param_name = parse_key(input_string)
-            param_value = True
+            param_value: BareItemType = True
             if input_string and input_string[0] == "=":
                 input_string, _ = remove_char(input_string)
                 input_string, param_value = parse_bare_item(input_string)
@@ -65,16 +71,16 @@ class Parameters(dict):
                 output += ser_bare_item(self[param_name])
         return output
 
-    def to_json(self) -> Any:
+    def to_json(self) -> JsonType:
         return {k: value_to_json(v) for (k, v) in self.items()}
 
-    def from_json(self, json_data: Any) -> None:
+    def from_json(self, json_data: JsonType) -> None:
         for name, value in json_data.items():
             self[name] = value_from_json(value)
 
 
 class InnerList(list):
-    def __init__(self, values: list = None) -> None:
+    def __init__(self, values: _List[Union[Item, BareItemType]] = None) -> None:
         list.__init__(self, [itemise(v) for v in values or []])
         self.params = Parameters()
 
@@ -107,10 +113,10 @@ class InnerList(list):
         output += str(self.params)
         return output
 
-    def to_json(self) -> Any:
+    def to_json(self) -> JsonType:
         return [[i.to_json() for i in self], self.params.to_json()]
 
-    def from_json(self, json_data: Any) -> None:
+    def from_json(self, json_data: JsonType) -> None:
         try:
             values, params = json_data
         except ValueError:
@@ -121,7 +127,7 @@ class InnerList(list):
         self.params.from_json(params)
 
 
-def parse_bare_item(input_string: str) -> Any:
+def parse_bare_item(input_string: str) -> Tuple[str, BareItemType]:
     if not input_string:
         raise ValueError("Empty item.", input_string)
     start_char = input_string[0]
@@ -140,26 +146,29 @@ def parse_bare_item(input_string: str) -> Any:
     )
 
 
-def ser_bare_item(item: Any) -> str:
+def ser_bare_item(item: BareItemType) -> str:
     item_type = type(item)
     if item_type is int:
-        return ser_integer(item)
+        return ser_integer(cast(int, item))
     if isinstance(item, (Decimal, float)):
         return ser_decimal(item)
     if isinstance(item, Token):
         return ser_token(item)
     if item_type is str:
-        return ser_string(item)
+        return ser_string(cast(str, item))
     if item_type is bool:
-        return ser_boolean(item)
+        return ser_boolean(cast(bool, item))
     if item_type is bytes:
-        return ser_byteseq(item)
+        return ser_byteseq(cast(bytes, item))
     raise ValueError(f"Can't serialise; unrecognised item with type {item_type}")
 
 
-def itemise(thing: Any) -> Union[InnerList, Item]:
+def itemise(thing: Union[BareItemType, InnerList, Item]) -> Union[InnerList, Item]:
     if isinstance(thing, (Item, InnerList)):
         return thing
     if isinstance(thing, list):
         return InnerList(thing)
     return Item(thing)
+
+
+AllItemType = Union[BareItemType, Item, InnerList]

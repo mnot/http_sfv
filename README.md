@@ -58,7 +58,24 @@ That means that you need to create Tokens explicitly:
 'bar'
 ~~~
 
-Note that Dictionaries, Lists, and Items can be instantiated with a value:
+If you compare two Items, they'll be considered to be equivalent if their values match, even when their parameters are different:
+
+~~~ python
+>>> Token('foo') in my_list  # note that my_list's 'foo' has a parameter
+True
+>>> my_list.count(Token("foo"))
+1
+~~~
+
+Inner Lists can be added by passing a list:
+
+~~~ python
+>>> my_list.append(['another_thing', 'and_another'])
+>>> print(my_list)
+
+~~~
+
+Dictionaries, Lists, and Items can be instantiated with a value:
 
 ~~~ python
 >>> from http_sfv import Dictionary

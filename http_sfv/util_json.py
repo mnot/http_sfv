@@ -2,9 +2,10 @@ import base64
 from typing import Any
 
 from .token import Token
+from .types import JsonType, BareItemType
 
 
-def value_to_json(value: Any) -> Any:
+def value_to_json(value: BareItemType) -> JsonType:
     if isinstance(value, bytes):
         return {
             "__type": "binary",
@@ -15,7 +16,7 @@ def value_to_json(value: Any) -> Any:
     return value
 
 
-def value_from_json(value: Any) -> Any:
+def value_from_json(value: JsonType) -> BareItemType:
     if isinstance(value, dict):
         if "__type" in value:
             if value["__type"] == "token":

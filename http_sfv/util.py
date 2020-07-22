@@ -30,7 +30,7 @@ def parse_key(input_string: str) -> Tuple[str, str]:
         raise ValueError(
             f"Key does not begin with lcalpha or * at: {input_string[:10]}"
         )
-    output_string = []  # type: List[str]
+    output_string: List[str] = []
     while input_string:
         if input_string[0] not in KEY_CHARS:
             return input_string, "".join(output_string)
@@ -51,7 +51,7 @@ def ser_key(key: str) -> str:
 
 class StructuredFieldValue:
     def __init__(self) -> None:
-        self.raw_value = None  # type: str
+        self.raw_value: str = None
 
     def parse(self, input_string: str) -> None:
         self.raw_value = input_string

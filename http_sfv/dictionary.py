@@ -1,8 +1,8 @@
 from collections import UserDict
-from typing import Any
 
-from .item import Item, InnerList, Parameters, itemise
+from .item import Item, InnerList, Parameters, itemise, AllItemType
 from .list import parse_item_or_inner_list
+from .types import JsonType
 from .util import (
     StructuredFieldValue,
     remove_char,
@@ -40,7 +40,7 @@ class Dictionary(UserDict, StructuredFieldValue):
                 )
         return input_string
 
-    def __setitem__(self, key: str, value: Any) -> None:
+    def __setitem__(self, key: str, value: AllItemType) -> None:
         self.data[key] = itemise(value)
 
     def __str__(self) -> str:
@@ -61,10 +61,10 @@ class Dictionary(UserDict, StructuredFieldValue):
                 output += ", "
         return output
 
-    def to_json(self) -> Any:
+    def to_json(self) -> JsonType:
         return {k: v.to_json() for (k, v) in self.items()}
 
-    def from_json(self, json_data: Any) -> None:
+    def from_json(self, json_data: JsonType) -> None:
         for k, v in json_data.items():
             if isinstance(v[0], list):
                 self[k] = InnerList()
