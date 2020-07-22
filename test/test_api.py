@@ -22,6 +22,7 @@ assert(my_list.count(Token("foo")) == 1)
 
 my_list.append(['another_thing', 'and_another'])
 assert(my_list[-1] == ['another_thing', 'and_another'])
+my_list[-1][-1].params['a'] = True
 print(my_list)
 
 from http_sfv import Dictionary

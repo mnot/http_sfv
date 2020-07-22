@@ -72,7 +72,8 @@ Inner Lists can be added by passing a list:
 ~~~ python
 >>> my_list.append(['another_thing', 'and_another'])
 >>> print(my_list)
-
+foo;a=1, bar;b=2, bar, ("another_thing" "and_another")
+>>> my_list[-1][-1].params['a'] = True
 ~~~
 
 Dictionaries, Lists, and Items can be instantiated with a value:
