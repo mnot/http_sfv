@@ -1,5 +1,6 @@
+from collections import UserList
 from decimal import Decimal
-from typing import List as _List, Tuple, Union, Any, cast
+from typing import List as _List, Tuple, Union, Any, Iterable, cast
 
 from .boolean import parse_boolean, ser_boolean
 from .byteseq import parse_byteseq, ser_byteseq, BYTE_DELIMIT
@@ -79,9 +80,12 @@ class Parameters(dict):
             self[name] = value_from_json(value)
 
 
-class InnerList(list):
-    def __init__(self, values: _List[Union[Item, BareItemType]] = None) -> None:
-        list.__init__(self, [itemise(v) for v in values or []])
+SingleItemType = Union[BareItemType, Item]
+
+
+class InnerList(UserList):
+    def __init__(self, values: _List[Union[Item, SingleItemType]] = None) -> None:
+        UserList.__init__(self, [itemise(v) for v in values or []])
         self.params = Parameters()
 
     def parse(self, input_string: str) -> str:
@@ -97,14 +101,14 @@ class InnerList(list):
                 return self.params.parse(input_string)
             item = Item()
             input_string = item.parse_content(input_string)
-            self.append(item)
+            self.data.append(item)
             if not (input_string and input_string[0] in set(" )")):
                 raise ValueError(f"Inner list bad delimitation at: {input_string[:10]}")
         raise ValueError(f"End of inner list not found at: {input_string[:10]}")
 
     def __str__(self) -> str:
         output = "("
-        count = len(self)
+        count = len(self.data)
         for x in range(0, count):
             output += str(self[x])
             if x + 1 < count:
@@ -113,8 +117,24 @@ class InnerList(list):
         output += str(self.params)
         return output
 
+    def __setitem__(
+        self,
+        index: Union[int, slice],
+        value: Union[SingleItemType, Iterable[SingleItemType]],
+    ) -> None:
+        if isinstance(index, slice):
+            self.data[index] = [itemise(v) for v in value]  # type: ignore
+        else:
+            self.data[index] = itemise(cast(SingleItemType, value))
+
+    def append(self, item: SingleItemType) -> None:
+        self.data.append(itemise(item))
+
+    def insert(self, i: int, item: SingleItemType) -> None:
+        self.data.insert(i, itemise(item))
+
     def to_json(self) -> JsonType:
-        return [[i.to_json() for i in self], self.params.to_json()]
+        return [[i.to_json() for i in self.data], self.params.to_json()]
 
     def from_json(self, json_data: JsonType) -> None:
         try:
@@ -122,7 +142,7 @@ class InnerList(list):
         except ValueError:
             raise ValueError(json_data)
         for i in values:
-            self.append(Item())
+            self.data.append(Item())
             self[-1].from_json(i)
         self.params.from_json(params)
 
