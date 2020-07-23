@@ -8,8 +8,8 @@ FRAC_DIGITS = 3
 PRECISION = Decimal(10) ** -FRAC_DIGITS
 
 
-def parse_decimal(input_string: str) -> Tuple[str, Decimal]:
-    return parse_number(input_string)  # type: ignore
+def parse_decimal(data: bytes) -> Tuple[int, Decimal]:
+    return parse_number(data)  # type: ignore
 
 
 def ser_decimal(input_decimal: Union[Decimal, float]) -> str:

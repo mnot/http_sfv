@@ -1,48 +1,58 @@
 from string import ascii_lowercase, digits
-from typing import List, Tuple
+from typing import Tuple
 
 
-def remove_char(input_string: str) -> Tuple[str, str]:
+def next_char(data: bytes) -> bytes:
+    """Return the next character in data, or nothing if it is not there."""
+    return data[0:1]
+
+
+def remove_char(data: bytes) -> Tuple[int, bytes]:
     "Remove the first character of input_string and return it."
-    if not input_string:
-        raise ValueError(f"No next character in input at  at: {input_string[:10]}")
-    next_char = input_string[0]
-    input_string = input_string[1:]
-    return input_string, next_char
+    if not data:
+        return 0, b""
+    return 1, data[0:1]
 
 
-def discard_ows(input_string: str) -> str:
-    "Remove leading space from input_string."
-    return input_string.lstrip(" ")
+def discard_ows(data: bytes) -> int:
+    "Return the number of space characters at the beginning of data."
+    for i in range(len(data)):
+        if data[i : i + 1] != b" ":
+            return i
+    return len(data)
 
 
-def discard_http_ows(input_string: str) -> str:
-    "remove leading space or HTAB from input_string."
-    return input_string.lstrip(" \t")
+def discard_http_ows(data: bytes) -> int:
+    "Return the number of space or HTAB characters at the beginning of data."
+    for i in range(len(data)):
+        if data[i : i + 1] not in b" \t":
+            return i
+    return len(data)
 
 
-KEY_START_CHARS = set(ascii_lowercase + "*")
-KEY_CHARS = set(ascii_lowercase + digits + "_-*.")
+KEY_START_CHARS = (ascii_lowercase + "*").encode("ascii")
+KEY_CHARS = (ascii_lowercase + digits + "_-*.").encode("ascii")
 
 
-def parse_key(input_string: str) -> Tuple[str, str]:
-    if input_string and input_string[0] not in KEY_START_CHARS:
-        raise ValueError(
-            f"Key does not begin with lcalpha or * at: {input_string[:10]}"
-        )
-    output_string: List[str] = []
-    while input_string:
-        if input_string[0] not in KEY_CHARS:
-            return input_string, "".join(output_string)
-        input_string, char = remove_char(input_string)
-        output_string.append(char)
-    return input_string, "".join(output_string)
+def parse_key(data: bytes) -> Tuple[int, str]:
+    bytes_consumed = 0
+    peek = next_char(data)
+    if not peek or peek not in KEY_START_CHARS:
+        raise ValueError("Key does not begin with lcalpha or *")
+    output_string = bytearray()
+    while True:
+        peek = next_char(data[bytes_consumed:])
+        if not peek or peek not in KEY_CHARS:
+            return bytes_consumed, output_string.decode("ascii")
+        offset, char = remove_char(data[bytes_consumed:])
+        bytes_consumed += offset
+        output_string.extend(char)
 
 
 def ser_key(key: str) -> str:
-    if not all(char in KEY_CHARS for char in key):
+    if not all(char.encode("ascii") in KEY_CHARS for char in key):
         raise ValueError("Key contains disallowed characters")
-    if key[0] not in KEY_START_CHARS:
+    if key[0].encode("ascii") not in KEY_START_CHARS:
         raise ValueError("Key does not start with allowed character")
     output = ""
     output += key
@@ -51,18 +61,15 @@ def ser_key(key: str) -> str:
 
 class StructuredFieldValue:
     def __init__(self) -> None:
-        self.raw_value: str = None
+        self.raw_value: bytes = None
 
-    def parse(self, input_string: str) -> None:
-        self.raw_value = input_string
-        input_string = discard_ows(input_string)
+    def parse(self, data: bytes) -> None:
+        self.raw_value = data
+        bytes_consumed = discard_ows(data)
+        bytes_consumed += self.parse_content(data[bytes_consumed:])  # type: ignore
+        bytes_consumed += discard_ows(data[bytes_consumed:])
+        if data[bytes_consumed:]:
+            raise ValueError("Trailing text after parsed value")
 
-        input_string = self.parse_content(input_string)  # type: ignore
-        input_string = discard_ows(input_string)
-        if input_string:
-            raise ValueError(
-                f"Trailing text after parsed value at: {input_string[:10]}"
-            )
-
-    def parse_content(self, input_string: str) -> str:
+    def parse_content(self, data: bytes) -> int:
         raise NotImplementedError

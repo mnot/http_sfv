@@ -7,11 +7,12 @@ from .util import remove_char
 MAX_INT = 999999999999999
 MIN_INT = -999999999999999
 
-NUMBER_START_CHARS = set(digits + "-")
+DIGITS = digits.encode("ascii")
+NUMBER_START_CHARS = (digits + "-").encode("ascii")
 
 
-def parse_integer(input_string: str) -> Tuple[str, int]:
-    return parse_number(input_string)  # type: ignore
+def parse_integer(data: bytes) -> Tuple[int, int]:
+    return parse_number(data)  # type: ignore
 
 
 def ser_integer(inval: int) -> str:
@@ -28,44 +29,43 @@ INTEGER = "integer"
 DECIMAL = "decimal"
 
 
-def parse_number(input_string: str) -> Tuple[str, Union[int, Decimal]]:
+def parse_number(data: bytes) -> Tuple[int, Union[int, Decimal]]:
     _type = INTEGER
     _sign = 1
     input_number = []
-    if input_string.startswith("-"):
-        input_string = input_string[1:]
+    bytes_consumed = 0
+    if data.startswith(b"-"):
+        bytes_consumed += 1
         _sign = -1
-    if not input_string:
-        raise ValueError("Number input lacked a number at: {input_string[:10]}")
-    if not input_string[0] in digits:
-        raise ValueError("Number doesn't start with a DIGIT at: {input_string[:10]}")
-    while input_string:
-        input_string, char = remove_char(input_string)
-        if char in digits:
+    if not data[bytes_consumed:]:
+        raise ValueError("Number input lacked a number")
+    if not data[bytes_consumed : bytes_consumed + 1] in DIGITS:
+        raise ValueError("Number doesn't start with a DIGIT")
+    while bytes_consumed < len(data):
+        offset, char = remove_char(data[bytes_consumed:])
+        bytes_consumed += offset
+        if char in DIGITS:
             input_number.append(char)
-        elif _type is INTEGER and char == ".":
+        elif _type is INTEGER and char == b".":
             if len(input_number) > 12:
-                raise ValueError("Decimal too long.", "".join(input_number))
+                raise ValueError("Decimal too long.")
             input_number.append(char)
             _type = DECIMAL
         else:
-            input_string = char + input_string
+            bytes_consumed -= 1
             break
         if _type == INTEGER and len(input_number) > 15:
-            raise ValueError("Integer too long.", input_string)
+            raise ValueError("Integer too long.")
         if _type == DECIMAL and len(input_number) > 16:
-            raise ValueError("Decimal too long.", input_string)
-    # we diverge from the specified algorithm a bit here to satisfy mypi.
+            raise ValueError("Decimal too long.")
     if _type == INTEGER:
-        output_int = int("".join(input_number)) * _sign
+        output_int = int(b"".join(input_number)) * _sign
         if not MIN_INT <= output_int <= MAX_INT:
-            raise ValueError("Integer outside allowed range at: {input_string[:10]}")
-        return input_string, output_int
-    if input_number and input_number[-1] == ".":
-        raise ValueError("Decimal ends in '.'.", input_string)
-    if len(input_number) - input_number.index(".") - 1 > 3:
-        raise ValueError(
-            "Decimal fractional component too long at: {input_string[:10]}"
-        )
-    output_float = Decimal("".join(input_number)) * _sign
-    return input_string, output_float
+            raise ValueError("Integer outside allowed range")
+        return bytes_consumed, output_int
+    if input_number and input_number[-1] == b".":
+        raise ValueError("Decimal ends in '.'")
+    if len(input_number) - input_number.index(b".") - 1 > 3:
+        raise ValueError("Decimal fractional component too long")
+    output_float = Decimal((b"".join(input_number)).decode("ascii")) * _sign
+    return bytes_consumed, output_float

@@ -9,7 +9,14 @@ from .integer import parse_number, ser_integer, NUMBER_START_CHARS
 from .string import parse_string, ser_string, DQUOTE
 from .token import parse_token, ser_token, Token, TOKEN_START_CHARS
 from .types import BareItemType, JsonType
-from .util import StructuredFieldValue, remove_char, discard_ows, parse_key, ser_key
+from .util import (
+    StructuredFieldValue,
+    remove_char,
+    next_char,
+    discard_ows,
+    parse_key,
+    ser_key,
+)
 from .util_json import value_to_json, value_from_json
 
 
@@ -19,9 +26,10 @@ class Item(StructuredFieldValue):
         self.value = value
         self.params = Parameters()
 
-    def parse_content(self, input_string: str) -> str:
-        input_string, self.value = parse_bare_item(input_string)
-        return self.params.parse(input_string)
+    def parse_content(self, data: bytes) -> int:
+        bytes_consumed, self.value = parse_bare_item(data)
+        bytes_consumed += self.params.parse(data[bytes_consumed:])
+        return bytes_consumed
 
     def __str__(self) -> str:
         output = ""
@@ -48,19 +56,22 @@ class Item(StructuredFieldValue):
 
 
 class Parameters(dict):
-    def parse(self, input_string: str) -> str:
-        while input_string:
-            if input_string[0] != ";":
+    def parse(self, data: bytes) -> int:
+        bytes_consumed = 0
+        while True:
+            if next_char(data[bytes_consumed:]) != b";":
                 break
-            input_string, _ = remove_char(input_string)
-            input_string = discard_ows(input_string)
-            input_string, param_name = parse_key(input_string)
+            bytes_consumed += remove_char(data[bytes_consumed:])[0]
+            bytes_consumed += discard_ows(data[bytes_consumed:])
+            offset, param_name = parse_key(data[bytes_consumed:])
+            bytes_consumed += offset
             param_value: BareItemType = True
-            if input_string and input_string[0] == "=":
-                input_string, _ = remove_char(input_string)
-                input_string, param_value = parse_bare_item(input_string)
+            if next_char(data[bytes_consumed:]) == b"=":
+                bytes_consumed += remove_char(data[bytes_consumed:])[0]
+                offset, param_value = parse_bare_item(data[bytes_consumed:])
+                bytes_consumed += offset
             self[param_name] = param_value
-        return input_string
+        return bytes_consumed
 
     def __str__(self) -> str:
         output = ""
@@ -88,23 +99,24 @@ class InnerList(UserList):
         UserList.__init__(self, [itemise(v) for v in values or []])
         self.params = Parameters()
 
-    def parse(self, input_string: str) -> str:
-        input_string, char = remove_char(input_string)
-        if char != "(":
-            raise ValueError(
-                f"First character of inner list is not '(' at: {input_string[:10]}"
-            )
-        while input_string:
-            input_string = discard_ows(input_string)
-            if input_string and input_string[0] == ")":
-                input_string = input_string[1:]
-                return self.params.parse(input_string)
+    def parse(self, data: bytes) -> int:
+        bytes_consumed, char = remove_char(data)
+        if char != b"(":
+            raise ValueError("First character of inner list is not '('")
+        while True:
+            bytes_consumed += discard_ows(data[bytes_consumed:])
+            if next_char(data[bytes_consumed:]) == b")":
+                bytes_consumed += 1
+                bytes_consumed += self.params.parse(data[bytes_consumed:])
+                return bytes_consumed
             item = Item()
-            input_string = item.parse_content(input_string)
+            bytes_consumed += item.parse_content(data[bytes_consumed:])
             self.data.append(item)
-            if not (input_string and input_string[0] in set(" )")):
-                raise ValueError(f"Inner list bad delimitation at: {input_string[:10]}")
-        raise ValueError(f"End of inner list not found at: {input_string[:10]}")
+            peek = next_char(data[bytes_consumed:])
+            if not peek:
+                raise ValueError("End of inner list not found")
+            if peek not in b" )":
+                raise ValueError("Inner list bad delimitation")
 
     def __str__(self) -> str:
         output = "("
@@ -147,22 +159,22 @@ class InnerList(UserList):
         self.params.from_json(params)
 
 
-def parse_bare_item(input_string: str) -> Tuple[str, BareItemType]:
-    if not input_string:
-        raise ValueError("Empty item.", input_string)
-    start_char = input_string[0]
+def parse_bare_item(data: bytes) -> Tuple[int, BareItemType]:
+    if not data:
+        raise ValueError("Empty item")
+    start_char = data[0:1]
+    if start_char == DQUOTE:
+        return parse_string(data)
+    if start_char == BYTE_DELIMIT:
+        return parse_byteseq(data)
+    if start_char == b"?":
+        return parse_boolean(data)
     if start_char in TOKEN_START_CHARS:
-        return parse_token(input_string)
-    if start_char is DQUOTE:
-        return parse_string(input_string)
+        return parse_token(data)
     if start_char in NUMBER_START_CHARS:
-        return parse_number(input_string)
-    if start_char is BYTE_DELIMIT:
-        return parse_byteseq(input_string)
-    if start_char == "?":
-        return parse_boolean(input_string)
+        return parse_number(data)
     raise ValueError(
-        f"Item starting with '{input_string[0]}' can't be identified at: {input_string[:10]}"
+        f"Item starting with '{start_char.decode('ascii')}' can't be identified"
     )
 
 

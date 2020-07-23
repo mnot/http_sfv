@@ -3,28 +3,26 @@ from typing import Tuple, Union, Iterable, cast
 
 from .item import Item, InnerList, itemise, AllItemType
 from .types import JsonType
-from .util import StructuredFieldValue, discard_http_ows, remove_char
+from .util import StructuredFieldValue, discard_http_ows, remove_char, next_char
 
 
 class List(UserList, StructuredFieldValue):
-    def parse_content(self, input_string: str) -> str:
-        while input_string:
-            input_string, member = parse_item_or_inner_list(input_string)
+    def parse_content(self, data: bytes) -> int:
+        bytes_consumed = 0
+        while True:
+            offset, member = parse_item_or_inner_list(data[bytes_consumed:])
+            bytes_consumed += offset
             self.append(member)
-            input_string = discard_http_ows(input_string)
-            if not input_string:
-                return input_string
-            input_string, char = remove_char(input_string)
-            if char != ",":
-                raise ValueError(
-                    f"Trailing text after item in list at: {input_string[:10]}"
-                )
-            input_string = discard_http_ows(input_string)
-            if not input_string:
-                raise ValueError(
-                    f"Trailing comma at end of list at: {input_string[:10]}"
-                )
-        return input_string
+            bytes_consumed += discard_http_ows(data[bytes_consumed:])
+            if not data[bytes_consumed:]:
+                return bytes_consumed
+            offset, char = remove_char(data[bytes_consumed:])
+            bytes_consumed += offset
+            if char != b",":
+                raise ValueError("Trailing text after item in list")
+            bytes_consumed += discard_http_ows(data[bytes_consumed:])
+            if not data[bytes_consumed:]:
+                raise ValueError("Trailing comma at end of list")
 
     def __str__(self) -> str:
         if len(self) == 0:
@@ -63,11 +61,11 @@ class List(UserList, StructuredFieldValue):
             self[-1].from_json(i)
 
 
-def parse_item_or_inner_list(input_string: str) -> Tuple[str, Union[Item, InnerList]]:
-    if input_string and input_string[0] == "(":
+def parse_item_or_inner_list(data: bytes) -> Tuple[int, Union[Item, InnerList]]:
+    if next_char(data) == b"(":
         inner_list = InnerList()
-        input_string = inner_list.parse(input_string)
-        return input_string, inner_list
+        bytes_consumed = inner_list.parse(data)
+        return bytes_consumed, inner_list
     item = Item()
-    input_string = item.parse_content(input_string)
-    return input_string, item
+    bytes_consumed = item.parse_content(data)
+    return bytes_consumed, item

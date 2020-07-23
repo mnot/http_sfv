@@ -1,11 +1,12 @@
 from collections import UserDict
 
-from .item import Item, InnerList, Parameters, itemise, AllItemType
+from .item import Item, InnerList, itemise, AllItemType
 from .list import parse_item_or_inner_list
 from .types import JsonType
 from .util import (
     StructuredFieldValue,
     remove_char,
+    next_char,
     discard_http_ows,
     ser_key,
     parse_key,
@@ -13,32 +14,31 @@ from .util import (
 
 
 class Dictionary(UserDict, StructuredFieldValue):
-    def parse_content(self, input_string: str) -> str:
-        while input_string:
-            input_string, this_key = parse_key(input_string)
-            if input_string and input_string[0] == "=":
-                input_string, char = remove_char(input_string)
-                input_string, member = parse_item_or_inner_list(input_string)
+    def parse_content(self, data: bytes) -> int:
+        bytes_consumed = 0
+        while True:
+            offset, this_key = parse_key(data[bytes_consumed:])
+            bytes_consumed += offset
+            if next_char(data[bytes_consumed:]) == b"=":
+                offset, char = remove_char(data[bytes_consumed:])
+                bytes_consumed += offset
+                offset, member = parse_item_or_inner_list(data[bytes_consumed:])
+                bytes_consumed += offset
             else:
                 member = Item()
                 member.value = True
-                member.params = Parameters()
-                input_string = member.params.parse(input_string)
+                bytes_consumed += member.params.parse(data[bytes_consumed:])
             self[this_key] = member
-            input_string = discard_http_ows(input_string)
-            if not input_string:
-                return input_string
-            input_string, char = remove_char(input_string)
-            if char != ",":
-                raise ValueError(
-                    f"Dictionary member trailing characters at: {input_string[:10]}"
-                )
-            input_string = discard_http_ows(input_string)
-            if not input_string:
-                raise ValueError(
-                    f"Dictionary has trailing comma at: {input_string[:10]}"
-                )
-        return input_string
+            bytes_consumed += discard_http_ows(data[bytes_consumed:])
+            if not data[bytes_consumed:]:
+                return bytes_consumed
+            offset, char = remove_char(data[bytes_consumed:])
+            bytes_consumed += offset
+            if char and char != b",":
+                raise ValueError("Dictionary member has trailing characters")
+            bytes_consumed += discard_http_ows(data[bytes_consumed:])
+            if not data[bytes_consumed:]:
+                raise ValueError("Dictionary has trailing comma")
 
     def __setitem__(self, key: str, value: AllItemType) -> None:
         self.data[key] = itemise(value)

@@ -1,19 +1,14 @@
 from typing import Tuple
 
 
-def parse_boolean(input_string: str) -> Tuple[str, bool]:
-    if not input_string or input_string[0] != "?":
-        raise ValueError(
-            f"First character of Boolean is not '?' at: {input_string[:10]}"
-        )
-    input_string = input_string[1:]
-    if input_string and input_string[0] == "1":
-        input_string = input_string[1:]
-        return input_string, True
-    if input_string and input_string[0] == "0":
-        input_string = input_string[1:]
-        return input_string, False
-    raise ValueError(f"No Boolean value found at: {input_string[:10]}")
+def parse_boolean(data: bytes) -> Tuple[int, bool]:
+    if not data or data[0:1] != b"?":
+        raise ValueError("First character of Boolean is not '?'")
+    if data[1:] and data[1:2] == b"1":
+        return 2, True
+    if data[1:] and data[1:2] == b"0":
+        return 2, False
+    raise ValueError("No Boolean value found")
 
 
 def ser_boolean(inval: bool) -> str:
