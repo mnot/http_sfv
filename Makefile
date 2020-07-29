@@ -37,6 +37,10 @@ test: $(TESTS)
 test/tests:
 	git submodule update --init --recursive
 
+.PHONY: perf
+perf:
+	PYTHONPATH=$(PYTHONPATH) $(PYTHON) test/test_perf.py
+
 .PHONY: typecheck
 typecheck:
 	PYTHONPATH=$(PYTHONPATH) $(PYTHON) -m mypy --config-file=test/mypy.ini $(name)
