@@ -3,7 +3,7 @@
 from http_sfv import List, Token
 
 my_list = List()
-my_list.parse("foo; a=1, bar; b=2")
+my_list.parse(b"foo; a=1, bar; b=2")
 
 my_list
 my_list[0]

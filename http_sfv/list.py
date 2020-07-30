@@ -1,41 +1,36 @@
 from collections import UserList
 from typing import Tuple, Union, Iterable, cast
 
-from .item import Item, InnerList, itemise, AllItemType
+from .item import Item, InnerList, itemise, AllItemType, PAREN_OPEN
 from .types import JsonType
-from .util import StructuredFieldValue, discard_http_ows, remove_char
+from .util import StructuredFieldValue, discard_http_ows
+
+
+COMMA = ord(b",")
 
 
 class List(UserList, StructuredFieldValue):
-    def parse_content(self, input_string: str) -> str:
-        while input_string:
-            input_string, member = parse_item_or_inner_list(input_string)
+    def parse_content(self, data: bytes) -> int:
+        bytes_consumed = 0
+        data_len = len(data)
+        while True:
+            offset, member = parse_item_or_inner_list(data[bytes_consumed:])
+            bytes_consumed += offset
             self.append(member)
-            input_string = discard_http_ows(input_string)
-            if not input_string:
-                return input_string
-            input_string, char = remove_char(input_string)
-            if char != ",":
-                raise ValueError(
-                    f"Trailing text after item in list at: {input_string[:10]}"
-                )
-            input_string = discard_http_ows(input_string)
-            if not input_string:
-                raise ValueError(
-                    f"Trailing comma at end of list at: {input_string[:10]}"
-                )
-        return input_string
+            bytes_consumed += discard_http_ows(data[bytes_consumed:])
+            if bytes_consumed == data_len:
+                return bytes_consumed
+            if data[bytes_consumed] != COMMA:
+                raise ValueError("Trailing text after item in list")
+            bytes_consumed += 1
+            bytes_consumed += discard_http_ows(data[bytes_consumed:])
+            if bytes_consumed == data_len:
+                raise ValueError("Trailing comma at end of list")
 
     def __str__(self) -> str:
         if len(self) == 0:
             raise ValueError("No contents; field should not be emitted")
-        output = ""
-        count = len(self)
-        for x in range(0, count):
-            output += str(self[x])
-            if x + 1 < count:
-                output += ", "
-        return output
+        return ", ".join([str(m) for m in self])
 
     def __setitem__(
         self, index: Union[int, slice], value: Union[AllItemType, Iterable[AllItemType]]
@@ -63,11 +58,14 @@ class List(UserList, StructuredFieldValue):
             self[-1].from_json(i)
 
 
-def parse_item_or_inner_list(input_string: str) -> Tuple[str, Union[Item, InnerList]]:
-    if input_string and input_string[0] == "(":
-        inner_list = InnerList()
-        input_string = inner_list.parse(input_string)
-        return input_string, inner_list
+def parse_item_or_inner_list(data: bytes) -> Tuple[int, Union[Item, InnerList]]:
+    try:
+        if data[0] == PAREN_OPEN:
+            inner_list = InnerList()
+            bytes_consumed = inner_list.parse(data)
+            return bytes_consumed, inner_list
+    except IndexError:
+        pass
     item = Item()
-    input_string = item.parse_content(input_string)
-    return input_string, item
+    bytes_consumed = item.parse_content(data)
+    return bytes_consumed, item

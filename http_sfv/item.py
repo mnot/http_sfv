@@ -9,8 +9,20 @@ from .integer import parse_number, ser_integer, NUMBER_START_CHARS
 from .string import parse_string, ser_string, DQUOTE
 from .token import parse_token, ser_token, Token, TOKEN_START_CHARS
 from .types import BareItemType, JsonType
-from .util import StructuredFieldValue, remove_char, discard_ows, parse_key, ser_key
+from .util import (
+    StructuredFieldValue,
+    discard_ows,
+    parse_key,
+    ser_key,
+)
 from .util_json import value_to_json, value_from_json
+
+
+SEMICOLON = ord(b";")
+EQUALS = ord(b"=")
+PAREN_OPEN = ord(b"(")
+PAREN_CLOSE = ord(b")")
+INNERLIST_DELIMS = set(b" )")
 
 
 class Item(StructuredFieldValue):
@@ -19,15 +31,13 @@ class Item(StructuredFieldValue):
         self.value = value
         self.params = Parameters()
 
-    def parse_content(self, input_string: str) -> str:
-        input_string, self.value = parse_bare_item(input_string)
-        return self.params.parse(input_string)
+    def parse_content(self, data: bytes) -> int:
+        bytes_consumed, self.value = parse_bare_item(data)
+        bytes_consumed += self.params.parse(data[bytes_consumed:])
+        return bytes_consumed
 
     def __str__(self) -> str:
-        output = ""
-        output += ser_bare_item(self.value)
-        output += str(self.params)
-        return output
+        return f"{ser_bare_item(self.value)}{str(self.params)}"
 
     def __eq__(self, other: Any) -> bool:
         if isinstance(other, Item):
@@ -48,29 +58,36 @@ class Item(StructuredFieldValue):
 
 
 class Parameters(dict):
-    def parse(self, input_string: str) -> str:
-        while input_string:
-            if input_string[0] != ";":
+    def parse(self, data: bytes) -> int:
+        bytes_consumed = 0
+        while True:
+            try:
+                if data[bytes_consumed] != SEMICOLON:
+                    break
+            except IndexError:
                 break
-            input_string, _ = remove_char(input_string)
-            input_string = discard_ows(input_string)
-            input_string, param_name = parse_key(input_string)
+            bytes_consumed += 1  # consume the ";"
+            bytes_consumed += discard_ows(data[bytes_consumed:])
+            offset, param_name = parse_key(data[bytes_consumed:])
+            bytes_consumed += offset
             param_value: BareItemType = True
-            if input_string and input_string[0] == "=":
-                input_string, _ = remove_char(input_string)
-                input_string, param_value = parse_bare_item(input_string)
+            try:
+                if data[bytes_consumed] == EQUALS:
+                    bytes_consumed += 1  # consume the "="
+                    offset, param_value = parse_bare_item(data[bytes_consumed:])
+                    bytes_consumed += offset
+            except IndexError:
+                pass
             self[param_name] = param_value
-        return input_string
+        return bytes_consumed
 
     def __str__(self) -> str:
-        output = ""
-        for param_name in self:
-            output += ";"
-            output += ser_key(param_name)
-            if self[param_name] is not True:
-                output += "="
-                output += ser_bare_item(self[param_name])
-        return output
+        return "".join(
+            [
+                f";{ser_key(k)}{f'={ser_bare_item(v)}' if v is not True else ''}"
+                for k, v in self.items()
+            ]
+        )
 
     def to_json(self) -> JsonType:
         return {k: value_to_json(v) for (k, v) in self.items()}
@@ -88,34 +105,25 @@ class InnerList(UserList):
         UserList.__init__(self, [itemise(v) for v in values or []])
         self.params = Parameters()
 
-    def parse(self, input_string: str) -> str:
-        input_string, char = remove_char(input_string)
-        if char != "(":
-            raise ValueError(
-                f"First character of inner list is not '(' at: {input_string[:10]}"
-            )
-        while input_string:
-            input_string = discard_ows(input_string)
-            if input_string and input_string[0] == ")":
-                input_string = input_string[1:]
-                return self.params.parse(input_string)
+    def parse(self, data: bytes) -> int:
+        bytes_consumed = 1  # consume the "("
+        while True:
+            bytes_consumed += discard_ows(data[bytes_consumed:])
+            if data[bytes_consumed] == PAREN_CLOSE:
+                bytes_consumed += 1
+                bytes_consumed += self.params.parse(data[bytes_consumed:])
+                return bytes_consumed
             item = Item()
-            input_string = item.parse_content(input_string)
+            bytes_consumed += item.parse_content(data[bytes_consumed:])
             self.data.append(item)
-            if not (input_string and input_string[0] in set(" )")):
-                raise ValueError(f"Inner list bad delimitation at: {input_string[:10]}")
-        raise ValueError(f"End of inner list not found at: {input_string[:10]}")
+            try:
+                if data[bytes_consumed] not in INNERLIST_DELIMS:
+                    raise ValueError("Inner list bad delimitation")
+            except IndexError:
+                raise ValueError("End of inner list not found")
 
     def __str__(self) -> str:
-        output = "("
-        count = len(self.data)
-        for x in range(0, count):
-            output += str(self[x])
-            if x + 1 < count:
-                output += " "
-        output += ")"
-        output += str(self.params)
-        return output
+        return f"({' '.join([str(i) for i in self.data])}){self.params}"
 
     def __setitem__(
         self,
@@ -147,40 +155,47 @@ class InnerList(UserList):
         self.params.from_json(params)
 
 
-def parse_bare_item(input_string: str) -> Tuple[str, BareItemType]:
-    if not input_string:
-        raise ValueError("Empty item.", input_string)
-    start_char = input_string[0]
-    if start_char in TOKEN_START_CHARS:
-        return parse_token(input_string)
-    if start_char is DQUOTE:
-        return parse_string(input_string)
-    if start_char in NUMBER_START_CHARS:
-        return parse_number(input_string)
-    if start_char is BYTE_DELIMIT:
-        return parse_byteseq(input_string)
-    if start_char == "?":
-        return parse_boolean(input_string)
-    raise ValueError(
-        f"Item starting with '{input_string[0]}' can't be identified at: {input_string[:10]}"
-    )
+_parse_map = {
+    DQUOTE: parse_string,
+    BYTE_DELIMIT: parse_byteseq,
+    ord(b"?"): parse_boolean,
+}
+for c in TOKEN_START_CHARS:
+    _parse_map[c] = parse_token
+for c in NUMBER_START_CHARS:
+    _parse_map[c] = parse_number
+
+
+def parse_bare_item(data: bytes) -> Tuple[int, BareItemType]:
+    if not data:
+        raise ValueError("Empty item")
+    try:
+        return _parse_map[data[0]](data)  # type: ignore
+    except KeyError:
+        raise ValueError(
+            f"Item starting with '{data[0:1].decode('ascii')}' can't be identified"
+        )
+
+
+_ser_map = {
+    int: ser_integer,
+    float: ser_decimal,
+    str: ser_string,
+    bool: ser_boolean,
+    bytes: ser_byteseq,
+}
 
 
 def ser_bare_item(item: BareItemType) -> str:
-    item_type = type(item)
-    if item_type is int:
-        return ser_integer(cast(int, item))
-    if isinstance(item, (Decimal, float)):
-        return ser_decimal(item)
+    try:
+        return _ser_map[type(item)](item)  # type: ignore
+    except KeyError:
+        pass
     if isinstance(item, Token):
         return ser_token(item)
-    if item_type is str:
-        return ser_string(cast(str, item))
-    if item_type is bool:
-        return ser_boolean(cast(bool, item))
-    if item_type is bytes:
-        return ser_byteseq(cast(bytes, item))
-    raise ValueError(f"Can't serialise; unrecognised item with type {item_type}")
+    if isinstance(item, Decimal):
+        return ser_decimal(item)
+    raise ValueError(f"Can't serialise; unrecognised item with type {type(item)}")
 
 
 def itemise(thing: Union[BareItemType, InnerList, Item]) -> Union[InnerList, Item]:

@@ -8,8 +8,8 @@ FRAC_DIGITS = 3
 PRECISION = Decimal(10) ** -FRAC_DIGITS
 
 
-def parse_decimal(input_string: str) -> Tuple[str, Decimal]:
-    return parse_number(input_string)  # type: ignore
+def parse_decimal(data: bytes) -> Tuple[int, Decimal]:
+    return parse_number(data)  # type: ignore
 
 
 def ser_decimal(input_decimal: Union[Decimal, float]) -> str:
@@ -24,14 +24,8 @@ def ser_decimal(input_decimal: Union[Decimal, float]) -> str:
         raise ValueError(
             f"decimal with oversize integer component {integer_component_s}"
         )
-    output = ""
-    if input_decimal < 0:
-        output += "-"
-    output += integer_component_s
-    output += "."
     fractional_component = abs_decimal.quantize(PRECISION).normalize() % 1
-    if fractional_component == 0:
-        output += "0"
-    else:
-        output += str(fractional_component)[2:]
-    return output
+    return (
+        f"{'-' if input_decimal < 0 else ''}{integer_component_s}."
+        f"{str(fractional_component)[2:] if fractional_component else '0'}"
+    )
