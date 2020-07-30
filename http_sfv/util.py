@@ -19,7 +19,7 @@ def discard_ows(data: bytes) -> int:
     i = 0
     l = len(data)
     while True:
-        if i == l or data[i:i+1] != b" ":
+        if i == l or data[i : i + 1] != b" ":
             return i
         i += 1
 
@@ -29,7 +29,7 @@ def discard_http_ows(data: bytes) -> int:
     i = 0
     l = len(data)
     while True:
-        if i == l or data[i:i+1] not in b" \t":
+        if i == l or data[i : i + 1] not in b" \t":
             return i
         i += 1
 
@@ -67,7 +67,7 @@ class StructuredFieldValue:
 
     def parse(self, data: bytes) -> None:
         self.raw_value = data
-        bytes_consumed = discard_ows(data)
+        bytes_consumed = discard_ows(bytearray(data))
         bytes_consumed += self.parse_content(data[bytes_consumed:])  # type: ignore
         bytes_consumed += discard_ows(data[bytes_consumed:])
         if data[bytes_consumed:]:
