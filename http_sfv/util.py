@@ -43,7 +43,6 @@ def parse_key(data: bytes) -> Tuple[int, str]:
     peek = next_char(data)
     if not peek or peek not in KEY_START_CHARS:
         raise ValueError("Key does not begin with lcalpha or *")
-    output_string = bytearray()
     while True:
         peek = next_char(data[bytes_consumed:])
         if not peek or peek not in KEY_CHARS:
