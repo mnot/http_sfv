@@ -25,25 +25,25 @@ def discard_http_ows(data: bytes) -> int:
         i += 1
 
 
-KEY_START_CHARS = (ascii_lowercase + "*").encode("ascii")
-KEY_CHARS = (ascii_lowercase + digits + "_-*.").encode("ascii")
+KEY_START_CHARS = set((ascii_lowercase + "*").encode("ascii"))
+KEY_CHARS = set((ascii_lowercase + digits + "_-*.").encode("ascii"))
 
 
 def parse_key(data: bytes) -> Tuple[int, str]:
-    bytes_consumed = 0
-    if not data[0:1] or data[0:1] not in KEY_START_CHARS:
+    if data == b"" or data[0] not in KEY_START_CHARS:
         raise ValueError("Key does not begin with lcalpha or *")
-    while True:
-        peek = data[bytes_consumed : bytes_consumed + 1]
-        if not peek or peek not in KEY_CHARS:
+    bytes_consumed = 1
+    while bytes_consumed < len(data):
+        if data[bytes_consumed] not in KEY_CHARS:
             return bytes_consumed, data[:bytes_consumed].decode("ascii")
         bytes_consumed += 1
+    return bytes_consumed, data.decode("ascii")
 
 
 def ser_key(key: str) -> str:
-    if not all(char.encode("ascii") in KEY_CHARS for char in key):
+    if not all(ord(char) in KEY_CHARS for char in key):
         raise ValueError("Key contains disallowed characters")
-    if key[0].encode("ascii") not in KEY_START_CHARS:
+    if ord(key[0]) not in KEY_START_CHARS:
         raise ValueError("Key does not start with allowed character")
     output = ""
     output += key
