@@ -12,14 +12,12 @@ def parse_token(data: bytes) -> Tuple[int, Token]:
     if not data or data[0:1] not in TOKEN_START_CHARS:
         raise ValueError("Token didn't start with legal character")
     bytes_consumed = 0
-    output_string = bytearray()
-    for _ in range(len(data)):
+    while True:
         offset, char = remove_char(data[bytes_consumed:])
-        bytes_consumed += offset
         if not char or char not in TOKEN_CHARS:
-            return bytes_consumed - 1, Token(output_string.decode("ascii"))
-        output_string.extend(char)
-    return bytes_consumed, Token(output_string.decode("ascii"))
+            return bytes_consumed, Token(data[:bytes_consumed].decode("ascii"))
+        bytes_consumed += offset
+    return bytes_consumed, Token(data[:bytes_consumed].decode("ascii"))
 
 
 def ser_token(token: Token) -> str:
