@@ -165,9 +165,10 @@ _parse_map = {
     b"?": parse_boolean,
 }
 for char in TOKEN_START_CHARS:
-    _parse_map[bytes(chr(char), 'ascii')] = parse_token
+    _parse_map[bytes(chr(char), "ascii")] = parse_token
 for char in NUMBER_START_CHARS:
-    _parse_map[bytes(chr(char), 'ascii')] = parse_number
+    _parse_map[bytes(chr(char), "ascii")] = parse_number
+
 
 def parse_bare_item(data: bytes) -> Tuple[int, BareItemType]:
     if not data:
