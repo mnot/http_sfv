@@ -16,18 +16,22 @@ def remove_char(data: bytes) -> Tuple[int, bytes]:
 
 def discard_ows(data: bytes) -> int:
     "Return the number of space characters at the beginning of data."
-    for i in range(len(data)):
-        if data[i : i + 1] != b" ":
+    i = 0
+    l = len(data)
+    while True:
+        if i == l or data[i:i+1] != b" ":
             return i
-    return len(data)
+        i += 1
 
 
 def discard_http_ows(data: bytes) -> int:
     "Return the number of space or HTAB characters at the beginning of data."
-    for i in range(len(data)):
-        if data[i : i + 1] not in b" \t":
+    i = 0
+    l = len(data)
+    while True:
+        if i == l or data[i:i+1] not in b" \t":
             return i
-    return len(data)
+        i += 1
 
 
 KEY_START_CHARS = (ascii_lowercase + "*").encode("ascii")
