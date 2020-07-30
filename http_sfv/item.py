@@ -160,19 +160,19 @@ class InnerList(UserList):
 _parse_map = {
     DQUOTE: parse_string,
     BYTE_DELIMIT: parse_byteseq,
-    b"?": parse_boolean,
+    ord(b"?"): parse_boolean,
 }
 for c in TOKEN_START_CHARS:
-    _parse_map[bytes(chr(c), "ascii")] = parse_token
+    _parse_map[c] = parse_token
 for c in NUMBER_START_CHARS:
-    _parse_map[bytes(chr(c), "ascii")] = parse_number
+    _parse_map[c] = parse_number
 
 
 def parse_bare_item(data: bytes) -> Tuple[int, BareItemType]:
     if not data:
         raise ValueError("Empty item")
     try:
-        return _parse_map[data[0:1]](data)  # type: ignore
+        return _parse_map[data[0]](data)  # type: ignore
     except KeyError:
         raise ValueError(
             f"Item starting with '{data[0:1].decode('ascii')}' can't be identified"

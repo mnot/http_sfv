@@ -1,33 +1,35 @@
 from typing import Tuple
 
-DQUOTE = b'"'
-BACKSLASH = b"\\"
-DQUOTEBACKSLASH = DQUOTE + BACKSLASH
+DQUOTE = ord('"')
+BACKSLASH = ord("\\")
+DQUOTEBACKSLASH = set([DQUOTE, BACKSLASH])
 
 
 def parse_string(data: bytes) -> Tuple[int, str]:
-    output_string = []
-    if not data or data[0:1] != DQUOTE:
+    output_string = bytearray()
+    if not data or data[0] != DQUOTE:
         raise ValueError("First character of string is not DQUOTE")
     bytes_consumed = 1
     while True:
-        char = data[bytes_consumed : bytes_consumed + 1]
-        bytes_consumed += 1
-        if not char:
+        try:
+            char = data[bytes_consumed]
+        except IndexError:
             raise ValueError("Reached end of input without finding a closing DQUOTE")
+        bytes_consumed += 1
         if char == BACKSLASH:
-            if not data[bytes_consumed:]:
+            try:
+                next_char = data[bytes_consumed]
+            except IndexError:
                 raise ValueError("Last character of input was a backslash")
-            next_char = data[bytes_consumed : bytes_consumed + 1]
             bytes_consumed += 1
-            if not next_char or next_char not in DQUOTEBACKSLASH:
+            if next_char not in DQUOTEBACKSLASH:
                 raise ValueError(
-                    f"Backslash before disallowed character '{next_char.decode('ascii')}'"
+                    f"Backslash before disallowed character '{chr(next_char)}'"
                 )
             output_string.append(next_char)
         elif char == DQUOTE:
-            return bytes_consumed, (b"".join(output_string)).decode("ascii")
-        elif not 31 < char[0] < 127:
+            return bytes_consumed, output_string.decode("ascii")
+        elif not 31 < char < 127:
             raise ValueError("String contains disallowed character")
         else:
             output_string.append(char)

@@ -6,8 +6,9 @@ from typing import Tuple, Union
 MAX_INT = 999999999999999
 MIN_INT = -999999999999999
 
-DIGITS = digits.encode("ascii")
-NUMBER_START_CHARS = (digits + "-").encode("ascii")
+DIGITS = set(digits.encode("ascii"))
+NUMBER_START_CHARS = set((digits + "-").encode("ascii"))
+PERIOD = ord(b".")
 
 
 def parse_integer(data: bytes) -> Tuple[int, int]:
@@ -41,17 +42,18 @@ def parse_number(data: bytes) -> Tuple[int, Union[int, Decimal]]:
         _sign = -1
     if not data[bytes_consumed:]:
         raise ValueError("Number input lacked a number")
-    if not data[num_start : num_start + 1] in DIGITS:
+    if not data[num_start] in DIGITS:
         raise ValueError("Number doesn't start with a DIGIT")
     while True:
-        char = data[bytes_consumed : bytes_consumed + 1]
-        if not char:
+        try:
+            char = data[bytes_consumed]
+        except IndexError:
             break
         bytes_consumed += 1
         num_length = bytes_consumed - num_start - 1
         if char in DIGITS:
             pass
-        elif _type is INTEGER and char == b".":
+        elif _type is INTEGER and char == PERIOD:
             if num_length > 12:
                 raise ValueError("Decimal too long.")
             _type = DECIMAL
