@@ -1,13 +1,16 @@
 from string import ascii_lowercase, digits
 from typing import Tuple
 
+SPACE = ord(b" ")
+HTTP_OWS = set(b" \t")
+
 
 def discard_ows(data: bytes) -> int:
     "Return the number of space characters at the beginning of data."
     i = 0
     l = len(data)
     while True:
-        if i == l or data[i : i + 1] != b" ":
+        if i == l or data[i] != SPACE:
             return i
         i += 1
 
@@ -17,7 +20,7 @@ def discard_http_ows(data: bytes) -> int:
     i = 0
     l = len(data)
     while True:
-        if i == l or data[i : i + 1] not in b" \t":
+        if i == l or data[i] not in HTTP_OWS:
             return i
         i += 1
 
