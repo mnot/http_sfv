@@ -1,10 +1,11 @@
-from decimal import Decimal
+from decimal import Decimal, getcontext
 from string import digits
 from typing import Tuple, Union
 
 
 MAX_INT = 999999999999999
 MIN_INT = -999999999999999
+getcontext().prec = 3
 
 DIGITS = set(digits.encode("ascii"))
 NUMBER_START_CHARS = set((digits + "-").encode("ascii"))
