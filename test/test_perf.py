@@ -1,6 +1,7 @@
 #!/usr/bin/env pypy3
 
 import locale
+import time
 import timeit
 
 import http_sfv as sfv
@@ -10,6 +11,7 @@ locale.setlocale(locale.LC_ALL, "")
 digits = 9
 unit = 'ns'
 i = 50000
+wait = 2
 
 perf_structures = [
     ('"abcdefghijklmnopqrstuvwxyz"', 'item', 'String (simple)'),
@@ -28,7 +30,7 @@ perf_structures = [
 
 def time_parse(structure, field_type):
     return int(timeit.timeit(
-        f"sfv.structures['{field_type}']().parse(b'{structure}')",
+        f"sfv.structures['{field_type}']().parse('{structure}')",
         setup='import time; time.sleep(2)',
         globals=globals(),
         number=i
@@ -37,5 +39,6 @@ def time_parse(structure, field_type):
 
 if __name__ == "__main__":
     for test_structure, field_type, name in perf_structures:
+        time.sleep(wait)
         times = time_parse(test_structure, field_type)
         print(f"* {name:25.25s} {times:{digits}n} {unit}")
