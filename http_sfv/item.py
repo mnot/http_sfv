@@ -159,23 +159,25 @@ class InnerList(UserList):
         self.params.from_json(params)
 
 
+_parse_map = {
+    DQUOTE: parse_string,
+    BYTE_DELIMIT: parse_byteseq,
+    b"?": parse_boolean,
+}
+for char in TOKEN_START_CHARS:
+    _parse_map[bytes(chr(char), 'ascii')] = parse_token
+for char in NUMBER_START_CHARS:
+    _parse_map[bytes(chr(char), 'ascii')] = parse_number
+
 def parse_bare_item(data: bytes) -> Tuple[int, BareItemType]:
     if not data:
         raise ValueError("Empty item")
-    start_char = data[0:1]
-    if start_char == DQUOTE:
-        return parse_string(data)
-    if start_char == BYTE_DELIMIT:
-        return parse_byteseq(data)
-    if start_char == b"?":
-        return parse_boolean(data)
-    if start_char in TOKEN_START_CHARS:
-        return parse_token(data)
-    if start_char in NUMBER_START_CHARS:
-        return parse_number(data)
-    raise ValueError(
-        f"Item starting with '{start_char.decode('ascii')}' can't be identified"
-    )
+    try:
+        return _parse_map[data[0:1]](data)
+    except KeyError:
+        raise ValueError(
+            f"Item starting with '{data[0:1].decode('ascii')}' can't be identified"
+        )
 
 
 def ser_bare_item(item: BareItemType) -> str:
