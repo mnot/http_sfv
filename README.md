@@ -16,8 +16,10 @@ There are three top-level types for Structured Field Values; `Dictionary`, `List
 ~~~ python
 >>> from http_sfv import List
 >>> my_list = List()
->>> my_list.parse("foo; a=1, bar; b=2")
+>>> my_list.parse(b"foo; a=1, bar; b=2")
 ~~~
+
+Note that `.parse()` takes a bytes-like object. If you want to parse a string, please `.encode()` it first.
 
 Members of Lists and Dictionaries are available by normal Pythonic list and dictionary methods, respectively:
 

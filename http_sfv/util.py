@@ -1,68 +1,67 @@
 from string import ascii_lowercase, digits
-from typing import List, Tuple
+from typing import Tuple
+
+SPACE = ord(b" ")
+HTTP_OWS = set(b" \t")
 
 
-def remove_char(input_string: str) -> Tuple[str, str]:
-    "Remove the first character of input_string and return it."
-    if not input_string:
-        raise ValueError(f"No next character in input at  at: {input_string[:10]}")
-    next_char = input_string[0]
-    input_string = input_string[1:]
-    return input_string, next_char
+def discard_ows(data: bytes) -> int:
+    "Return the number of space characters at the beginning of data."
+    i = 0
+    l = len(data)
+    while True:
+        if i == l or data[i] != SPACE:
+            return i
+        i += 1
 
 
-def discard_ows(input_string: str) -> str:
-    "Remove leading space from input_string."
-    return input_string.lstrip(" ")
+def discard_http_ows(data: bytes) -> int:
+    "Return the number of space or HTAB characters at the beginning of data."
+    i = 0
+    l = len(data)
+    while True:
+        if i == l or data[i] not in HTTP_OWS:
+            return i
+        i += 1
 
 
-def discard_http_ows(input_string: str) -> str:
-    "remove leading space or HTAB from input_string."
-    return input_string.lstrip(" \t")
+KEY_START_CHARS = set((ascii_lowercase + "*").encode("ascii"))
+KEY_CHARS = set((ascii_lowercase + digits + "_-*.").encode("ascii"))
 
 
-KEY_START_CHARS = set(ascii_lowercase + "*")
-KEY_CHARS = set(ascii_lowercase + digits + "_-*.")
-
-
-def parse_key(input_string: str) -> Tuple[str, str]:
-    if input_string and input_string[0] not in KEY_START_CHARS:
-        raise ValueError(
-            f"Key does not begin with lcalpha or * at: {input_string[:10]}"
-        )
-    output_string: List[str] = []
-    while input_string:
-        if input_string[0] not in KEY_CHARS:
-            return input_string, "".join(output_string)
-        input_string, char = remove_char(input_string)
-        output_string.append(char)
-    return input_string, "".join(output_string)
+def parse_key(data: bytes) -> Tuple[int, str]:
+    if data == b"" or data[0] not in KEY_START_CHARS:
+        raise ValueError("Key does not begin with lcalpha or *")
+    bytes_consumed = 1
+    while bytes_consumed < len(data):
+        if data[bytes_consumed] not in KEY_CHARS:
+            return bytes_consumed, data[:bytes_consumed].decode("ascii")
+        bytes_consumed += 1
+    return bytes_consumed, data.decode("ascii")
 
 
 def ser_key(key: str) -> str:
-    if not all(char in KEY_CHARS for char in key):
+    if not all(ord(char) in KEY_CHARS for char in key):
         raise ValueError("Key contains disallowed characters")
-    if key[0] not in KEY_START_CHARS:
+    if ord(key[0]) not in KEY_START_CHARS:
         raise ValueError("Key does not start with allowed character")
-    output = ""
-    output += key
-    return output
+    return key
 
 
 class StructuredFieldValue:
     def __init__(self) -> None:
-        self.raw_value: str = None
+        self.raw_value: bytes = None
 
-    def parse(self, input_string: str) -> None:
-        self.raw_value = input_string
-        input_string = discard_ows(input_string)
+    def parse(self, data: bytes) -> None:
+        self.raw_value = data
+        bytes_consumed = discard_ows(bytearray(data))
+        bytes_consumed += self.parse_content(data[bytes_consumed:])  # type: ignore
+        bytes_consumed += discard_ows(data[bytes_consumed:])
+        if data[bytes_consumed:]:
+            raise ValueError("Trailing text after parsed value")
 
-        input_string = self.parse_content(input_string)  # type: ignore
-        input_string = discard_ows(input_string)
-        if input_string:
-            raise ValueError(
-                f"Trailing text after parsed value at: {input_string[:10]}"
-            )
+    def parse_content(self, data: bytes) -> int:
+        raise NotImplementedError
 
-    def parse_content(self, input_string: str) -> str:
+    def __str__(self) -> str:
         raise NotImplementedError

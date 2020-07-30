@@ -1,44 +1,48 @@
 from collections import UserDict
 
-from .item import Item, InnerList, Parameters, itemise, AllItemType
+from .item import Item, InnerList, itemise, AllItemType
 from .list import parse_item_or_inner_list
 from .types import JsonType
 from .util import (
     StructuredFieldValue,
-    remove_char,
     discard_http_ows,
     ser_key,
     parse_key,
 )
 
+EQUALS = ord(b"=")
+COMMA = ord(b",")
+
 
 class Dictionary(UserDict, StructuredFieldValue):
-    def parse_content(self, input_string: str) -> str:
-        while input_string:
-            input_string, this_key = parse_key(input_string)
-            if input_string and input_string[0] == "=":
-                input_string, char = remove_char(input_string)
-                input_string, member = parse_item_or_inner_list(input_string)
+    def parse_content(self, data: bytes) -> int:
+        bytes_consumed = 0
+        data_len = len(data)
+        while True:
+            offset, this_key = parse_key(data[bytes_consumed:])
+            bytes_consumed += offset
+            try:
+                is_equals = data[bytes_consumed] == EQUALS
+            except IndexError:
+                is_equals = False
+            if is_equals:
+                bytes_consumed += 1  # consume the "="
+                offset, member = parse_item_or_inner_list(data[bytes_consumed:])
+                bytes_consumed += offset
             else:
                 member = Item()
                 member.value = True
-                member.params = Parameters()
-                input_string = member.params.parse(input_string)
+                bytes_consumed += member.params.parse(data[bytes_consumed:])
             self[this_key] = member
-            input_string = discard_http_ows(input_string)
-            if not input_string:
-                return input_string
-            input_string, char = remove_char(input_string)
-            if char != ",":
-                raise ValueError(
-                    f"Dictionary member trailing characters at: {input_string[:10]}"
-                )
-            input_string = discard_http_ows(input_string)
-            if not input_string:
-                raise ValueError(
-                    f"Dictionary has trailing comma at: {input_string[:10]}"
-                )
-        return input_string
+            bytes_consumed += discard_http_ows(data[bytes_consumed:])
+            if bytes_consumed == data_len:
+                return bytes_consumed
+            if data[bytes_consumed] != COMMA:
+                raise ValueError("Dictionary member has trailing characters")
+            bytes_consumed += 1
+            bytes_consumed += discard_http_ows(data[bytes_consumed:])
+            if bytes_consumed == data_len:
+                raise ValueError("Dictionary has trailing comma")
 
     def __setitem__(self, key: str, value: AllItemType) -> None:
         self.data[key] = itemise(value)
@@ -46,20 +50,15 @@ class Dictionary(UserDict, StructuredFieldValue):
     def __str__(self) -> str:
         if len(self) == 0:
             raise ValueError("No contents; field should not be emitted")
-        output = ""
-        count = len(self)
-        i = 0
-        for member_name in self.keys():
-            i += 1
-            output += ser_key(member_name)
-            if isinstance(self[member_name], Item) and self[member_name].value is True:
-                output += str(self[member_name].params)
-            else:
-                output += "="
-                output += str(self[member_name])
-            if i < count:
-                output += ", "
-        return output
+        return ", ".join(
+            [
+                f"{ser_key(m)}"
+                f"""{self[m].params if
+                    (isinstance(self[m], Item) and self[m].value is True)
+                    else f'={self[m]}'}"""
+                for m in self.keys()
+            ]
+        )
 
     def to_json(self) -> JsonType:
         return {k: v.to_json() for (k, v) in self.items()}
