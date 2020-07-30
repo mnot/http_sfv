@@ -32,40 +32,45 @@ DECIMAL = "decimal"
 def parse_number(data: bytes) -> Tuple[int, Union[int, Decimal]]:
     _type = INTEGER
     _sign = 1
-    input_number = []
     bytes_consumed = 0
+    num_start = 0
+    decimal_index = 0
     if data.startswith(b"-"):
         bytes_consumed += 1
+        num_start += 1
         _sign = -1
     if not data[bytes_consumed:]:
         raise ValueError("Number input lacked a number")
-    if not data[bytes_consumed : bytes_consumed + 1] in DIGITS:
+    if not data[num_start : num_start + 1] in DIGITS:
         raise ValueError("Number doesn't start with a DIGIT")
-    while bytes_consumed < len(data):
+    while True:
         offset, char = remove_char(data[bytes_consumed:])
         bytes_consumed += offset
+        if not offset:
+            break
+        num_length = bytes_consumed - num_start - 1
         if char in DIGITS:
-            input_number.append(char)
+            pass
         elif _type is INTEGER and char == b".":
-            if len(input_number) > 12:
+            if num_length > 12:
                 raise ValueError("Decimal too long.")
-            input_number.append(char)
             _type = DECIMAL
+            decimal_index = bytes_consumed
         else:
             bytes_consumed -= 1
             break
-        if _type == INTEGER and len(input_number) > 15:
+        if _type == INTEGER and num_length > 15:
             raise ValueError("Integer too long.")
-        if _type == DECIMAL and len(input_number) > 16:
+        if _type == DECIMAL and num_length > 16:
             raise ValueError("Decimal too long.")
     if _type == INTEGER:
-        output_int = int(b"".join(input_number)) * _sign
+        output_int = int(data[num_start:bytes_consumed]) * _sign
         if not MIN_INT <= output_int <= MAX_INT:
             raise ValueError("Integer outside allowed range")
         return bytes_consumed, output_int
-    if input_number and input_number[-1] == b".":
+    if data[bytes_consumed-1:bytes_consumed] == b".":
         raise ValueError("Decimal ends in '.'")
-    if len(input_number) - input_number.index(b".") - 1 > 3:
+    if bytes_consumed - decimal_index > 3:
         raise ValueError("Decimal fractional component too long")
-    output_float = Decimal((b"".join(input_number)).decode("ascii")) * _sign
+    output_float = Decimal(data[num_start:bytes_consumed].decode("ascii")) * _sign
     return bytes_consumed, output_float
