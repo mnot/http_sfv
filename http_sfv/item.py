@@ -174,7 +174,7 @@ def parse_bare_item(data: bytes) -> Tuple[int, BareItemType]:
     if not data:
         raise ValueError("Empty item")
     try:
-        return _parse_map[data[0:1]](data)
+        return _parse_map[data[0:1]](data)  # type: ignore
     except KeyError:
         raise ValueError(
             f"Item starting with '{data[0:1].decode('ascii')}' can't be identified"
