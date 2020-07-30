@@ -43,10 +43,8 @@ def parse_key(data: bytes) -> Tuple[int, str]:
     while True:
         peek = next_char(data[bytes_consumed:])
         if not peek or peek not in KEY_CHARS:
-            return bytes_consumed, output_string.decode("ascii")
-        offset, char = remove_char(data[bytes_consumed:])
-        bytes_consumed += offset
-        output_string.extend(char)
+            return bytes_consumed, data[:bytes_consumed].decode("ascii")
+        bytes_consumed += 1
 
 
 def ser_key(key: str) -> str:
