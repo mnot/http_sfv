@@ -58,7 +58,7 @@ else:
 
 try:
     field = structures[args.field_type]()
-    field.parse(input_string.encode('utf-8'))
+    field.parse(input_string.encode("utf-8"))
     print(json.dumps(field.to_json(), sort_keys=True, indent=4))
 except ValueError as why:
     sys.stderr.write(f"VALUE: {input_string.strip()}\n")
