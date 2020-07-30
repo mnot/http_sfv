@@ -164,10 +164,10 @@ _parse_map = {
     BYTE_DELIMIT: parse_byteseq,
     b"?": parse_boolean,
 }
-for char in TOKEN_START_CHARS:
-    _parse_map[bytes(chr(char), "ascii")] = parse_token
-for char in NUMBER_START_CHARS:
-    _parse_map[bytes(chr(char), "ascii")] = parse_number
+for c in TOKEN_START_CHARS:
+    _parse_map[bytes(chr(c), "ascii")] = parse_token
+for c in NUMBER_START_CHARS:
+    _parse_map[bytes(chr(c), "ascii")] = parse_number
 
 
 def parse_bare_item(data: bytes) -> Tuple[int, BareItemType]:
