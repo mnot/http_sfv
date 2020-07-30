@@ -35,6 +35,7 @@ def parse_number(data: bytes) -> Tuple[int, Union[int, Decimal]]:
     bytes_consumed = 0
     num_start = 0
     decimal_index = 0
+    num_length = 0
     if data.startswith(b"-"):
         bytes_consumed += 1
         num_start += 1
@@ -59,16 +60,17 @@ def parse_number(data: bytes) -> Tuple[int, Union[int, Decimal]]:
         else:
             bytes_consumed -= 1
             break
-        if _type == INTEGER and num_length > 15:
-            raise ValueError("Integer too long.")
-        if _type == DECIMAL and num_length > 16:
-            raise ValueError("Decimal too long.")
     if _type == INTEGER:
+        if num_length > 15:
+            raise ValueError("Integer too long.")
         output_int = int(data[num_start:bytes_consumed]) * _sign
         if not MIN_INT <= output_int <= MAX_INT:
             raise ValueError("Integer outside allowed range")
         return bytes_consumed, output_int
-    if data[bytes_consumed-1:bytes_consumed] == b".":
+    # Decimal
+    if num_length > 16:
+        raise ValueError("Decimal too long.")
+    if data[bytes_consumed - 1 : bytes_consumed] == b".":
         raise ValueError("Decimal ends in '.'")
     if bytes_consumed - decimal_index > 3:
         raise ValueError("Decimal fractional component too long")
