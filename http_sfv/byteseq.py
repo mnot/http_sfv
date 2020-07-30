@@ -7,8 +7,6 @@ B64CONTENT = set((ascii_letters + digits + "+/=").encode("ascii"))
 
 
 def parse_byteseq(data: bytes) -> Tuple[int, bytes]:
-    if data[0] != BYTE_DELIMIT:
-        raise ValueError("Binary Sequence didn't start with ':'")
     bytes_consumed = 1
     try:
         end_delimit = data[bytes_consumed:].index(BYTE_DELIMIT)

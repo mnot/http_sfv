@@ -1,13 +1,17 @@
 from typing import Tuple
 
+QUESTION = ord(b"?")
+ONE = ord(b"1")
+ZERO = ord(b"0")
+
+_boolean_map = {ONE: (2, True), ZERO: (2, False)}
+
 
 def parse_boolean(data: bytes) -> Tuple[int, bool]:
-    if data[0:1] != b"?":
-        raise ValueError("First character of Boolean is not '?'")
-    if data[1:2] == b"1":
-        return 2, True
-    if data[1:2] == b"0":
-        return 2, False
+    try:
+        return _boolean_map[data[1]]
+    except KeyError:
+        pass
     raise ValueError("No Boolean value found")
 
 

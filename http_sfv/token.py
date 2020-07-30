@@ -8,9 +8,7 @@ TOKEN_CHARS = set((ascii_letters + digits + ":/!#$%&'*+-.^_`|~").encode("ascii")
 
 
 def parse_token(data: bytes) -> Tuple[int, Token]:
-    if data[0] not in TOKEN_START_CHARS:
-        raise ValueError("Token didn't start with legal character")
-    bytes_consumed = 1
+    bytes_consumed = 1  # consume start char
     while bytes_consumed < len(data):
         if data[bytes_consumed] not in TOKEN_CHARS:
             return bytes_consumed, Token(data[:bytes_consumed].decode("ascii"))

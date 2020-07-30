@@ -111,8 +111,6 @@ class InnerList(UserList):
         self.params = Parameters()
 
     def parse(self, data: bytes) -> int:
-        if data[0] != PAREN_OPEN:
-            raise ValueError("First character of inner list is not '('")
         bytes_consumed = 1  # consume the "("
         while True:
             bytes_consumed += discard_ows(data[bytes_consumed:])

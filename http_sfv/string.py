@@ -7,9 +7,7 @@ DQUOTEBACKSLASH = set([DQUOTE, BACKSLASH])
 
 def parse_string(data: bytes) -> Tuple[int, str]:
     output_string = bytearray()
-    if data[0] != DQUOTE:
-        raise ValueError("First character of string is not DQUOTE")
-    bytes_consumed = 1
+    bytes_consumed = 1  # consume DQUOTE
     while True:
         try:
             char = data[bytes_consumed]
