@@ -11,8 +11,6 @@ from .token import parse_token, ser_token, Token, TOKEN_START_CHARS
 from .types import BareItemType, JsonType
 from .util import (
     StructuredFieldValue,
-    remove_char,
-    next_char,
     discard_ows,
     parse_key,
     ser_key,
@@ -59,15 +57,15 @@ class Parameters(dict):
     def parse(self, data: bytes) -> int:
         bytes_consumed = 0
         while True:
-            if next_char(data[bytes_consumed:]) != b";":
+            if data[bytes_consumed : bytes_consumed + 1] != b";":
                 break
-            bytes_consumed += remove_char(data[bytes_consumed:])[0]
+            bytes_consumed += 1  # consume the ";"
             bytes_consumed += discard_ows(data[bytes_consumed:])
             offset, param_name = parse_key(data[bytes_consumed:])
             bytes_consumed += offset
             param_value: BareItemType = True
-            if next_char(data[bytes_consumed:]) == b"=":
-                bytes_consumed += remove_char(data[bytes_consumed:])[0]
+            if data[bytes_consumed : bytes_consumed + 1] == b"=":
+                bytes_consumed += 1  # consume the "="
                 offset, param_value = parse_bare_item(data[bytes_consumed:])
                 bytes_consumed += offset
             self[param_name] = param_value
@@ -100,19 +98,19 @@ class InnerList(UserList):
         self.params = Parameters()
 
     def parse(self, data: bytes) -> int:
-        bytes_consumed, char = remove_char(data)
-        if char != b"(":
+        if data[0:1] != b"(":
             raise ValueError("First character of inner list is not '('")
+        bytes_consumed = 1  # consume the "("
         while True:
             bytes_consumed += discard_ows(data[bytes_consumed:])
-            if next_char(data[bytes_consumed:]) == b")":
+            if data[bytes_consumed : bytes_consumed + 1] == b")":
                 bytes_consumed += 1
                 bytes_consumed += self.params.parse(data[bytes_consumed:])
                 return bytes_consumed
             item = Item()
             bytes_consumed += item.parse_content(data[bytes_consumed:])
             self.data.append(item)
-            peek = next_char(data[bytes_consumed:])
+            peek = data[bytes_consumed : bytes_consumed + 1]
             if not peek:
                 raise ValueError("End of inner list not found")
             if peek not in b" )":

@@ -1,7 +1,5 @@
 from typing import Tuple
 
-from .util import remove_char
-
 DQUOTE = b'"'
 BACKSLASH = b"\\"
 DQUOTEBACKSLASH = DQUOTE + BACKSLASH
@@ -13,15 +11,15 @@ def parse_string(data: bytes) -> Tuple[int, str]:
         raise ValueError("First character of string is not DQUOTE")
     bytes_consumed = 1
     while True:
-        offset, char = remove_char(data[bytes_consumed:])
-        bytes_consumed += offset
+        char = data[bytes_consumed : bytes_consumed + 1]
+        bytes_consumed += 1
         if not char:
             raise ValueError("Reached end of input without finding a closing DQUOTE")
         if char == BACKSLASH:
             if not data[bytes_consumed:]:
                 raise ValueError("Last character of input was a backslash")
-            offset, next_char = remove_char(data[bytes_consumed:])
-            bytes_consumed += offset
+            next_char = data[bytes_consumed : bytes_consumed + 1]
+            bytes_consumed += 1
             if not next_char or next_char not in DQUOTEBACKSLASH:
                 raise ValueError(
                     f"Backslash before disallowed character '{next_char.decode('ascii')}'"

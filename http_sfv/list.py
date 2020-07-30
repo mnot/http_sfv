@@ -3,7 +3,7 @@ from typing import Tuple, Union, Iterable, cast
 
 from .item import Item, InnerList, itemise, AllItemType
 from .types import JsonType
-from .util import StructuredFieldValue, discard_http_ows, remove_char, next_char
+from .util import StructuredFieldValue, discard_http_ows
 
 
 class List(UserList, StructuredFieldValue):
@@ -16,8 +16,8 @@ class List(UserList, StructuredFieldValue):
             bytes_consumed += discard_http_ows(data[bytes_consumed:])
             if not data[bytes_consumed:]:
                 return bytes_consumed
-            offset, char = remove_char(data[bytes_consumed:])
-            bytes_consumed += offset
+            char = data[bytes_consumed : bytes_consumed + 1]
+            bytes_consumed += 1
             if char != b",":
                 raise ValueError("Trailing text after item in list")
             bytes_consumed += discard_http_ows(data[bytes_consumed:])
@@ -62,7 +62,7 @@ class List(UserList, StructuredFieldValue):
 
 
 def parse_item_or_inner_list(data: bytes) -> Tuple[int, Union[Item, InnerList]]:
-    if next_char(data) == b"(":
+    if data[0:1] == b"(":
         inner_list = InnerList()
         bytes_consumed = inner_list.parse(data)
         return bytes_consumed, inner_list

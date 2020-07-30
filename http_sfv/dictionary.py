@@ -5,8 +5,6 @@ from .list import parse_item_or_inner_list
 from .types import JsonType
 from .util import (
     StructuredFieldValue,
-    remove_char,
-    next_char,
     discard_http_ows,
     ser_key,
     parse_key,
@@ -19,9 +17,8 @@ class Dictionary(UserDict, StructuredFieldValue):
         while True:
             offset, this_key = parse_key(data[bytes_consumed:])
             bytes_consumed += offset
-            if next_char(data[bytes_consumed:]) == b"=":
-                offset, char = remove_char(data[bytes_consumed:])
-                bytes_consumed += offset
+            if data[bytes_consumed : bytes_consumed + 1] == b"=":
+                bytes_consumed += 1  # consume the "="
                 offset, member = parse_item_or_inner_list(data[bytes_consumed:])
                 bytes_consumed += offset
             else:
@@ -32,10 +29,9 @@ class Dictionary(UserDict, StructuredFieldValue):
             bytes_consumed += discard_http_ows(data[bytes_consumed:])
             if not data[bytes_consumed:]:
                 return bytes_consumed
-            offset, char = remove_char(data[bytes_consumed:])
-            bytes_consumed += offset
-            if char and char != b",":
+            if data[bytes_consumed : bytes_consumed + 1] != b",":
                 raise ValueError("Dictionary member has trailing characters")
+            bytes_consumed += 1
             bytes_consumed += discard_http_ows(data[bytes_consumed:])
             if not data[bytes_consumed:]:
                 raise ValueError("Dictionary has trailing comma")

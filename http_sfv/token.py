@@ -2,7 +2,6 @@ from string import ascii_letters, digits
 from typing import Tuple
 
 from .types import Token
-from .util import remove_char
 
 TOKEN_START_CHARS = (ascii_letters + "*").encode("ascii")
 TOKEN_CHARS = (ascii_letters + digits + ":/!#$%&'*+-.^_`|~").encode("ascii")
@@ -13,10 +12,10 @@ def parse_token(data: bytes) -> Tuple[int, Token]:
         raise ValueError("Token didn't start with legal character")
     bytes_consumed = 0
     while True:
-        offset, char = remove_char(data[bytes_consumed:])
+        char = data[bytes_consumed : bytes_consumed + 1]
         if not char or char not in TOKEN_CHARS:
             return bytes_consumed, Token(data[:bytes_consumed].decode("ascii"))
-        bytes_consumed += offset
+        bytes_consumed += 1
     return bytes_consumed, Token(data[:bytes_consumed].decode("ascii"))
 
 

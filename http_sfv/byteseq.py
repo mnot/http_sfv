@@ -2,14 +2,12 @@ import base64
 from string import ascii_letters, digits
 from typing import Tuple
 
-from .util import next_char
-
 BYTE_DELIMIT = b":"
 B64CONTENT = (ascii_letters + digits + "+/=").encode("ascii")
 
 
 def parse_byteseq(data: bytes) -> Tuple[int, bytes]:
-    if next_char(data) != BYTE_DELIMIT:
+    if data[0:1] != BYTE_DELIMIT:
         raise ValueError("Binary Sequence didn't start with ':'")
     bytes_consumed = 1
     try:

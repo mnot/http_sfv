@@ -2,7 +2,6 @@ from decimal import Decimal
 from string import digits
 from typing import Tuple, Union
 
-from .util import remove_char
 
 MAX_INT = 999999999999999
 MIN_INT = -999999999999999
@@ -45,10 +44,10 @@ def parse_number(data: bytes) -> Tuple[int, Union[int, Decimal]]:
     if not data[num_start : num_start + 1] in DIGITS:
         raise ValueError("Number doesn't start with a DIGIT")
     while True:
-        offset, char = remove_char(data[bytes_consumed:])
-        bytes_consumed += offset
-        if not offset:
+        char = data[bytes_consumed : bytes_consumed + 1]
+        if not char:
             break
+        bytes_consumed += 1
         num_length = bytes_consumed - num_start - 1
         if char in DIGITS:
             pass

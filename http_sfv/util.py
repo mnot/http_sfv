@@ -2,18 +2,6 @@ from string import ascii_lowercase, digits
 from typing import Tuple
 
 
-def next_char(data: bytes) -> bytes:
-    """Return the next character in data, or nothing if it is not there."""
-    return data[0:1]
-
-
-def remove_char(data: bytes) -> Tuple[int, bytes]:
-    "Remove the first character of input_string and return it."
-    if not data:
-        return 0, b""
-    return 1, data[0:1]
-
-
 def discard_ows(data: bytes) -> int:
     "Return the number of space characters at the beginning of data."
     i = 0
@@ -40,11 +28,10 @@ KEY_CHARS = (ascii_lowercase + digits + "_-*.").encode("ascii")
 
 def parse_key(data: bytes) -> Tuple[int, str]:
     bytes_consumed = 0
-    peek = next_char(data)
-    if not peek or peek not in KEY_START_CHARS:
+    if not data[0:1] or data[0:1] not in KEY_START_CHARS:
         raise ValueError("Key does not begin with lcalpha or *")
     while True:
-        peek = next_char(data[bytes_consumed:])
+        peek = data[bytes_consumed : bytes_consumed + 1]
         if not peek or peek not in KEY_CHARS:
             return bytes_consumed, data[:bytes_consumed].decode("ascii")
         bytes_consumed += 1
