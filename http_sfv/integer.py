@@ -9,6 +9,7 @@ MIN_INT = -999999999999999
 DIGITS = set(digits.encode("ascii"))
 NUMBER_START_CHARS = set((digits + "-").encode("ascii"))
 PERIOD = ord(b".")
+MINUS = ord(b"-")
 
 
 def parse_integer(data: bytes) -> Tuple[int, int]:
@@ -36,7 +37,7 @@ def parse_number(data: bytes) -> Tuple[int, Union[int, Decimal]]:
     num_start = 0
     decimal_index = 0
     num_length = 0
-    if data.startswith(b"-"):
+    if data[0] == MINUS:
         bytes_consumed += 1
         num_start += 1
         _sign = -1
@@ -71,7 +72,7 @@ def parse_number(data: bytes) -> Tuple[int, Union[int, Decimal]]:
     # Decimal
     if num_length > 16:
         raise ValueError("Decimal too long.")
-    if data[bytes_consumed - 1 : bytes_consumed] == b".":
+    if data[bytes_consumed - 1] == MINUS:
         raise ValueError("Decimal ends in '.'")
     if bytes_consumed - decimal_index > 3:
         raise ValueError("Decimal fractional component too long")

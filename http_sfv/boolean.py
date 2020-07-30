@@ -2,11 +2,11 @@ from typing import Tuple
 
 
 def parse_boolean(data: bytes) -> Tuple[int, bool]:
-    if not data or data[0:1] != b"?":
+    if data[0:1] != b"?":
         raise ValueError("First character of Boolean is not '?'")
-    if data[1:] and data[1:2] == b"1":
+    if data[1:2] == b"1":
         return 2, True
-    if data[1:] and data[1:2] == b"0":
+    if data[1:2] == b"0":
         return 2, False
     raise ValueError("No Boolean value found")
 

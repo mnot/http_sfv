@@ -18,6 +18,13 @@ from .util import (
 from .util_json import value_to_json, value_from_json
 
 
+SEMICOLON = ord(b";")
+EQUALS = ord(b"=")
+PAREN_OPEN = ord(b"(")
+PAREN_CLOSE = ord(b")")
+INNERLIST_DELIMS = set(b" )")
+
+
 class Item(StructuredFieldValue):
     def __init__(self, value: BareItemType = None) -> None:
         StructuredFieldValue.__init__(self)
@@ -57,17 +64,23 @@ class Parameters(dict):
     def parse(self, data: bytes) -> int:
         bytes_consumed = 0
         while True:
-            if data[bytes_consumed : bytes_consumed + 1] != b";":
+            try:
+                if data[bytes_consumed] != SEMICOLON:
+                    break
+            except IndexError:
                 break
             bytes_consumed += 1  # consume the ";"
             bytes_consumed += discard_ows(data[bytes_consumed:])
             offset, param_name = parse_key(data[bytes_consumed:])
             bytes_consumed += offset
             param_value: BareItemType = True
-            if data[bytes_consumed : bytes_consumed + 1] == b"=":
-                bytes_consumed += 1  # consume the "="
-                offset, param_value = parse_bare_item(data[bytes_consumed:])
-                bytes_consumed += offset
+            try:
+                if data[bytes_consumed] == EQUALS:
+                    bytes_consumed += 1  # consume the "="
+                    offset, param_value = parse_bare_item(data[bytes_consumed:])
+                    bytes_consumed += offset
+            except IndexError:
+                pass
             self[param_name] = param_value
         return bytes_consumed
 
@@ -98,23 +111,23 @@ class InnerList(UserList):
         self.params = Parameters()
 
     def parse(self, data: bytes) -> int:
-        if data[0:1] != b"(":
+        if data[0] != PAREN_OPEN:
             raise ValueError("First character of inner list is not '('")
         bytes_consumed = 1  # consume the "("
         while True:
             bytes_consumed += discard_ows(data[bytes_consumed:])
-            if data[bytes_consumed : bytes_consumed + 1] == b")":
+            if data[bytes_consumed] == PAREN_CLOSE:
                 bytes_consumed += 1
                 bytes_consumed += self.params.parse(data[bytes_consumed:])
                 return bytes_consumed
             item = Item()
             bytes_consumed += item.parse_content(data[bytes_consumed:])
             self.data.append(item)
-            peek = data[bytes_consumed : bytes_consumed + 1]
-            if not peek:
+            try:
+                if data[bytes_consumed] not in INNERLIST_DELIMS:
+                    raise ValueError("Inner list bad delimitation")
+            except IndexError:
                 raise ValueError("End of inner list not found")
-            if peek not in b" )":
-                raise ValueError("Inner list bad delimitation")
 
     def __str__(self) -> str:
         output = "("

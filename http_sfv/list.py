@@ -1,27 +1,30 @@
 from collections import UserList
 from typing import Tuple, Union, Iterable, cast
 
-from .item import Item, InnerList, itemise, AllItemType
+from .item import Item, InnerList, itemise, AllItemType, PAREN_OPEN
 from .types import JsonType
 from .util import StructuredFieldValue, discard_http_ows
+
+
+COMMA = ord(b",")
 
 
 class List(UserList, StructuredFieldValue):
     def parse_content(self, data: bytes) -> int:
         bytes_consumed = 0
+        data_len = len(data)
         while True:
             offset, member = parse_item_or_inner_list(data[bytes_consumed:])
             bytes_consumed += offset
             self.append(member)
             bytes_consumed += discard_http_ows(data[bytes_consumed:])
-            if not data[bytes_consumed:]:
+            if bytes_consumed == data_len:
                 return bytes_consumed
-            char = data[bytes_consumed : bytes_consumed + 1]
-            bytes_consumed += 1
-            if char != b",":
+            if data[bytes_consumed] != COMMA:
                 raise ValueError("Trailing text after item in list")
+            bytes_consumed += 1
             bytes_consumed += discard_http_ows(data[bytes_consumed:])
-            if not data[bytes_consumed:]:
+            if bytes_consumed == data_len:
                 raise ValueError("Trailing comma at end of list")
 
     def __str__(self) -> str:
@@ -62,10 +65,13 @@ class List(UserList, StructuredFieldValue):
 
 
 def parse_item_or_inner_list(data: bytes) -> Tuple[int, Union[Item, InnerList]]:
-    if data[0:1] == b"(":
-        inner_list = InnerList()
-        bytes_consumed = inner_list.parse(data)
-        return bytes_consumed, inner_list
+    try:
+        if data[0] == PAREN_OPEN:
+            inner_list = InnerList()
+            bytes_consumed = inner_list.parse(data)
+            return bytes_consumed, inner_list
+    except IndexError:
+        pass
     item = Item()
     bytes_consumed = item.parse_content(data)
     return bytes_consumed, item
