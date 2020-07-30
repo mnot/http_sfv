@@ -36,11 +36,5 @@ def parse_string(data: bytes) -> Tuple[int, str]:
 def ser_string(inval: str) -> str:
     if not all(31 < ord(char) < 127 for char in inval):
         raise ValueError("String contains disallowed characters")
-    output = ""
-    output += '"'
-    for char in inval:
-        if char in '"\\':
-            output += "\\"
-        output += char
-    output += '"'
-    return output
+    escaped = inval.replace("\\", "\\\\").replace('"', '\\"')
+    return f'"{escaped}"'

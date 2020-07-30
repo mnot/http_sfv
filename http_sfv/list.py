@@ -30,13 +30,7 @@ class List(UserList, StructuredFieldValue):
     def __str__(self) -> str:
         if len(self) == 0:
             raise ValueError("No contents; field should not be emitted")
-        output = ""
-        count = len(self)
-        for x in range(0, count):
-            output += str(self[x])
-            if x + 1 < count:
-                output += ", "
-        return output
+        return ", ".join([str(m) for m in self])
 
     def __setitem__(
         self, index: Union[int, slice], value: Union[AllItemType, Iterable[AllItemType]]

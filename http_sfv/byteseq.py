@@ -21,8 +21,4 @@ def parse_byteseq(data: bytes) -> Tuple[int, bytes]:
 
 
 def ser_byteseq(byteseq: bytes) -> str:
-    output = ""
-    output += ":"
-    output += base64.standard_b64encode(byteseq).decode("ascii")
-    output += ":"
-    return output
+    return f":{base64.standard_b64encode(byteseq).decode('ascii')}:"

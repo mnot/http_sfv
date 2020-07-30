@@ -45,9 +45,7 @@ def ser_key(key: str) -> str:
         raise ValueError("Key contains disallowed characters")
     if ord(key[0]) not in KEY_START_CHARS:
         raise ValueError("Key does not start with allowed character")
-    output = ""
-    output += key
-    return output
+    return key
 
 
 class StructuredFieldValue:
@@ -63,4 +61,7 @@ class StructuredFieldValue:
             raise ValueError("Trailing text after parsed value")
 
     def parse_content(self, data: bytes) -> int:
+        raise NotImplementedError
+
+    def __str__(self) -> str:
         raise NotImplementedError

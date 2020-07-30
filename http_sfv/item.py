@@ -37,10 +37,7 @@ class Item(StructuredFieldValue):
         return bytes_consumed
 
     def __str__(self) -> str:
-        output = ""
-        output += ser_bare_item(self.value)
-        output += str(self.params)
-        return output
+        return f"{ser_bare_item(self.value)}{str(self.params)}"
 
     def __eq__(self, other: Any) -> bool:
         if isinstance(other, Item):
@@ -85,14 +82,12 @@ class Parameters(dict):
         return bytes_consumed
 
     def __str__(self) -> str:
-        output = ""
-        for param_name in self:
-            output += ";"
-            output += ser_key(param_name)
-            if self[param_name] is not True:
-                output += "="
-                output += ser_bare_item(self[param_name])
-        return output
+        return "".join(
+            [
+                f";{ser_key(k)}{f'={ser_bare_item(v)}' if v is not True else ''}"
+                for k, v in self.items()
+            ]
+        )
 
     def to_json(self) -> JsonType:
         return {k: value_to_json(v) for (k, v) in self.items()}
@@ -128,15 +123,7 @@ class InnerList(UserList):
                 raise ValueError("End of inner list not found")
 
     def __str__(self) -> str:
-        output = "("
-        count = len(self.data)
-        for x in range(0, count):
-            output += str(self[x])
-            if x + 1 < count:
-                output += " "
-        output += ")"
-        output += str(self.params)
-        return output
+        return f"({' '.join([str(i) for i in self.data])}){self.params}"
 
     def __setitem__(
         self,
@@ -190,21 +177,25 @@ def parse_bare_item(data: bytes) -> Tuple[int, BareItemType]:
         )
 
 
+_ser_map = {
+    int: ser_integer,
+    float: ser_decimal,
+    str: ser_string,
+    bool: ser_boolean,
+    bytes: ser_byteseq,
+}
+
+
 def ser_bare_item(item: BareItemType) -> str:
-    item_type = type(item)
-    if item_type is int:
-        return ser_integer(cast(int, item))
-    if isinstance(item, (Decimal, float)):
-        return ser_decimal(item)
+    try:
+        return _ser_map[type(item)](item)  # type: ignore
+    except KeyError:
+        pass
     if isinstance(item, Token):
         return ser_token(item)
-    if item_type is str:
-        return ser_string(cast(str, item))
-    if item_type is bool:
-        return ser_boolean(cast(bool, item))
-    if item_type is bytes:
-        return ser_byteseq(cast(bytes, item))
-    raise ValueError(f"Can't serialise; unrecognised item with type {item_type}")
+    if isinstance(item, Decimal):
+        return ser_decimal(item)
+    raise ValueError(f"Can't serialise; unrecognised item with type {type(item)}")
 
 
 def itemise(thing: Union[BareItemType, InnerList, Item]) -> Union[InnerList, Item]:

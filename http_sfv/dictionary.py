@@ -50,20 +50,15 @@ class Dictionary(UserDict, StructuredFieldValue):
     def __str__(self) -> str:
         if len(self) == 0:
             raise ValueError("No contents; field should not be emitted")
-        output = ""
-        count = len(self)
-        i = 0
-        for member_name in self.keys():
-            i += 1
-            output += ser_key(member_name)
-            if isinstance(self[member_name], Item) and self[member_name].value is True:
-                output += str(self[member_name].params)
-            else:
-                output += "="
-                output += str(self[member_name])
-            if i < count:
-                output += ", "
-        return output
+        return ", ".join(
+            [
+                f"{ser_key(m)}"
+                f"""{self[m].params if
+                    (isinstance(self[m], Item) and self[m].value is True)
+                    else f'={self[m]}'}"""
+                for m in self.keys()
+            ]
+        )
 
     def to_json(self) -> JsonType:
         return {k: v.to_json() for (k, v) in self.items()}

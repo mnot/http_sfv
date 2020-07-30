@@ -21,6 +21,4 @@ def ser_token(token: Token) -> str:
         raise ValueError("Token didn't start with legal character")
     if not all(ord(char) in TOKEN_CHARS for char in str(token)):
         raise ValueError("Token contains disallowed characters")
-    output = ""
-    output += str(token)
-    return output
+    return str(token)

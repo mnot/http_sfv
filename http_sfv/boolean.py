@@ -16,10 +16,4 @@ def parse_boolean(data: bytes) -> Tuple[int, bool]:
 
 
 def ser_boolean(inval: bool) -> str:
-    output = ""
-    output += "?"
-    if inval:
-        output += "1"
-    if not inval:
-        output += "0"
-    return output
+    return f"?{inval and '1' or '0'}"
