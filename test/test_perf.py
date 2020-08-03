@@ -1,7 +1,9 @@
 #!/usr/bin/env pypy3
 
+from cProfile import Profile
 import locale
 import time
+from pstats import Stats
 import timeit
 
 import http_sfv as sfv
@@ -12,6 +14,7 @@ digits = 9
 unit = 'ns'
 i = 50000
 wait = 2
+do_profile = False
 
 perf_structures = [
     ('"abcdefghijklmnopqrstuvwxyz"', 'item', 'String (simple)'),
@@ -30,9 +33,10 @@ perf_structures = [
 
 
 def time_parse(structure, field_type):
-    return int(timeit.timeit(
-        f"sfv.structures['{field_type}']().parse('{structure}')",
-        setup='import time; time.sleep(2)',
+    return int(
+        timeit.timeit(
+        f"sfv.structures['{field_type}']().parse(b'{structure}')",
+        setup=f"import time; time.sleep({wait})",
         globals=globals(),
         number=i
     ) / i * (10 ** digits))
@@ -40,6 +44,15 @@ def time_parse(structure, field_type):
 
 if __name__ == "__main__":
     for test_structure, field_type, name in perf_structures:
-        time.sleep(wait)
-        times = time_parse(test_structure, field_type)
-        print(f"* {name:25.25s} {times:{digits}n} {unit}")
+        if do_profile:
+            profiler = Profile()
+            profiler.runcall(time_parse, test_structure, field_type)
+            stats = Stats(profiler)
+            stats.strip_dirs()
+            stats.sort_stats('cumulative')
+            print(f"* {name}")
+            stats.print_stats('^(?!timeit)')
+            print()
+        else:
+            times = time_parse(test_structure, field_type)
+            print(f"* {name:25.25s} {times:{digits}n} {unit}")
