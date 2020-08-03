@@ -18,7 +18,11 @@ do_profile = False
 
 perf_structures = [
     ('"abcdefghijklmnopqrstuvwxyz"', 'item', 'String (simple)'),
-    ('abdefghijklmnopqrstuvwxyz', 'item', 'Token (simple)'),
+    ('"abcd"', 'item', 'String (short)'),
+    ('"abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz"', 'item', 'String (long)'),
+    ('abcdefghijklmnopqrstuvwxyz', 'item', 'Token (simple)'),
+    ('abcd', 'item', 'Token (short)'),
+    ('abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz', 'item', 'Token (long)'),
     ('123456789012345', 'item', 'Integer (simple)'),
     ('123456789012.345', 'item', 'Decimal (simple)'),
     ('?0', 'item', 'Boolean (false)'),
