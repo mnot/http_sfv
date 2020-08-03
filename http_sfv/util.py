@@ -49,11 +49,7 @@ def ser_key(key: str) -> str:
 
 
 class StructuredFieldValue:
-    def __init__(self) -> None:
-        self.raw_value: bytes = None
-
     def parse(self, data: bytes) -> None:
-        self.raw_value = data
         bytes_consumed = discard_ows(bytearray(data))
         bytes_consumed += self.parse_content(data[bytes_consumed:])  # type: ignore
         bytes_consumed += discard_ows(data[bytes_consumed:])
