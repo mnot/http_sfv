@@ -9,7 +9,8 @@ TOKEN_CHARS = set((ascii_letters + digits + ":/!#$%&'*+-.^_`|~").encode("ascii")
 
 def parse_token(data: bytes) -> Tuple[int, Token]:
     bytes_consumed = 1  # consume start char
-    while bytes_consumed < len(data):
+    size = len(data)
+    while bytes_consumed < size:
         if data[bytes_consumed] not in TOKEN_CHARS:
             return bytes_consumed, Token(data[:bytes_consumed].decode("ascii"))
         bytes_consumed += 1
