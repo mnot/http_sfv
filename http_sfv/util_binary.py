@@ -16,6 +16,7 @@ Each structure has a one-byte header, whose bits are:
 
 - The first four `t` bits indicate the type of the structure. Each type has a specific payload
 - The last four `x` bits are available for the structure's use
+Each structure is self-delimiting.
 """
 
 # FIXME: value content validation
@@ -203,7 +204,7 @@ def ser_inner_list(value: InnerList) -> bytes:
 
 def parse_parameters(data: bytes) -> Tuple[int, Parameters]:
     """
-    Payload: Integer num, num x (Integer keyLen, structure) pairs
+    Payload: Integer num, item, num x (Integer keyLen, structure) pairs
     """
     output = Parameters()
     bytes_consumed, members = _decode_integer(HEADER_BITS, data)
