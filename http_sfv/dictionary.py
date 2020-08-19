@@ -61,10 +61,10 @@ class Dictionary(UserDict, StructuredFieldValue):
         )
 
     def to_json(self) -> JsonType:
-        return {k: v.to_json() for (k, v) in self.items()}
+        return [[k, v.to_json()] for (k, v) in self.items()]
 
     def from_json(self, json_data: JsonType) -> None:
-        for k, v in json_data.items():
+        for k, v in json_data:
             if isinstance(v[0], list):
                 self[k] = InnerList()
             else:
