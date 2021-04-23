@@ -51,7 +51,7 @@ fuzz-%:
 
 .PHONY: update-tests
 update-tests:
-	cd test/tests; git pull origin master || exit
+	cd test/tests; git pull origin main || exit
 	git add test/tests
 	git commit -m "update tests"
 
