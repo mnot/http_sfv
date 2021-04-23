@@ -38,7 +38,7 @@ class Dictionary(UserDict, StructuredFieldValue):
             if bytes_consumed == data_len:
                 return bytes_consumed
             if data[bytes_consumed] != COMMA:
-                raise ValueError("Dictionary member has trailing characters")
+                raise ValueError(f"Dictionary member '{this_key}' has trailing characters '{data[bytes_consumed:][:10]}'")
             bytes_consumed += 1
             bytes_consumed += discard_http_ows(data[bytes_consumed:])
             if bytes_consumed == data_len:
