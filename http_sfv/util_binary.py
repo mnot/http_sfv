@@ -27,34 +27,38 @@ HEADER_MASK = 0b00001111
 
 def parse_binary(data: bytes) -> Tuple[int, StructuredFieldValue]:
     try:
-        return _top_level_parsers[data[0] & HEADER_MASK](bytes)  # type: ignore
+        return _top_level_parsers[data[0] >> HEADER_BITS](bytes)  # type: ignore
     except KeyError:
         return parse_item(data)
 
 
-def ser_binary(structure: StructuredFieldValue) -> bytes:
-    return _serialisers[structure][1]()  # type: ignore
+def ser_binary(structure: StructuredFieldValue) -> bytearray:
+    structure_type = structure.__class__
+    try:
+        return _top_level_serialisers[structure_type][1](structure)  # type: ignore
+    except KeyError:
+        return _serialisers[structure_type][1](structure)  # type: ignore
 
 
 def parse_item_or_inner_list(data: bytes) -> Tuple[int, Union[InnerList, Item]]:
     try:
-        return _item_or_inner_list_parsers[data[0] & HEADER_MASK](bytes)  # type: ignore
+        return _item_or_inner_list_parsers[data[0] >> HEADER_BITS](bytes)  # type: ignore
     except KeyError:
         raise
 
 
-def ser_item_or_inner_list(structure: Union[InnerList, Item]) -> bytes:
+def ser_item_or_inner_list(structure: Union[InnerList, Item]) -> bytearray:
     pass
 
 
 def parse_bare_item(data: bytes) -> Tuple[int, BareItemType]:
     try:
-        return _bare_item_parsers[data[0] & HEADER_MASK](bytes)  # type: ignore
+        return _bare_item_parsers[data[0] >> HEADER_BITS](bytes)  # type: ignore
     except KeyError:
         raise
 
 
-def ser_bare_item(item: BareItemType) -> bytes:
+def ser_bare_item(item: BareItemType) -> bytearray:
     pass
 
 
@@ -66,8 +70,9 @@ def parse_item(data: bytes) -> Tuple[int, Item]:
     return bytes_consumed + offset, item
 
 
-def ser_item(item: Item) -> bytes:
-    pass
+def ser_item(item: Item) -> bytearray:
+    structure_type = item.__class__
+    return _serialisers[structure_type][1](item)  # type: ignore
 
 
 def parse_integer(data: bytes) -> Tuple[int, int]:
@@ -77,8 +82,11 @@ def parse_integer(data: bytes) -> Tuple[int, int]:
     return _decode_integer(HEADER_BITS, data)
 
 
-def ser_integer(value: int) -> bytes:
-    pass
+def ser_integer(value: int) -> bytearray:
+    data = _encode_integer(HEADER_BITS + 1, value)
+    data = add_type(data, INTEGER)
+    ## TODO: add sign
+    return data
 
 
 def parse_decimal(data: bytes) -> Tuple[int, Decimal]:
@@ -90,7 +98,7 @@ def parse_decimal(data: bytes) -> Tuple[int, Decimal]:
     return bytes_consumed + offset, Decimal()  # FIXME
 
 
-def ser_decimal(value: Decimal) -> bytes:
+def ser_decimal(value: Decimal) -> bytearray:
     pass
 
 
@@ -101,7 +109,7 @@ def parse_boolean(data: bytes) -> Tuple[int, bool]:
     return 1, (data[0] & 0b00010000) > 0
 
 
-def ser_boolean(value: bool) -> bytes:
+def ser_boolean(value: bool) -> bytearray:
     pass
 
 
@@ -114,7 +122,7 @@ def parse_byteseq(data: bytes) -> Tuple[int, bytes]:
     return end, data[bytes_consumed:end]
 
 
-def ser_byteseq(value: bytes) -> bytes:
+def ser_byteseq(value: bytes) -> bytearray:
     pass
 
 
@@ -127,7 +135,7 @@ def parse_string(data: bytes) -> Tuple[int, str]:
     return end, data[bytes_consumed:end].decode("ascii")
 
 
-def ser_string(value: str) -> bytes:
+def ser_string(value: str) -> bytearray:
     pass
 
 
@@ -140,7 +148,7 @@ def parse_token(data: bytes) -> Tuple[int, Token]:
     return end, Token(data[bytes_consumed:end].decode("ascii"))
 
 
-def ser_token(value: Token) -> bytes:
+def ser_token(value: Token) -> bytearray:
     pass
 
 
@@ -157,7 +165,7 @@ def parse_list(data: bytes) -> Tuple[int, List]:
     return bytes_consumed, output
 
 
-def ser_list(value: List) -> bytes:
+def ser_list(value: List) -> bytearray:
     pass
 
 
@@ -180,7 +188,7 @@ def parse_dictionary(data: bytes) -> Tuple[int, Dictionary]:
     return bytes_consumed, output
 
 
-def ser_dictionary(value: Dictionary) -> bytes:
+def ser_dictionary(value: Dictionary) -> bytearray:
     pass
 
 
@@ -198,7 +206,7 @@ def parse_inner_list(data: bytes) -> Tuple[int, InnerList]:
     return bytes_consumed, output
 
 
-def ser_inner_list(value: InnerList) -> bytes:
+def ser_inner_list(value: InnerList) -> bytearray:
     pass
 
 
@@ -220,40 +228,59 @@ def parse_parameters(data: bytes) -> Tuple[int, Parameters]:
     return bytes_consumed, output
 
 
-def ser_parameters(value: Parameters) -> bytes:
+def ser_parameters(value: Parameters) -> bytearray:
     pass
 
 
-_top_level_parsers = {1: parse_dictionary, 2: parse_list}
+def add_type(data: bytearray, sf_type: int) -> bytearray:
+    data[0] = (sf_type << HEADER_BITS) | data[0]
+    return data
+
+
+DICTIONARY = 1
+LIST = 2
+INNER_LIST = 3
+INTEGER = 4
+DECIMAL = 5
+BOOLEAN = 6
+BYTESEQ = 7
+STRING = 8
+TOKEN = 9
+
+
+_top_level_parsers = {DICTIONARY: parse_dictionary, LIST: parse_list}
 _item_or_inner_list_parsers = {
-    3: parse_inner_list,
-    4: parse_integer,
-    5: parse_decimal,
-    6: parse_boolean,
-    7: parse_byteseq,
-    8: parse_string,
-    9: parse_token,
+    INNER_LIST: parse_inner_list,
+    INTEGER: parse_integer,
+    DECIMAL: parse_decimal,
+    BOOLEAN: parse_boolean,
+    BYTESEQ: parse_byteseq,
+    STRING: parse_string,
+    TOKEN: parse_token,
 }
 _bare_item_parsers = {
-    4: parse_integer,
-    5: parse_decimal,
-    6: parse_boolean,
-    7: parse_byteseq,
-    8: parse_string,
-    9: parse_token,
+    INTEGER: parse_integer,
+    DECIMAL: parse_decimal,
+    BOOLEAN: parse_boolean,
+    BYTESEQ: parse_byteseq,
+    STRING: parse_string,
+    TOKEN: parse_token,
 }
 
-_serialisers = {
-    Dictionary: (1, ser_dictionary),
-    List: (2, ser_list),
-    InnerList: (3, ser_inner_list),
-    int: (4, ser_integer),
-    Decimal: (5, ser_decimal),
-    bool: (6, ser_boolean),
-    bytes: (7, ser_byteseq),
-    str: (8, ser_string),
-    Token: (9, ser_token),
+_top_level_serialisers = {
+    Dictionary: (DICTIONARY, ser_dictionary),
+    List: (LIST, ser_list)
 }
+_serialisers = {
+    InnerList: (INNER_LIST, ser_inner_list),
+    int: (INTEGER, ser_integer),
+    Decimal: (DECIMAL, ser_decimal),
+    bool: (BOOLEAN, ser_boolean),
+    bytes: (BYTESEQ, ser_byteseq),
+    str: (STRING, ser_string),
+    Token: (TOKEN, ser_token),
+}
+
 
 #### From hyper hpack
 
@@ -298,7 +325,7 @@ def _decode_integer(prefix_bits: int, data: bytes) -> Tuple[int, int]:
     return index, number
 
 
-def encode_integer(integer: int, prefix_bits: int) -> bytes:
+def _encode_integer(integer: int, prefix_bits: int) -> bytearray:
     """
     This encodes an integer according to the wacky integer encoding rules
     defined in the HPACK spec.
