@@ -90,10 +90,10 @@ class Parameters(dict):
         )
 
     def to_json(self) -> JsonType:
-        return {k: value_to_json(v) for (k, v) in self.items()}
+        return [[k, value_to_json(v)] for (k, v) in self.items()]
 
     def from_json(self, json_data: JsonType) -> None:
-        for name, value in json_data.items():
+        for name, value in json_data:
             self[name] = value_from_json(value)
 
 

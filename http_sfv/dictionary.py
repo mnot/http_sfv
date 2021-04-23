@@ -38,7 +38,7 @@ class Dictionary(UserDict, StructuredFieldValue):
             if bytes_consumed == data_len:
                 return bytes_consumed
             if data[bytes_consumed] != COMMA:
-                raise ValueError("Dictionary member has trailing characters")
+                raise ValueError(f"Dictionary member '{this_key}' has trailing characters '{data[bytes_consumed:][:10]}'")
             bytes_consumed += 1
             bytes_consumed += discard_http_ows(data[bytes_consumed:])
             if bytes_consumed == data_len:
@@ -61,10 +61,10 @@ class Dictionary(UserDict, StructuredFieldValue):
         )
 
     def to_json(self) -> JsonType:
-        return {k: v.to_json() for (k, v) in self.items()}
+        return [[k, v.to_json()] for (k, v) in self.items()]
 
     def from_json(self, json_data: JsonType) -> None:
-        for k, v in json_data.items():
+        for k, v in json_data:
             if isinstance(v[0], list):
                 self[k] = InnerList()
             else:
