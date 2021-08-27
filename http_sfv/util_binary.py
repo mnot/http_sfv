@@ -1,6 +1,7 @@
 from decimal import Decimal
 from typing import Tuple, Union
 
+from .decimal import FRAC_DIGITS, PRECISION
 from .dictionary import Dictionary
 from .item import Parameters, InnerList, Item
 from .list import List
@@ -99,7 +100,14 @@ def parse_decimal(data: bytes) -> Tuple[int, Decimal]:
 
 
 def ser_decimal(value: Decimal) -> bytearray:
-    pass
+    input_decimal = round(value, FRAC_DIGITS)
+    abs_decimal = value.copy_abs()
+    integer_component_s = str(int(abs_decimal))
+    fractional_component = abs_decimal.quantize(PRECISION).normalize() % 1
+    data = _encode_integer(integer_component, HEADER_BITS)
+    data = add_type(data, DECIMAL)
+    data += _encode_integer(fractional_component, 0)
+    return data
 
 
 def parse_boolean(data: bytes) -> Tuple[int, bool]:
