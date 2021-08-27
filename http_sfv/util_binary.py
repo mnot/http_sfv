@@ -27,7 +27,7 @@ HEADER_MASK = 0b00001111
 
 def parse_binary(data: bytes) -> Tuple[int, StructuredFieldValue]:
     try:
-        return _top_level_parsers[data[0] >> HEADER_BITS](bytes)  # type: ignore
+        return _top_level_parsers[data[0] >> HEADER_BITS](data)  # type: ignore
     except KeyError:
         return parse_item(data)
 
@@ -42,7 +42,7 @@ def ser_binary(structure: StructuredFieldValue) -> bytearray:
 
 def parse_item_or_inner_list(data: bytes) -> Tuple[int, Union[InnerList, Item]]:
     try:
-        return _item_or_inner_list_parsers[data[0] >> HEADER_BITS](bytes)  # type: ignore
+        return _item_or_inner_list_parsers[data[0] >> HEADER_BITS](data)  # type: ignore
     except KeyError:
         raise
 
@@ -53,7 +53,7 @@ def ser_item_or_inner_list(structure: Union[InnerList, Item]) -> bytearray:
 
 def parse_bare_item(data: bytes) -> Tuple[int, BareItemType]:
     try:
-        return _bare_item_parsers[data[0] >> HEADER_BITS](bytes)  # type: ignore
+        return _bare_item_parsers[data[0] >> HEADER_BITS](data)  # type: ignore
     except KeyError:
         raise
 
