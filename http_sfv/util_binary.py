@@ -118,7 +118,11 @@ def parse_boolean(data: bytes) -> Tuple[int, bool]:
 
 
 def ser_boolean(value: bool) -> bytearray:
-    pass
+    if value:
+        data = 0b00010000
+    else:
+        data = 0b00000000
+    return add_type(data, BOOLEAN)
 
 
 def parse_byteseq(data: bytes) -> Tuple[int, bytes]:
