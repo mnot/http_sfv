@@ -11,7 +11,7 @@ def value_to_json(value: BareItemType) -> JsonType:
             "value": base64.b32encode(value).decode("ascii"),
         }
     if isinstance(value, Token):
-        return {"__type": "token", "value": value}
+        return {"__type": "token", "value": str(value)}
     return value
 
 
