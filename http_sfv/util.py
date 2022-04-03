@@ -24,6 +24,7 @@ def discard_http_ows(data: bytes) -> int:
             return i
         i += 1
 
+
 KEY_START_CHARS = set((ascii_lowercase + "*").encode("ascii"))
 KEY_CHARS = set((ascii_lowercase + digits + "_-*.").encode("ascii"))
 UPPER_CHARS = set((ascii_uppercase).encode("ascii"))
@@ -32,12 +33,12 @@ COMPAT = False
 
 def parse_key(data: bytes) -> Tuple[int, str]:
     if data == b"" or data[0] not in KEY_START_CHARS:
-        if data == b"" or not(COMPAT and data[0] in UPPER_CHARS):
+        if data == b"" or not (COMPAT and data[0] in UPPER_CHARS):
             raise ValueError("Key does not begin with lcalpha or *")
     bytes_consumed = 1
     while bytes_consumed < len(data):
         if data[bytes_consumed] not in KEY_CHARS:
-            if not(COMPAT and data[bytes_consumed] in UPPER_CHARS):
+            if not (COMPAT and data[bytes_consumed] in UPPER_CHARS):
                 return bytes_consumed, data[:bytes_consumed].decode("ascii").lower()
         bytes_consumed += 1
     return bytes_consumed, data.decode("ascii").lower()
