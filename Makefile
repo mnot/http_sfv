@@ -8,8 +8,8 @@ run: test
 
 .PHONY: test
 test: $(TESTS) venv
-	PYTHONPATH=$(VENV) $(VENV)/python test/test.py $(TESTS)
-	PYTHONPATH=$(VENV) $(VENV)/python test/test_api.py
+	PYTHONPATH=.:$(VENV) $(VENV)/python test/test.py $(TESTS)
+	PYTHONPATH=.:$(VENV) $(VENV)/python test/test_api.py
 
 $(TESTS):
 	git submodule update --init --recursive
