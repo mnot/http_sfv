@@ -1,5 +1,6 @@
 from collections import UserList
 from typing import Tuple, Union, Iterable, cast
+from typing_extensions import SupportsIndex
 
 from .item import Item, InnerList, itemise, AllItemType, PAREN_OPEN
 from .types import JsonType
@@ -33,7 +34,9 @@ class List(UserList, StructuredFieldValue):
         return ", ".join([str(m) for m in self])
 
     def __setitem__(
-        self, index: Union[int, slice], value: Union[AllItemType, Iterable[AllItemType]]
+        self,
+        index: Union[SupportsIndex, slice],
+        value: Union[AllItemType, Iterable[AllItemType]],
     ) -> None:
         if isinstance(index, slice):
             self.data[index] = [itemise(v) for v in value]  # type: ignore

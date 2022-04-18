@@ -1,6 +1,7 @@
 from collections import UserList
 from decimal import Decimal
 from typing import List as _List, Tuple, Union, Any, Iterable, cast
+from typing_extensions import SupportsIndex
 
 from .boolean import parse_boolean, ser_boolean
 from .byteseq import parse_byteseq, ser_byteseq, BYTE_DELIMIT
@@ -127,7 +128,7 @@ class InnerList(UserList):
 
     def __setitem__(
         self,
-        index: Union[int, slice],
+        index: Union[SupportsIndex, slice],
         value: Union[SingleItemType, Iterable[SingleItemType]],
     ) -> None:
         if isinstance(index, slice):
