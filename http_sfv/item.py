@@ -33,8 +33,12 @@ class Item(StructuredFieldValue):
         self.params = Parameters()
 
     def parse_content(self, data: bytes) -> int:
-        bytes_consumed, self.value = parse_bare_item(data)
-        bytes_consumed += self.params.parse(data[bytes_consumed:])
+        try:
+            bytes_consumed, self.value = parse_bare_item(data)
+            bytes_consumed += self.params.parse(data[bytes_consumed:])
+        except Exception:
+            self.value = None
+            raise
         return bytes_consumed
 
     def __str__(self) -> str:

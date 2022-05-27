@@ -18,33 +18,37 @@ class Dictionary(UserDict, StructuredFieldValue):
     def parse_content(self, data: bytes) -> int:
         bytes_consumed = 0
         data_len = len(data)
-        while True:
-            offset, this_key = parse_key(data[bytes_consumed:])
-            bytes_consumed += offset
-            try:
-                is_equals = data[bytes_consumed] == EQUALS
-            except IndexError:
-                is_equals = False
-            if is_equals:
-                bytes_consumed += 1  # consume the "="
-                offset, member = parse_item_or_inner_list(data[bytes_consumed:])
+        try:
+            while True:
+                offset, this_key = parse_key(data[bytes_consumed:])
                 bytes_consumed += offset
-            else:
-                member = Item()
-                member.value = True
-                bytes_consumed += member.params.parse(data[bytes_consumed:])
-            self[this_key] = member
-            bytes_consumed += discard_http_ows(data[bytes_consumed:])
-            if bytes_consumed == data_len:
-                return bytes_consumed
-            if data[bytes_consumed] != COMMA:
-                raise ValueError(
-                    f"Dictionary member '{this_key}' has trailing characters"
-                )
-            bytes_consumed += 1
-            bytes_consumed += discard_http_ows(data[bytes_consumed:])
-            if bytes_consumed == data_len:
-                raise ValueError("Dictionary has trailing comma")
+                try:
+                    is_equals = data[bytes_consumed] == EQUALS
+                except IndexError:
+                    is_equals = False
+                if is_equals:
+                    bytes_consumed += 1  # consume the "="
+                    offset, member = parse_item_or_inner_list(data[bytes_consumed:])
+                    bytes_consumed += offset
+                else:
+                    member = Item()
+                    member.value = True
+                    bytes_consumed += member.params.parse(data[bytes_consumed:])
+                self[this_key] = member
+                bytes_consumed += discard_http_ows(data[bytes_consumed:])
+                if bytes_consumed == data_len:
+                    return bytes_consumed
+                if data[bytes_consumed] != COMMA:
+                    raise ValueError(
+                        f"Dictionary member '{this_key}' has trailing characters"
+                    )
+                bytes_consumed += 1
+                bytes_consumed += discard_http_ows(data[bytes_consumed:])
+                if bytes_consumed == data_len:
+                    raise ValueError("Dictionary has trailing comma")
+        except Exception:
+            self.clear()
+            raise
 
     def __setitem__(self, key: str, value: AllItemType) -> None:
         self.data[key] = itemise(value)

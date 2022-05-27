@@ -14,19 +14,23 @@ class List(UserList, StructuredFieldValue):
     def parse_content(self, data: bytes) -> int:
         bytes_consumed = 0
         data_len = len(data)
-        while True:
-            offset, member = parse_item_or_inner_list(data[bytes_consumed:])
-            bytes_consumed += offset
-            self.append(member)
-            bytes_consumed += discard_http_ows(data[bytes_consumed:])
-            if bytes_consumed == data_len:
-                return bytes_consumed
-            if data[bytes_consumed] != COMMA:
-                raise ValueError("Trailing text after item in list")
-            bytes_consumed += 1
-            bytes_consumed += discard_http_ows(data[bytes_consumed:])
-            if bytes_consumed == data_len:
-                raise ValueError("Trailing comma at end of list")
+        try:
+            while True:
+                offset, member = parse_item_or_inner_list(data[bytes_consumed:])
+                bytes_consumed += offset
+                self.append(member)
+                bytes_consumed += discard_http_ows(data[bytes_consumed:])
+                if bytes_consumed == data_len:
+                    return bytes_consumed
+                if data[bytes_consumed] != COMMA:
+                    raise ValueError("Trailing text after item in list")
+                bytes_consumed += 1
+                bytes_consumed += discard_http_ows(data[bytes_consumed:])
+                if bytes_consumed == data_len:
+                    raise ValueError("Trailing comma at end of list")
+        except Exception:
+            self.clear()
+            raise
 
     def __str__(self) -> str:
         if len(self) == 0:
