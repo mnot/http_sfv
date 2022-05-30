@@ -26,7 +26,7 @@ perf: venv
 
 .PHONY: typecheck
 typecheck: venv
-	PYTHONPATH=$(VENV) $(VENV)/python -m mypy --config-file=test/mypy.ini $(PROJECT)
+	PYTHONPATH=$(VENV) $(VENV)/python -m mypy $(PROJECT)
 
 .PHONY: fuzz
 fuzz-%: venv
