@@ -2,7 +2,7 @@ from collections import UserDict
 
 from .item import Item, InnerList, itemise, AllItemType
 from .list import parse_item_or_inner_list
-from .types import JsonType
+from .types import JsonDictType
 from .util import (
     StructuredFieldValue,
     discard_http_ows,
@@ -46,9 +46,9 @@ class Dictionary(UserDict, StructuredFieldValue):
                 bytes_consumed += discard_http_ows(data[bytes_consumed:])
                 if bytes_consumed == data_len:
                     raise ValueError("Dictionary has trailing comma")
-        except Exception:
+        except Exception as why:
             self.clear()
-            raise
+            raise ValueError from why
 
     def __setitem__(self, key: str, value: AllItemType) -> None:
         self.data[key] = itemise(value)
@@ -59,20 +59,20 @@ class Dictionary(UserDict, StructuredFieldValue):
         return ", ".join(
             [
                 f"{ser_key(m)}"
-                f"""{self[m].params if
-                    (isinstance(self[m], Item) and self[m].value is True)
-                    else f'={self[m]}'}"""
-                for m in self.keys()
+                f"""{n.params if
+                    (isinstance(n, Item) and n.value is True)
+                    else f'={n}'}"""
+                for m, n in self.items()
             ]
         )
 
-    def to_json(self) -> JsonType:
-        return [[k, v.to_json()] for (k, v) in self.items()]
+    def to_json(self) -> JsonDictType:
+        return [(key, val.to_json()) for (key, val) in self.items()]
 
-    def from_json(self, json_data: JsonType) -> None:
-        for k, v in json_data:
-            if isinstance(v[0], list):
-                self[k] = InnerList()
+    def from_json(self, json_data: JsonDictType) -> None:
+        for key, val in json_data:
+            if isinstance(val[0], list):
+                self[key] = InnerList()
             else:
-                self[k] = Item()
-            self[k].from_json(v)
+                self[key] = Item()
+            self[key].from_json(val)

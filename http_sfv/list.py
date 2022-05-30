@@ -3,7 +3,7 @@ from typing import Tuple, Union, Iterable, cast
 from typing_extensions import SupportsIndex
 
 from .item import Item, InnerList, itemise, AllItemType, PAREN_OPEN
-from .types import JsonType
+from .types import JsonListType
 from .util import StructuredFieldValue, discard_http_ows
 
 
@@ -53,10 +53,10 @@ class List(UserList, StructuredFieldValue):
     def insert(self, i: int, item: AllItemType) -> None:
         self.data.insert(i, itemise(item))
 
-    def to_json(self) -> JsonType:
+    def to_json(self) -> JsonListType:
         return [i.to_json() for i in self]
 
-    def from_json(self, json_data: JsonType) -> None:
+    def from_json(self, json_data: JsonListType) -> None:
         for i in json_data:
             if isinstance(i[0], list):
                 self.append(InnerList())

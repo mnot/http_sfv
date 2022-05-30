@@ -8,9 +8,9 @@ HTTP_OWS = set(b" \t")
 def discard_ows(data: bytes) -> int:
     "Return the number of space characters at the beginning of data."
     i = 0
-    l = len(data)
+    ln = len(data)
     while True:
-        if i == l or data[i] != SPACE:
+        if i == ln or data[i] != SPACE:
             return i
         i += 1
 
@@ -18,9 +18,9 @@ def discard_ows(data: bytes) -> int:
 def discard_http_ows(data: bytes) -> int:
     "Return the number of space or HTAB characters at the beginning of data."
     i = 0
-    l = len(data)
+    ln = len(data)
     while True:
-        if i == l or data[i] not in HTTP_OWS:
+        if i == ln or data[i] not in HTTP_OWS:
             return i
         i += 1
 
@@ -55,7 +55,7 @@ def ser_key(key: str) -> str:
 class StructuredFieldValue:
     def parse(self, data: bytes) -> None:
         bytes_consumed = discard_ows(data)
-        bytes_consumed += self.parse_content(data[bytes_consumed:])  # type: ignore
+        bytes_consumed += self.parse_content(data[bytes_consumed:])
         bytes_consumed += discard_ows(data[bytes_consumed:])
         if data[bytes_consumed:]:
             raise ValueError("Trailing text after parsed value")

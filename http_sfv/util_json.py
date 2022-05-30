@@ -1,10 +1,11 @@
 import base64
+from decimal import Decimal
 
 from .token import Token
-from .types import JsonType, BareItemType
+from .types import BareItemType, JsonBareType
 
 
-def value_to_json(value: BareItemType) -> JsonType:
+def value_to_json(value: BareItemType) -> JsonBareType:
     if isinstance(value, bytes):
         return {
             "__type": "binary",
@@ -12,10 +13,12 @@ def value_to_json(value: BareItemType) -> JsonType:
         }
     if isinstance(value, Token):
         return {"__type": "token", "value": str(value)}
+    if isinstance(value, Decimal):
+        return float(value)
     return value
 
 
-def value_from_json(value: JsonType) -> BareItemType:
+def value_from_json(value: JsonBareType) -> BareItemType:
     if isinstance(value, dict):
         if "__type" in value:
             if value["__type"] == "token":
