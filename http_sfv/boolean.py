@@ -10,7 +10,7 @@ _boolean_map = {ONE: (2, True), ZERO: (2, False)}
 def parse_boolean(data: bytes) -> Tuple[int, bool]:
     try:
         return _boolean_map[data[1]]
-    except KeyError:
+    except (KeyError, IndexError):
         pass
     raise ValueError("No Boolean value found")
 

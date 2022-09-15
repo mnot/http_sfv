@@ -1,6 +1,7 @@
 from collections import UserList
 from decimal import Decimal
 from typing import List as _List, Tuple, Union, Any, Iterable, cast
+from typing_extensions import SupportsIndex
 
 from .boolean import parse_boolean, ser_boolean
 from .byteseq import parse_byteseq, ser_byteseq, BYTE_DELIMIT
@@ -8,7 +9,7 @@ from .decimal import ser_decimal
 from .integer import parse_number, ser_integer, NUMBER_START_CHARS
 from .string import parse_string, ser_string, DQUOTE
 from .token import parse_token, ser_token, Token, TOKEN_START_CHARS
-from .types import BareItemType, JsonType
+from .types import BareItemType, JsonItemType, JsonParamType, JsonInnerListType
 from .util import (
     StructuredFieldValue,
     discard_ows,
@@ -32,8 +33,12 @@ class Item(StructuredFieldValue):
         self.params = Parameters()
 
     def parse_content(self, data: bytes) -> int:
-        bytes_consumed, self.value = parse_bare_item(data)
-        bytes_consumed += self.params.parse(data[bytes_consumed:])
+        try:
+            bytes_consumed, self.value = parse_bare_item(data)
+            bytes_consumed += self.params.parse(data[bytes_consumed:])
+        except Exception as why:
+            self.value = None
+            raise ValueError from why
         return bytes_consumed
 
     def __str__(self) -> str:
@@ -42,17 +47,17 @@ class Item(StructuredFieldValue):
     def __eq__(self, other: Any) -> bool:
         if isinstance(other, Item):
             return self.value == other.value
-        return self.value == other
+        return bool(self.value == other)
 
-    def to_json(self) -> JsonType:
+    def to_json(self) -> JsonItemType:
         value = value_to_json(self.value)
-        return [value, self.params.to_json()]
+        return (value, self.params.to_json())
 
-    def from_json(self, json_data: JsonType) -> None:
+    def from_json(self, json_data: JsonItemType) -> None:
         try:
-            value, params = json_data
-        except ValueError:
-            raise ValueError(json_data)
+            [value, params] = json_data
+        except ValueError as why:
+            raise ValueError(json_data) from why
         self.value = value_from_json(value)
         self.params.from_json(params)
 
@@ -89,11 +94,11 @@ class Parameters(dict):
             ]
         )
 
-    def to_json(self) -> JsonType:
-        return [[k, value_to_json(v)] for (k, v) in self.items()]
+    def to_json(self) -> JsonParamType:
+        return [(k, value_to_json(v)) for (k, v) in self.items()]
 
-    def from_json(self, json_data: JsonType) -> None:
-        for name, value in json_data:
+    def from_json(self, json_data: JsonParamType) -> None:
+        for (name, value) in json_data:
             self[name] = value_from_json(value)
 
 
@@ -119,15 +124,15 @@ class InnerList(UserList):
             try:
                 if data[bytes_consumed] not in INNERLIST_DELIMS:
                     raise ValueError("Inner list bad delimitation")
-            except IndexError:
-                raise ValueError("End of inner list not found")
+            except IndexError as why:
+                raise ValueError("End of inner list not found") from why
 
     def __str__(self) -> str:
         return f"({' '.join([str(i) for i in self.data])}){self.params}"
 
     def __setitem__(
         self,
-        index: Union[int, slice],
+        index: Union[SupportsIndex, slice],
         value: Union[SingleItemType, Iterable[SingleItemType]],
     ) -> None:
         if isinstance(index, slice):
@@ -141,14 +146,14 @@ class InnerList(UserList):
     def insert(self, i: int, item: SingleItemType) -> None:
         self.data.insert(i, itemise(item))
 
-    def to_json(self) -> JsonType:
-        return [[i.to_json() for i in self.data], self.params.to_json()]
+    def to_json(self) -> JsonInnerListType:
+        return ([i.to_json() for i in self.data], self.params.to_json())
 
-    def from_json(self, json_data: JsonType) -> None:
+    def from_json(self, json_data: JsonInnerListType) -> None:
         try:
             values, params = json_data
-        except ValueError:
-            raise ValueError(json_data)
+        except ValueError as why:
+            raise ValueError(json_data) from why
         for i in values:
             self.data.append(Item())
             self[-1].from_json(i)
@@ -171,10 +176,10 @@ def parse_bare_item(data: bytes) -> Tuple[int, BareItemType]:
         raise ValueError("Empty item")
     try:
         return _parse_map[data[0]](data)  # type: ignore
-    except KeyError:
+    except KeyError as why:
         raise ValueError(
             f"Item starting with '{data[0:1].decode('ascii')}' can't be identified"
-        )
+        ) from why
 
 
 _ser_map = {
@@ -198,7 +203,9 @@ def ser_bare_item(item: BareItemType) -> str:
     raise ValueError(f"Can't serialise; unrecognised item with type {type(item)}")
 
 
-def itemise(thing: Union[BareItemType, InnerList, Item]) -> Union[InnerList, Item]:
+def itemise(
+    thing: Union[BareItemType, InnerList, Item, _List]
+) -> Union[InnerList, Item]:
     if isinstance(thing, (Item, InnerList)):
         return thing
     if isinstance(thing, list):

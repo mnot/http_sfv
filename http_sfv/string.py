@@ -11,14 +11,16 @@ def parse_string(data: bytes) -> Tuple[int, str]:
     while True:
         try:
             char = data[bytes_consumed]
-        except IndexError:
-            raise ValueError("Reached end of input without finding a closing DQUOTE")
+        except IndexError as why:
+            raise ValueError(
+                "Reached end of input without finding a closing DQUOTE"
+            ) from why
         bytes_consumed += 1
         if char == BACKSLASH:
             try:
                 next_char = data[bytes_consumed]
-            except IndexError:
-                raise ValueError("Last character of input was a backslash")
+            except IndexError as why:
+                raise ValueError("Last character of input was a backslash") from why
             bytes_consumed += 1
             if next_char not in DQUOTEBACKSLASH:
                 raise ValueError(

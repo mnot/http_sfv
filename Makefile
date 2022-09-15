@@ -1,53 +1,18 @@
-PYTHON=python3
-PYTHONPATH=./
+PROJECT=http_sfv
 BLAB=blab
 TESTS=test/tests/*.json
-name=http_sfv
-version=$(shell PYTHONPATH=$(PYTHONPATH) $(PYTHON) -c "import $(name); print($(name).__version__)")
 
 # for running from IDEs (e.g., TextMate)
 .PHONY: run
 run: test
 
-.PHONY: version
-version:
-	@echo $(version)
-
-.PHONY: dist
-dist: clean typecheck # test
-	git tag $(name)-$(version)
-	git push
-	git push --tags origin
-	$(PYTHON) setup.py sdist
-	$(PYTHON) -m twine upload dist/*
-
-.PHONY: lint
-lint:
-	PYTHONPATH=$(PYTHONPATH) $(PYTHON) -m pylint --rcfile=test/pylintrc $(name)
-
-.PHONY: black
-black:
-	PYTHONPATH=$(PYTHONPATH) black $(name)/*.py
-
 .PHONY: test
-test: $(TESTS)
-	PYTHONPATH=$(PYTHONPATH) $(PYTHON) test/test.py $(TESTS)
-	PYTHONPATH=$(PYTHONPATH) $(PYTHON) test/test_api.py
+test: $(TESTS) venv
+	PYTHONPATH=.:$(VENV) $(VENV)/python test/test.py $(TESTS)
+	PYTHONPATH=.:$(VENV) $(VENV)/python test/test_api.py
 
-test/tests:
+$(TESTS):
 	git submodule update --init --recursive
-
-.PHONY: perf
-perf:
-	PYTHONPATH=$(PYTHONPATH) $(PYTHON) test/test_perf.py
-
-.PHONY: typecheck
-typecheck:
-	PYTHONPATH=$(PYTHONPATH) $(PYTHON) -m mypy --config-file=test/mypy.ini $(name)
-
-.PHONY: fuzz
-fuzz-%:
-	$(BLAB) -l test/ -e "sf.sf-$*" | PYTHONPATH=$(PYTHONPATH) $(PYTHON) -m http_sfv --$* --stdin
 
 .PHONY: update-tests
 update-tests:
@@ -55,8 +20,50 @@ update-tests:
 	git add test/tests
 	git commit -m "update tests"
 
+.PHONY: perf
+perf: venv
+	PYTHONPATH=$(VENV) $(VENV)/python test/test_perf.py
+
+.PHONY: typecheck
+typecheck: venv
+	PYTHONPATH=$(VENV) $(VENV)/python -m mypy $(PROJECT)
+
+.PHONY: fuzz
+fuzz-%: venv
+	$(BLAB) -l test/ -e "sf.sf-$*" | PYTHONPATH=$(VENV) $(VENV)/python -m http_sfv --$* --stdin
+
+.PHONY: tidy
+tidy: venv
+	$(VENV)/black $(PROJECT)
+
+.PHONY: lint
+lint: venv
+	PYTHONPATH=$(VENV) $(VENV)/pylint --output-format=colorized $(PROJECT)
+
 .PHONY: clean
 clean:
-	rm -rf build dist MANIFEST $(name).egg-info
-	find . -type f -name \*.pyc -exec rm {} \;
 	find . -d -type d -name __pycache__ -exec rm -rf {} \;
+	rm -rf build dist MANIFEST $(PROJECT).egg-info .venv .mypy_cache *.log
+
+
+#############################################################################
+## Distribution
+
+.PHONY: version
+version: venv
+	$(eval VERSION=$(shell $(VENV)/python -c "import $(PROJECT); print($(PROJECT).__version__)"))
+
+.PHONY: build
+build: clean venv
+	$(VENV)/python -m build
+
+.PHONY: upload
+upload: build test typecheck version
+	git tag $(PROJECT)-$(VERSION)
+	git push
+	git push --tags origin
+	$(VENV)/python -m twine upload dist/*
+
+
+
+include Makefile.venv

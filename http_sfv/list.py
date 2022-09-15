@@ -1,8 +1,9 @@
 from collections import UserList
 from typing import Tuple, Union, Iterable, cast
+from typing_extensions import SupportsIndex
 
 from .item import Item, InnerList, itemise, AllItemType, PAREN_OPEN
-from .types import JsonType
+from .types import JsonListType
 from .util import StructuredFieldValue, discard_http_ows
 
 
@@ -13,19 +14,23 @@ class List(UserList, StructuredFieldValue):
     def parse_content(self, data: bytes) -> int:
         bytes_consumed = 0
         data_len = len(data)
-        while True:
-            offset, member = parse_item_or_inner_list(data[bytes_consumed:])
-            bytes_consumed += offset
-            self.append(member)
-            bytes_consumed += discard_http_ows(data[bytes_consumed:])
-            if bytes_consumed == data_len:
-                return bytes_consumed
-            if data[bytes_consumed] != COMMA:
-                raise ValueError("Trailing text after item in list")
-            bytes_consumed += 1
-            bytes_consumed += discard_http_ows(data[bytes_consumed:])
-            if bytes_consumed == data_len:
-                raise ValueError("Trailing comma at end of list")
+        try:
+            while True:
+                offset, member = parse_item_or_inner_list(data[bytes_consumed:])
+                bytes_consumed += offset
+                self.append(member)
+                bytes_consumed += discard_http_ows(data[bytes_consumed:])
+                if bytes_consumed == data_len:
+                    return bytes_consumed
+                if data[bytes_consumed] != COMMA:
+                    raise ValueError("Trailing text after item in list")
+                bytes_consumed += 1
+                bytes_consumed += discard_http_ows(data[bytes_consumed:])
+                if bytes_consumed == data_len:
+                    raise ValueError("Trailing comma at end of list")
+        except Exception:
+            self.clear()
+            raise
 
     def __str__(self) -> str:
         if len(self) == 0:
@@ -33,7 +38,9 @@ class List(UserList, StructuredFieldValue):
         return ", ".join([str(m) for m in self])
 
     def __setitem__(
-        self, index: Union[int, slice], value: Union[AllItemType, Iterable[AllItemType]]
+        self,
+        index: Union[SupportsIndex, slice],
+        value: Union[AllItemType, Iterable[AllItemType]],
     ) -> None:
         if isinstance(index, slice):
             self.data[index] = [itemise(v) for v in value]  # type: ignore
@@ -46,10 +53,10 @@ class List(UserList, StructuredFieldValue):
     def insert(self, i: int, item: AllItemType) -> None:
         self.data.insert(i, itemise(item))
 
-    def to_json(self) -> JsonType:
+    def to_json(self) -> JsonListType:
         return [i.to_json() for i in self]
 
-    def from_json(self, json_data: JsonType) -> None:
+    def from_json(self, json_data: JsonListType) -> None:
         for i in json_data:
             if isinstance(i[0], list):
                 self.append(InnerList())

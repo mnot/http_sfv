@@ -77,15 +77,17 @@ def test_parse(test: dict) -> Union[bool, Any, str]:
         parse_success = True
     except ValueError as why:
         parse_fail_reason = why.args
-    except Exception:
+    except Exception as why:
         sys.stderr.write(f"*** TEST ERROR in {test['name']}\n")
         raise
     if test.get("must_fail", False):
         test_success = not parse_success
     else:
-        test_success = test["expected"] == field.to_json()
-    return test_success, field.to_json(), parse_fail_reason
+        test_success = test["expected"] == norm(field.to_json())
+    return test_success, norm(field.to_json()), parse_fail_reason
 
+def norm(injson: Any) -> Any:
+    return json.loads(json.dumps(injson), parse_float=decimal.Decimal)
 
 def test_serialise(test: dict) -> Union[bool, str, str, str]:
     expected = test.get("canonical", test["raw"])

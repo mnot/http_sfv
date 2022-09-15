@@ -1,4 +1,4 @@
-from string import ascii_lowercase, digits
+from string import ascii_lowercase, ascii_uppercase, digits
 from typing import Tuple
 
 SPACE = ord(b" ")
@@ -8,9 +8,9 @@ HTTP_OWS = set(b" \t")
 def discard_ows(data: bytes) -> int:
     "Return the number of space characters at the beginning of data."
     i = 0
-    l = len(data)
+    ln = len(data)
     while True:
-        if i == l or data[i] != SPACE:
+        if i == ln or data[i] != SPACE:
             return i
         i += 1
 
@@ -18,26 +18,30 @@ def discard_ows(data: bytes) -> int:
 def discard_http_ows(data: bytes) -> int:
     "Return the number of space or HTAB characters at the beginning of data."
     i = 0
-    l = len(data)
+    ln = len(data)
     while True:
-        if i == l or data[i] not in HTTP_OWS:
+        if i == ln or data[i] not in HTTP_OWS:
             return i
         i += 1
 
 
 KEY_START_CHARS = set((ascii_lowercase + "*").encode("ascii"))
 KEY_CHARS = set((ascii_lowercase + digits + "_-*.").encode("ascii"))
+UPPER_CHARS = set((ascii_uppercase).encode("ascii"))
+COMPAT = False
 
 
 def parse_key(data: bytes) -> Tuple[int, str]:
     if data == b"" or data[0] not in KEY_START_CHARS:
-        raise ValueError("Key does not begin with lcalpha or *")
+        if data == b"" or not (COMPAT and data[0] in UPPER_CHARS):
+            raise ValueError("Key does not begin with lcalpha or *")
     bytes_consumed = 1
     while bytes_consumed < len(data):
         if data[bytes_consumed] not in KEY_CHARS:
-            return bytes_consumed, data[:bytes_consumed].decode("ascii")
+            if not (COMPAT and data[bytes_consumed] in UPPER_CHARS):
+                return bytes_consumed, data[:bytes_consumed].decode("ascii").lower()
         bytes_consumed += 1
-    return bytes_consumed, data.decode("ascii")
+    return bytes_consumed, data.decode("ascii").lower()
 
 
 def ser_key(key: str) -> str:
@@ -51,7 +55,7 @@ def ser_key(key: str) -> str:
 class StructuredFieldValue:
     def parse(self, data: bytes) -> None:
         bytes_consumed = discard_ows(data)
-        bytes_consumed += self.parse_content(data[bytes_consumed:])  # type: ignore
+        bytes_consumed += self.parse_content(data[bytes_consumed:])
         bytes_consumed += discard_ows(data[bytes_consumed:])
         if data[bytes_consumed:]:
             raise ValueError("Trailing text after parsed value")
