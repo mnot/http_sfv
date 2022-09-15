@@ -42,10 +42,13 @@ structures = {"dictionary": Dictionary, "list": List, "item": Item}
 def parse_binary(data: bytes) -> Tuple[int, StructuredFieldValue]:
     stype = data[0] >> HEADER_BITS
     if stype == STYPE.DICTIONARY:
-        top_level = Dictionary()
-    elif stype == STYPE.LIST:
-        top_level = List()
-    else:
-        top_level = Item()
-    bytes_consumed = top_level.from_binary(data)
-    return bytes_consumed, top_level
+        dictionary = Dictionary()
+        bytes_consumed = dictionary.from_binary(data)
+        return bytes_consumed, dictionary
+    if stype == STYPE.LIST:
+        list_ = List()
+        bytes_consumed = list_.from_binary(data)
+        return bytes_consumed, list_
+    item = Item()
+    bytes_consumed = item.from_binary(data)
+    return bytes_consumed, item

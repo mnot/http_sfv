@@ -2,10 +2,10 @@ from collections import UserList
 from typing import Tuple, Union, Iterable, cast
 from typing_extensions import SupportsIndex
 
-from .item import Item, InnerList, itemise, AllItemType, PAREN_OPEN, bin_parse_bare_item
+from .item import Item, InnerList, itemise, AllItemType, PAREN_OPEN
 from .types import JsonListType
 from .util import StructuredFieldValue, discard_http_ows
-from .util_binary import decode_integer, encode_integer, add_type, STYPE, HEADER_BITS
+from .util_binary import decode_integer, add_type, STYPE, HEADER_BITS
 
 
 COMMA = ord(b",")
@@ -73,7 +73,7 @@ class List(UserList, StructuredFieldValue):
         for _ in range(member_count):
             offset, member = bin_parse_item_or_inner_list(data[bytes_consumed:])
             bytes_consumed += offset
-            self.append(member)
+            self.data.append(member)
         return bytes_consumed
 
     def to_binary(self) -> bytearray:
@@ -97,5 +97,7 @@ def parse_item_or_inner_list(data: bytes) -> Tuple[int, Union[Item, InnerList]]:
 def bin_parse_item_or_inner_list(data: bytes) -> Tuple[int, Union[InnerList, Item]]:
     stype = data[0] >> HEADER_BITS
     if stype == STYPE.INNER_LIST:
-        return InnerList().from_binary(data)
-    return bin_parse_bare_item(data)
+        inner_list = InnerList()
+        return inner_list.from_binary(data), inner_list
+    item = Item()
+    return item.from_binary(data), item

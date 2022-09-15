@@ -84,20 +84,21 @@ class Dictionary(UserDict, StructuredFieldValue):
         Payload: Integer num, num x (Integer keyLen, structure) pairs
         """
         bytes_consumed, member_count = decode_integer(HEADER_BITS, data)
-        for i in range(member_count):
+        for _ in range(member_count):
             offset, key_len = decode_integer(0, data[bytes_consumed:])
             bytes_consumed += offset
-            key_end = bytes_consumed + offset
+            key_end = bytes_consumed + key_len
             name = data[bytes_consumed:key_end].decode("ascii")
             bytes_consumed = key_end
             offset, value = bin_parse_item_or_inner_list(data[bytes_consumed:])
             bytes_consumed += offset
             self[name] = value
-            # FIXME: Parameters
         return bytes_consumed
 
     def to_binary(self) -> bytearray:
         data = encode_integer(HEADER_BITS, len(self))
         for member in self:
-            pass  # TODO
+            data += encode_integer(HEADER_BITS, len(member))
+            data += member.encode("ascii")
+            data += self[member].to_binary()
         return add_type(data, STYPE.DICTIONARY)

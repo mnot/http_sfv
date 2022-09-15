@@ -82,16 +82,14 @@ class Item(StructuredFieldValue):
         self.params.from_json(params)
 
     def from_binary(self, data: bytes) -> int:
-        bytes_consumed, self.value = parse_bare_item(data)
+        bytes_consumed, self.value = bin_parse_bare_item(data)
         # FIXME: flag for params
         offset = self.params.from_binary(data[bytes_consumed:])
         return bytes_consumed + offset
 
     def to_binary(self) -> bytearray:
-        if isinstance(self, InnerList):
-            return self.to_binary()
-        if isinstance(self, Token):
-            return bin_ser_token(self)
+        if isinstance(self.value, Token):
+            return bin_ser_token(self.value)
         if isinstance(self.value, int):
             return bin_ser_integer(self.value)
         if isinstance(self.value, Decimal):
@@ -103,6 +101,7 @@ class Item(StructuredFieldValue):
         if isinstance(self.value, str):
             return bin_ser_string(self.value)
         raise ValueError
+        # FIXME: parameters
 
 
 class Parameters(dict):
@@ -149,10 +148,10 @@ class Parameters(dict):
         Payload: Integer num, item, num x (Integer keyLen, structure) pairs
         """
         bytes_consumed, members = decode_integer(HEADER_BITS, data)
-        for i in range(members):
+        for _ in range(members):
             offset, key_len = decode_integer(0, data[bytes_consumed:])
             bytes_consumed += offset
-            key_end = bytes_consumed + offset
+            key_end = bytes_consumed + key_len
             name = data[bytes_consumed:key_end].decode("ascii")
             bytes_consumed = key_end
             offset, value = parse_bare_item(data[bytes_consumed:])
@@ -161,7 +160,7 @@ class Parameters(dict):
         return bytes_consumed
 
     def to_binary(self) -> bytearray:
-        pass
+        pass  # FIXME
 
 
 SingleItemType = Union[BareItemType, Item]
@@ -226,7 +225,7 @@ class InnerList(UserList):
         Payload: Integer l, l items following
         """
         bytes_consumed, members = decode_integer(HEADER_BITS, data)
-        for i in range(members):
+        for _ in range(members):
             offset, member = bin_parse_bare_item(data[bytes_consumed:])
             bytes_consumed += offset
             self.append(member)
@@ -268,7 +267,7 @@ _ser_map = {
 }
 
 
-def bin_ser_bare_item(item: BareItemType) -> str:
+def ser_bare_item(item: BareItemType) -> str:
     try:
         return _ser_map[type(item)](item)  # type: ignore
     except KeyError:
@@ -294,11 +293,11 @@ def bin_parse_bare_item(data: bytes) -> Tuple[int, BareItemType]:
         return bin_parse_string(data)
     if stype == STYPE.TOKEN:
         return bin_parse_token(data)
-    raise ValueError
+    raise ValueError(f"Item with binary type '{stype}' can't be identified")
 
 
-def ser_bare_item(item: BareItemType) -> bytearray:
-    pass
+def bin_ser_bare_item(item: BareItemType) -> bytearray:
+    pass  # FIXME
 
 
 def itemise(
