@@ -1,5 +1,7 @@
 from typing import Tuple
 
+from .util_binary import decode_integer, encode_integer, add_type, STYPE, HEADER_BITS
+
 DQUOTE = ord('"')
 BACKSLASH = ord("\\")
 DQUOTEBACKSLASH = set([DQUOTE, BACKSLASH])
@@ -40,3 +42,18 @@ def ser_string(inval: str) -> str:
         raise ValueError("String contains disallowed characters")
     escaped = inval.replace("\\", "\\\\").replace('"', '\\"')
     return f'"{escaped}"'
+
+
+def bin_parse_string(data: bytes) -> Tuple[int, str]:
+    """
+    Payload: Integer l, l bytes of content
+    """
+    bytes_consumed, length = decode_integer(HEADER_BITS, data)
+    end = bytes_consumed + length
+    return end, data[bytes_consumed:end].decode("ascii")
+
+
+def bin_ser_string(value: str) -> bytearray:
+    data = encode_integer(HEADER_BITS, len(value))
+    data += value.encode("ascii")
+    return add_type(data, STYPE.STRING)

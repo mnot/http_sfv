@@ -3,12 +3,31 @@ from decimal import Decimal
 from typing import List as _List, Tuple, Union, Any, Iterable, cast
 from typing_extensions import SupportsIndex
 
-from .boolean import parse_boolean, ser_boolean
-from .byteseq import parse_byteseq, ser_byteseq, BYTE_DELIMIT
-from .decimal import ser_decimal
-from .integer import parse_number, ser_integer, NUMBER_START_CHARS
-from .string import parse_string, ser_string, DQUOTE
-from .token import parse_token, ser_token, Token, TOKEN_START_CHARS
+from .boolean import parse_boolean, ser_boolean, bin_parse_boolean, bin_ser_boolean
+from .byteseq import (
+    parse_byteseq,
+    ser_byteseq,
+    bin_parse_byteseq,
+    bin_ser_byteseq,
+    BYTE_DELIMIT,
+)
+from .decimal import ser_decimal, bin_parse_decimal, bin_ser_decimal
+from .integer import (
+    parse_number,
+    ser_integer,
+    bin_parse_integer,
+    bin_ser_integer,
+    NUMBER_START_CHARS,
+)
+from .string import parse_string, ser_string, bin_parse_string, bin_ser_string, DQUOTE
+from .token import (
+    parse_token,
+    ser_token,
+    bin_parse_token,
+    bin_ser_token,
+    Token,
+    TOKEN_START_CHARS,
+)
 from .types import BareItemType, JsonItemType, JsonParamType, JsonInnerListType
 from .util import (
     StructuredFieldValue,
@@ -16,6 +35,7 @@ from .util import (
     parse_key,
     ser_key,
 )
+from .util_binary import decode_integer, STYPE, HEADER_BITS
 from .util_json import value_to_json, value_from_json
 
 
@@ -61,6 +81,29 @@ class Item(StructuredFieldValue):
         self.value = value_from_json(value)
         self.params.from_json(params)
 
+    def from_binary(self, data: bytes) -> int:
+        bytes_consumed, self.value = parse_bare_item(data)
+        # FIXME: flag for params
+        offset = self.params.from_binary(data[bytes_consumed:])
+        return bytes_consumed + offset
+
+    def to_binary(self) -> bytearray:
+        if isinstance(self, InnerList):
+            return self.to_binary()
+        if isinstance(self, Token):
+            return bin_ser_token(self)
+        if isinstance(self.value, int):
+            return bin_ser_integer(self.value)
+        if isinstance(self.value, Decimal):
+            return bin_ser_decimal(self.value)
+        if isinstance(self.value, bool):
+            return bin_ser_boolean(self.value)
+        if isinstance(self.value, bytes):
+            return bin_ser_byteseq(self.value)
+        if isinstance(self.value, str):
+            return bin_ser_string(self.value)
+        raise ValueError
+
 
 class Parameters(dict):
     def parse(self, data: bytes) -> int:
@@ -100,6 +143,25 @@ class Parameters(dict):
     def from_json(self, json_data: JsonParamType) -> None:
         for (name, value) in json_data:
             self[name] = value_from_json(value)
+
+    def from_binary(self, data: bytes) -> int:
+        """
+        Payload: Integer num, item, num x (Integer keyLen, structure) pairs
+        """
+        bytes_consumed, members = decode_integer(HEADER_BITS, data)
+        for i in range(members):
+            offset, key_len = decode_integer(0, data[bytes_consumed:])
+            bytes_consumed += offset
+            key_end = bytes_consumed + offset
+            name = data[bytes_consumed:key_end].decode("ascii")
+            bytes_consumed = key_end
+            offset, value = parse_bare_item(data[bytes_consumed:])
+            bytes_consumed += offset
+            self[name] = value
+        return bytes_consumed
+
+    def to_binary(self) -> bytearray:
+        pass
 
 
 SingleItemType = Union[BareItemType, Item]
@@ -159,6 +221,21 @@ class InnerList(UserList):
             self[-1].from_json(i)
         self.params.from_json(params)
 
+    def from_binary(self, data: bytes) -> int:
+        """
+        Payload: Integer l, l items following
+        """
+        bytes_consumed, members = decode_integer(HEADER_BITS, data)
+        for i in range(members):
+            offset, member = bin_parse_bare_item(data[bytes_consumed:])
+            bytes_consumed += offset
+            self.append(member)
+        # FIXME: parameters
+        return bytes_consumed
+
+    def to_binary(self) -> bytearray:
+        pass
+
 
 _parse_map = {
     DQUOTE: parse_string,
@@ -191,7 +268,7 @@ _ser_map = {
 }
 
 
-def ser_bare_item(item: BareItemType) -> str:
+def bin_ser_bare_item(item: BareItemType) -> str:
     try:
         return _ser_map[type(item)](item)  # type: ignore
     except KeyError:
@@ -201,6 +278,27 @@ def ser_bare_item(item: BareItemType) -> str:
     if isinstance(item, Decimal):
         return ser_decimal(item)
     raise ValueError(f"Can't serialise; unrecognised item with type {type(item)}")
+
+
+def bin_parse_bare_item(data: bytes) -> Tuple[int, BareItemType]:
+    stype = data[0] >> HEADER_BITS
+    if stype == STYPE.INTEGER:
+        return bin_parse_integer(data)
+    if stype == STYPE.DECIMAL:
+        return bin_parse_decimal(data)
+    if stype == STYPE.BOOLEAN:
+        return bin_parse_boolean(data)
+    if stype == STYPE.BYTESEQ:
+        return bin_parse_byteseq(data)
+    if stype == STYPE.STRING:
+        return bin_parse_string(data)
+    if stype == STYPE.TOKEN:
+        return bin_parse_token(data)
+    raise ValueError
+
+
+def ser_bare_item(item: BareItemType) -> bytearray:
+    pass
 
 
 def itemise(

@@ -2,6 +2,7 @@ from decimal import Decimal
 from string import digits
 from typing import Tuple, Union
 
+from .util_binary import decode_integer, encode_integer, add_type, STYPE, HEADER_BITS
 
 MAX_INT = 999999999999999
 MIN_INT = -999999999999999
@@ -24,6 +25,20 @@ def ser_integer(inval: int) -> str:
         output += "-"
     output += str(abs(inval))
     return output
+
+
+def bin_parse_integer(data: bytes) -> Tuple[int, int]:
+    """
+    Payload: Integer i
+    """
+    ## TODO: sign
+    return decode_integer(HEADER_BITS, data)
+
+
+def bin_ser_integer(value: int) -> bytearray:
+    ## TODO: add sign
+    data = encode_integer(HEADER_BITS + 1, value)
+    return add_type(data, STYPE.INTEGER)
 
 
 INTEGER = "integer"

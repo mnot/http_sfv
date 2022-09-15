@@ -27,11 +27,25 @@ THE SOFTWARE.
 
 __version__ = "0.9.8"
 
+from typing import Tuple
 
-# Top-level structures
 from .dictionary import Dictionary
 from .list import List
 from .item import Item, InnerList
 from .token import Token
+from .util import StructuredFieldValue
+from .util_binary import HEADER_BITS, STYPE
 
 structures = {"dictionary": Dictionary, "list": List, "item": Item}
+
+
+def parse_binary(data: bytes) -> Tuple[int, StructuredFieldValue]:
+    stype = data[0] >> HEADER_BITS
+    if stype == STYPE.DICTIONARY:
+        top_level = Dictionary()
+    elif stype == STYPE.LIST:
+        top_level = List()
+    else:
+        top_level = Item()
+    bytes_consumed = top_level.from_binary(data)
+    return bytes_consumed, top_level

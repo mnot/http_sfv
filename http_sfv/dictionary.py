@@ -1,7 +1,7 @@
 from collections import UserDict
 
 from .item import Item, InnerList, itemise, AllItemType
-from .list import parse_item_or_inner_list
+from .list import parse_item_or_inner_list, bin_parse_item_or_inner_list
 from .types import JsonDictType
 from .util import (
     StructuredFieldValue,
@@ -9,6 +9,8 @@ from .util import (
     ser_key,
     parse_key,
 )
+from .util_binary import decode_integer, encode_integer, add_type, STYPE, HEADER_BITS
+
 
 EQUALS = ord(b"=")
 COMMA = ord(b",")
@@ -76,3 +78,26 @@ class Dictionary(UserDict, StructuredFieldValue):
             else:
                 self[key] = Item()
             self[key].from_json(val)
+
+    def from_binary(self, data: bytes) -> int:
+        """
+        Payload: Integer num, num x (Integer keyLen, structure) pairs
+        """
+        bytes_consumed, member_count = decode_integer(HEADER_BITS, data)
+        for i in range(member_count):
+            offset, key_len = decode_integer(0, data[bytes_consumed:])
+            bytes_consumed += offset
+            key_end = bytes_consumed + offset
+            name = data[bytes_consumed:key_end].decode("ascii")
+            bytes_consumed = key_end
+            offset, value = bin_parse_item_or_inner_list(data[bytes_consumed:])
+            bytes_consumed += offset
+            self[name] = value
+            # FIXME: Parameters
+        return bytes_consumed
+
+    def to_binary(self) -> bytearray:
+        data = encode_integer(HEADER_BITS, len(self))
+        for member in self:
+            pass  # TODO
+        return add_type(data, STYPE.DICTIONARY)
