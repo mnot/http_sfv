@@ -38,9 +38,9 @@ def bin_parse_integer(data: bytearray) -> Tuple[int, int]:
     return bytes_consumed, integer
 
 
-def bin_ser_integer(value: int) -> bytearray:
+def bin_ser_integer(value: int, parameters: bool) -> bytearray:
     ## TODO: add sign
-    data = bin_header(STYPE.INTEGER)
+    data = bin_header(STYPE.INTEGER, parameters=parameters)
     data += encode_integer(value)
     return data
 

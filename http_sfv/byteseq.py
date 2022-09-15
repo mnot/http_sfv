@@ -41,8 +41,8 @@ def bin_parse_byteseq(data: bytearray) -> Tuple[int, bytes]:
     return end, data[bytes_consumed:end]
 
 
-def bin_ser_byteseq(value: bytes) -> bytearray:
-    data = bin_header(STYPE.BYTESEQ)
+def bin_ser_byteseq(value: bytes, parameters: bool) -> bytearray:
+    data = bin_header(STYPE.BYTESEQ, parameters=parameters)
     data += encode_integer(len(value))
     data += value
     return data

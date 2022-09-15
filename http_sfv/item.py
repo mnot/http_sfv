@@ -91,22 +91,9 @@ class Item(StructuredFieldValue):
 
     def to_binary(self) -> bytearray:
         data = bin_header(TLTYPE.ITEM)
-        if isinstance(self.value, Token):
-            data += bin_ser_token(self.value)
-        elif isinstance(self.value, int):
-            data += bin_ser_integer(self.value)
-        elif isinstance(self.value, Decimal):
-            data += bin_ser_decimal(self.value)
-        elif isinstance(self.value, bool):
-            data += bin_ser_boolean(self.value)
-        elif isinstance(self.value, bytes):
-            data += bin_ser_byteseq(self.value)
-        elif isinstance(self.value, str):
-            data += bin_ser_string(self.value)
-        else:
-            raise ValueError
-        return data
+        data += bin_ser_bare_item(self.value)
         # FIXME: parameters
+        return data
 
 
 class Parameters(dict):
@@ -304,21 +291,21 @@ def bin_parse_bare_item(data: bytearray) -> Tuple[int, BareItemType]:
     raise ValueError(f"Item with binary type '{stype}' can't be identified")
 
 
-def bin_ser_bare_item(item: BareItemType) -> bytearray:
+def bin_ser_bare_item(item: BareItemType, parameters: bool = False) -> bytearray:
     if isinstance(item, int):
-        return bin_ser_integer(item)
+        return bin_ser_integer(item, parameters)
     if isinstance(item, float):
-        return bin_ser_decimal(Decimal(item))
+        return bin_ser_decimal(Decimal(item), parameters)
     if isinstance(item, str):
-        return bin_ser_string(item)
-    if isinstance(item, bool):
-        return bin_ser_boolean(item)
+        return bin_ser_string(item, parameters)
     if isinstance(item, bytes):
-        return bin_ser_byteseq(item)
+        return bin_ser_byteseq(item, parameters)
     if isinstance(item, Token):
-        return bin_ser_token(item)
+        return bin_ser_token(item, parameters)
     if isinstance(item, Decimal):
-        return bin_ser_decimal(item)
+        return bin_ser_decimal(item, parameters)
+    if isinstance(item, bool):
+        return bin_ser_boolean(item, parameters)
     raise ValueError("Can't serialise; unrecognised item with type {stype}.")
 
 

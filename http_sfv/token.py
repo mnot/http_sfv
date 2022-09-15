@@ -38,8 +38,8 @@ def bin_parse_token(data: bytearray) -> Tuple[int, Token]:
     return end, Token(data[bytes_consumed:end].decode("ascii"))
 
 
-def bin_ser_token(value: Token) -> bytearray:
-    data = bin_header(STYPE.TOKEN)
+def bin_ser_token(value: Token, parameters: bool) -> bytearray:
+    data = bin_header(STYPE.TOKEN, parameters=parameters)
     data += encode_integer(len(value))
     data += value.encode("ascii")
     return data

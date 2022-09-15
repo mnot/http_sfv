@@ -55,8 +55,8 @@ def bin_parse_string(data: bytearray) -> Tuple[int, str]:
     return end, data[bytes_consumed:end].decode("ascii")
 
 
-def bin_ser_string(value: str) -> bytearray:
-    data = bin_header(STYPE.STRING)
+def bin_ser_string(value: str, parameters: bool) -> bytearray:
+    data = bin_header(STYPE.STRING, parameters=parameters)
     data += encode_integer(len(value))
     data += value.encode("ascii")
     return data

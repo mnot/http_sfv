@@ -45,13 +45,13 @@ def bin_parse_decimal(data: bytearray) -> Tuple[int, Decimal]:
     return bytes_consumed + offset, Decimal()  # FIXME
 
 
-def bin_ser_decimal(value: Decimal) -> bytearray:
+def bin_ser_decimal(value: Decimal, parameters: bool) -> bytearray:
     ## TODO: sign
     input_decimal = round(value, FRAC_DIGITS)
     abs_decimal = value.copy_abs()
     integer_component = int(abs_decimal)
     fractional_component = int(str(abs_decimal.quantize(PRECISION).normalize() % 1)[2:])
-    data = bin_header(STYPE.DECIMAL)
+    data = bin_header(STYPE.DECIMAL, parameters=parameters)
     data += encode_integer(integer_component)
     data += encode_integer(fractional_component)
     return data

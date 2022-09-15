@@ -28,7 +28,7 @@ def bin_parse_boolean(data: bytearray) -> Tuple[int, bool]:
     return 1, (data[0] & 0b00000010) > 0
 
 
-def bin_ser_boolean(value: bool) -> bytearray:
+def bin_ser_boolean(value: bool, parameters: bool) -> bytearray:
     if value:
-        return bin_header(STYPE.BOOLEAN, flag1=True)
-    return bin_header(STYPE.BOOLEAN, flag1=False)
+        return bin_header(STYPE.BOOLEAN, parameters=parameters, flag1=True)
+    return bin_header(STYPE.BOOLEAN, parameters=parameters, flag1=False)

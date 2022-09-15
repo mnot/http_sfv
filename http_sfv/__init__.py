@@ -51,6 +51,7 @@ def parse_binary(data: bytearray) -> Tuple[int, StructuredFieldValue]:
         return bytes_consumed, list_
     if tltype == TLTYPE.ITEM:
         item = Item()
-        bytes_consumed = item.from_binary(data)
-        return bytes_consumed, item
+        # Item() doesn't consume the top-level byte
+        bytes_consumed = item.from_binary(data[1:])
+        return bytes_consumed + 1, item
     raise ValueError(f"Top-level structured type '{tltype}' not recognized.")
