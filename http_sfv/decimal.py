@@ -39,7 +39,7 @@ def bin_parse_decimal(data: bytes) -> Tuple[int, Decimal]:
     """
     ## TODO: sign
     bytes_consumed, integer_component = decode_integer(HEADER_BITS, data)
-    offset, fractional_component = decode_integer(0, data[bytes_consumed:])
+    offset, fractional_component = decode_integer(1, data[bytes_consumed:])
     return bytes_consumed + offset, Decimal()  # FIXME
 
 

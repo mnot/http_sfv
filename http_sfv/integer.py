@@ -37,7 +37,7 @@ def bin_parse_integer(data: bytes) -> Tuple[int, int]:
 
 def bin_ser_integer(value: int) -> bytearray:
     ## TODO: add sign
-    data = encode_integer(HEADER_BITS + 1, value)
+    data = encode_integer(HEADER_BITS, value)
     return add_type(data, STYPE.INTEGER)
 
 

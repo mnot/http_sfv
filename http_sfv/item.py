@@ -149,7 +149,7 @@ class Parameters(dict):
         """
         bytes_consumed, members = decode_integer(HEADER_BITS, data)
         for _ in range(members):
-            offset, key_len = decode_integer(0, data[bytes_consumed:])
+            offset, key_len = decode_integer(1, data[bytes_consumed:])
             bytes_consumed += offset
             key_end = bytes_consumed + key_len
             name = data[bytes_consumed:key_end].decode("ascii")

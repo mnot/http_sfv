@@ -9,7 +9,7 @@ from .util import (
     ser_key,
     parse_key,
 )
-from .util_binary import decode_integer, encode_integer, add_type, STYPE, HEADER_BITS
+from .util_binary import decode_integer, encode_integer, add_type, TLTYPE, HEADER_BITS
 
 
 EQUALS = ord(b"=")
@@ -85,7 +85,7 @@ class Dictionary(UserDict, StructuredFieldValue):
         """
         bytes_consumed, member_count = decode_integer(HEADER_BITS, data)
         for _ in range(member_count):
-            offset, key_len = decode_integer(0, data[bytes_consumed:])
+            offset, key_len = decode_integer(1, data[bytes_consumed:])
             bytes_consumed += offset
             key_end = bytes_consumed + key_len
             name = data[bytes_consumed:key_end].decode("ascii")
@@ -98,7 +98,7 @@ class Dictionary(UserDict, StructuredFieldValue):
     def to_binary(self) -> bytearray:
         data = encode_integer(HEADER_BITS, len(self))
         for member in self:
-            data += encode_integer(HEADER_BITS, len(member))
+            data += encode_integer(1, len(member))
             data += member.encode("ascii")
             data += self[member].to_binary()
-        return add_type(data, STYPE.DICTIONARY)
+        return add_type(data, TLTYPE.DICTIONARY)

@@ -5,7 +5,7 @@ from typing_extensions import SupportsIndex
 from .item import Item, InnerList, itemise, AllItemType, PAREN_OPEN
 from .types import JsonListType
 from .util import StructuredFieldValue, discard_http_ows
-from .util_binary import decode_integer, add_type, STYPE, HEADER_BITS
+from .util_binary import decode_integer, add_type, STYPE, TLTYPE, HEADER_BITS
 
 
 COMMA = ord(b",")
@@ -78,7 +78,7 @@ class List(UserList, StructuredFieldValue):
 
     def to_binary(self) -> bytearray:
         data = bytearray(b"")
-        return add_type(data, STYPE.LIST)
+        return add_type(data, TLTYPE.LIST)
 
 
 def parse_item_or_inner_list(data: bytes) -> Tuple[int, Union[Item, InnerList]]:

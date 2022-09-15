@@ -34,21 +34,23 @@ from .list import List
 from .item import Item, InnerList
 from .token import Token
 from .util import StructuredFieldValue
-from .util_binary import HEADER_BITS, STYPE
+from .util_binary import HEADER_BITS, TLTYPE
 
 structures = {"dictionary": Dictionary, "list": List, "item": Item}
 
 
 def parse_binary(data: bytes) -> Tuple[int, StructuredFieldValue]:
-    stype = data[0] >> HEADER_BITS
-    if stype == STYPE.DICTIONARY:
+    tltype = data[0] >> HEADER_BITS
+    if tltype == TLTYPE.DICTIONARY:
         dictionary = Dictionary()
         bytes_consumed = dictionary.from_binary(data)
         return bytes_consumed, dictionary
-    if stype == STYPE.LIST:
+    if tltype == TLTYPE.LIST:
         list_ = List()
         bytes_consumed = list_.from_binary(data)
         return bytes_consumed, list_
-    item = Item()
-    bytes_consumed = item.from_binary(data)
-    return bytes_consumed, item
+    if tltype == TLTYPE.ITEM:
+        item = Item()
+        bytes_consumed = item.from_binary(data)
+        return bytes_consumed, item
+    raise ValueError(f"Top-level structured type '{tltype}' not recognized.")

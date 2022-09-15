@@ -18,20 +18,25 @@ HEADER_BITS = 4
 HEADER_MASK = 0b00001111
 
 
-class STYPE(IntEnum):
+class TLTYPE(IntEnum):
+    RAW = 0
     DICTIONARY = 1
     LIST = 2
-    INNER_LIST = 3
-    INTEGER = 4
-    DECIMAL = 5
-    BOOLEAN = 6
+    ITEM = 3
+
+class STYPE(IntEnum):
+    INNER_LIST = 1
+    PARAMETER = 2
+    INTEGER = 3
+    DECIMAL = 4
+    STRING = 5
+    TOKEN = 6
     BYTESEQ = 7
-    STRING = 8
-    TOKEN = 9
+    BOOLEAN = 8
 
 
 def add_type(data: bytearray, sf_type: STYPE) -> bytearray:
-    data[0] = (sf_type << HEADER_BITS) | data[0]
+    data[0] |= sf_type << HEADER_BITS
     return data
 
 
