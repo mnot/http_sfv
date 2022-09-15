@@ -35,7 +35,7 @@ from .util import (
     parse_key,
     ser_key,
 )
-from .util_binary import decode_integer, STYPE, HEADER_BITS
+from .util_binary import decode_integer, bin_header, TLTYPE, STYPE, HEADER_BITS
 from .util_json import value_to_json, value_from_json
 
 
@@ -81,26 +81,31 @@ class Item(StructuredFieldValue):
         self.value = value_from_json(value)
         self.params.from_json(params)
 
-    def from_binary(self, data: bytes) -> int:
-        bytes_consumed, self.value = bin_parse_bare_item(data)
+    def from_binary(self, data: bytearray) -> int:
+        bytes_consumed = 1  # header
+        offset, self.value = bin_parse_bare_item(data[bytes_consumed:])
+        bytes_consumed += offset
         # FIXME: flag for params
-        offset = self.params.from_binary(data[bytes_consumed:])
-        return bytes_consumed + offset
+        #        offset = self.params.from_binary(data[bytes_consumed:])
+        return bytes_consumed
 
     def to_binary(self) -> bytearray:
+        data = bin_header(TLTYPE.ITEM)
         if isinstance(self.value, Token):
-            return bin_ser_token(self.value)
-        if isinstance(self.value, int):
-            return bin_ser_integer(self.value)
-        if isinstance(self.value, Decimal):
-            return bin_ser_decimal(self.value)
-        if isinstance(self.value, bool):
-            return bin_ser_boolean(self.value)
-        if isinstance(self.value, bytes):
-            return bin_ser_byteseq(self.value)
-        if isinstance(self.value, str):
-            return bin_ser_string(self.value)
-        raise ValueError
+            data += bin_ser_token(self.value)
+        elif isinstance(self.value, int):
+            data += bin_ser_integer(self.value)
+        elif isinstance(self.value, Decimal):
+            data += bin_ser_decimal(self.value)
+        elif isinstance(self.value, bool):
+            data += bin_ser_boolean(self.value)
+        elif isinstance(self.value, bytes):
+            data += bin_ser_byteseq(self.value)
+        elif isinstance(self.value, str):
+            data += bin_ser_string(self.value)
+        else:
+            raise ValueError
+        return data
         # FIXME: parameters
 
 
@@ -143,18 +148,20 @@ class Parameters(dict):
         for (name, value) in json_data:
             self[name] = value_from_json(value)
 
-    def from_binary(self, data: bytes) -> int:
+    def from_binary(self, data: bytearray) -> int:
         """
         Payload: Integer num, item, num x (Integer keyLen, structure) pairs
         """
-        bytes_consumed, members = decode_integer(HEADER_BITS, data)
-        for _ in range(members):
-            offset, key_len = decode_integer(1, data[bytes_consumed:])
+        bytes_consumed = 1  # header
+        offset, member_count = decode_integer(data[bytes_consumed:])
+        bytes_consumed += offset
+        for _ in range(member_count):
+            offset, key_len = decode_integer(data[bytes_consumed:])
             bytes_consumed += offset
             key_end = bytes_consumed + key_len
             name = data[bytes_consumed:key_end].decode("ascii")
             bytes_consumed = key_end
-            offset, value = parse_bare_item(data[bytes_consumed:])
+            offset, value = bin_parse_bare_item(data[bytes_consumed:])
             bytes_consumed += offset
             self[name] = value
         return bytes_consumed
@@ -220,12 +227,11 @@ class InnerList(UserList):
             self[-1].from_json(i)
         self.params.from_json(params)
 
-    def from_binary(self, data: bytes) -> int:
-        """
-        Payload: Integer l, l items following
-        """
-        bytes_consumed, members = decode_integer(HEADER_BITS, data)
-        for _ in range(members):
+    def from_binary(self, data: bytearray) -> int:
+        bytes_consumed = 1  # header
+        offset, member_count = decode_integer(data[bytes_consumed:])
+        bytes_consumed += offset
+        for _ in range(member_count):
             offset, member = bin_parse_bare_item(data[bytes_consumed:])
             bytes_consumed += offset
             self.append(member)
@@ -233,7 +239,9 @@ class InnerList(UserList):
         return bytes_consumed
 
     def to_binary(self) -> bytearray:
-        pass
+        data = bin_header(TLTYPE.ITEM)
+        data += bin_ser_bare_item(self)
+        return data
 
 
 _parse_map = {
@@ -279,7 +287,7 @@ def ser_bare_item(item: BareItemType) -> str:
     raise ValueError(f"Can't serialise; unrecognised item with type {type(item)}")
 
 
-def bin_parse_bare_item(data: bytes) -> Tuple[int, BareItemType]:
+def bin_parse_bare_item(data: bytearray) -> Tuple[int, BareItemType]:
     stype = data[0] >> HEADER_BITS
     if stype == STYPE.INTEGER:
         return bin_parse_integer(data)
@@ -297,7 +305,21 @@ def bin_parse_bare_item(data: bytes) -> Tuple[int, BareItemType]:
 
 
 def bin_ser_bare_item(item: BareItemType) -> bytearray:
-    pass  # FIXME
+    if isinstance(item, int):
+        return bin_ser_integer(item)
+    if isinstance(item, float):
+        return bin_ser_decimal(Decimal(item))
+    if isinstance(item, str):
+        return bin_ser_string(item)
+    if isinstance(item, bool):
+        return bin_ser_boolean(item)
+    if isinstance(item, bytes):
+        return bin_ser_byteseq(item)
+    if isinstance(item, Token):
+        return bin_ser_token(item)
+    if isinstance(item, Decimal):
+        return bin_ser_decimal(item)
+    raise ValueError("Can't serialise; unrecognised item with type {stype}.")
 
 
 def itemise(

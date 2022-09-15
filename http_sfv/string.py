@@ -1,6 +1,6 @@
 from typing import Tuple
 
-from .util_binary import decode_integer, encode_integer, add_type, STYPE, HEADER_BITS
+from .util_binary import decode_integer, encode_integer, bin_header, STYPE
 
 DQUOTE = ord('"')
 BACKSLASH = ord("\\")
@@ -44,16 +44,19 @@ def ser_string(inval: str) -> str:
     return f'"{escaped}"'
 
 
-def bin_parse_string(data: bytes) -> Tuple[int, str]:
+def bin_parse_string(data: bytearray) -> Tuple[int, str]:
     """
     Payload: Integer l, l bytes of content
     """
-    bytes_consumed, length = decode_integer(HEADER_BITS, data)
+    bytes_consumed = 1  # header
+    offset, length = decode_integer(data)
+    bytes_consumed += offset
     end = bytes_consumed + length
     return end, data[bytes_consumed:end].decode("ascii")
 
 
 def bin_ser_string(value: str) -> bytearray:
-    data = encode_integer(HEADER_BITS, len(value))
+    data = bin_header(STYPE.STRING)
+    data += encode_integer(len(value))
     data += value.encode("ascii")
-    return add_type(data, STYPE.STRING)
+    return data

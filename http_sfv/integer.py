@@ -2,7 +2,7 @@ from decimal import Decimal
 from string import digits
 from typing import Tuple, Union
 
-from .util_binary import decode_integer, encode_integer, add_type, STYPE, HEADER_BITS
+from .util_binary import decode_integer, encode_integer, bin_header, STYPE
 
 MAX_INT = 999999999999999
 MIN_INT = -999999999999999
@@ -27,18 +27,22 @@ def ser_integer(inval: int) -> str:
     return output
 
 
-def bin_parse_integer(data: bytes) -> Tuple[int, int]:
+def bin_parse_integer(data: bytearray) -> Tuple[int, int]:
     """
     Payload: Integer i
     """
     ## TODO: sign
-    return decode_integer(HEADER_BITS, data)
+    bytes_consumed = 1  # header
+    offset, integer = decode_integer(data[bytes_consumed:])
+    bytes_consumed += offset
+    return bytes_consumed, integer
 
 
 def bin_ser_integer(value: int) -> bytearray:
     ## TODO: add sign
-    data = encode_integer(HEADER_BITS, value)
-    return add_type(data, STYPE.INTEGER)
+    data = bin_header(STYPE.INTEGER)
+    data += encode_integer(value)
+    return data
 
 
 INTEGER = "integer"

@@ -9,7 +9,7 @@ from .util import (
     ser_key,
     parse_key,
 )
-from .util_binary import decode_integer, encode_integer, add_type, TLTYPE, HEADER_BITS
+from .util_binary import decode_integer, encode_integer, bin_header, TLTYPE
 
 
 EQUALS = ord(b"=")
@@ -79,16 +79,21 @@ class Dictionary(UserDict, StructuredFieldValue):
                 self[key] = Item()
             self[key].from_json(val)
 
-    def from_binary(self, data: bytes) -> int:
+    def from_binary(self, data: bytearray) -> int:
         """
         Payload: Integer num, num x (Integer keyLen, structure) pairs
         """
-        bytes_consumed, member_count = decode_integer(HEADER_BITS, data)
+        bytes_consumed = 1  # header
+        offset, member_count = decode_integer(data[bytes_consumed:])
+        bytes_consumed += offset
+        print(f"decoded member count: {member_count}")
         for _ in range(member_count):
-            offset, key_len = decode_integer(1, data[bytes_consumed:])
+            offset, key_len = decode_integer(data[bytes_consumed:])
             bytes_consumed += offset
             key_end = bytes_consumed + key_len
+            print(f"decoded name length: {key_len}")
             name = data[bytes_consumed:key_end].decode("ascii")
+            print(f"decoded name: {name}")
             bytes_consumed = key_end
             offset, value = bin_parse_item_or_inner_list(data[bytes_consumed:])
             bytes_consumed += offset
@@ -96,9 +101,10 @@ class Dictionary(UserDict, StructuredFieldValue):
         return bytes_consumed
 
     def to_binary(self) -> bytearray:
-        data = encode_integer(HEADER_BITS, len(self))
+        data = bin_header(TLTYPE.DICTIONARY)
+        data += encode_integer(len(self))
         for member in self:
-            data += encode_integer(1, len(member))
+            data += encode_integer(len(member))
             data += member.encode("ascii")
             data += self[member].to_binary()
-        return add_type(data, TLTYPE.DICTIONARY)
+        return data

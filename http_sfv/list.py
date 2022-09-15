@@ -5,7 +5,7 @@ from typing_extensions import SupportsIndex
 from .item import Item, InnerList, itemise, AllItemType, PAREN_OPEN
 from .types import JsonListType
 from .util import StructuredFieldValue, discard_http_ows
-from .util_binary import decode_integer, add_type, STYPE, TLTYPE, HEADER_BITS
+from .util_binary import decode_integer, bin_header, STYPE, TLTYPE, HEADER_BITS
 
 
 COMMA = ord(b",")
@@ -65,11 +65,13 @@ class List(UserList, StructuredFieldValue):
                 self.append(Item())
             self[-1].from_json(i)
 
-    def from_binary(self, data: bytes) -> int:
+    def from_binary(self, data: bytearray) -> int:
         """
         Payload: Integer l, l items or inner lists following
         """
-        bytes_consumed, member_count = decode_integer(HEADER_BITS, data)
+        bytes_consumed = 1  # header
+        offset, member_count = decode_integer(data[bytes_consumed:])
+        bytes_consumed += offset
         for _ in range(member_count):
             offset, member = bin_parse_item_or_inner_list(data[bytes_consumed:])
             bytes_consumed += offset
@@ -77,8 +79,9 @@ class List(UserList, StructuredFieldValue):
         return bytes_consumed
 
     def to_binary(self) -> bytearray:
-        data = bytearray(b"")
-        return add_type(data, TLTYPE.LIST)
+        data = bin_header(TLTYPE.LIST)
+        data += bytearray(b"")  # FIXME
+        return data
 
 
 def parse_item_or_inner_list(data: bytes) -> Tuple[int, Union[Item, InnerList]]:
@@ -94,7 +97,7 @@ def parse_item_or_inner_list(data: bytes) -> Tuple[int, Union[Item, InnerList]]:
     return bytes_consumed, item
 
 
-def bin_parse_item_or_inner_list(data: bytes) -> Tuple[int, Union[InnerList, Item]]:
+def bin_parse_item_or_inner_list(data: bytearray) -> Tuple[int, Union[InnerList, Item]]:
     stype = data[0] >> HEADER_BITS
     if stype == STYPE.INNER_LIST:
         inner_list = InnerList()

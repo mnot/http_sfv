@@ -2,7 +2,7 @@ from string import ascii_letters, digits
 from typing import Tuple
 
 from .types import Token
-from .util_binary import decode_integer, encode_integer, add_type, STYPE, HEADER_BITS
+from .util_binary import decode_integer, encode_integer, bin_header, STYPE
 
 
 TOKEN_START_CHARS = set((ascii_letters + "*").encode("ascii"))
@@ -27,16 +27,19 @@ def ser_token(token: Token) -> str:
     return str(token)
 
 
-def bin_parse_token(data: bytes) -> Tuple[int, Token]:
+def bin_parse_token(data: bytearray) -> Tuple[int, Token]:
     """
     Payload: Integer l, l bytes of content
     """
-    bytes_consumed, length = decode_integer(HEADER_BITS, data)
+    bytes_consumed = 1  # header
+    offset, length = decode_integer(data)
+    bytes_consumed += offset
     end = bytes_consumed + length
     return end, Token(data[bytes_consumed:end].decode("ascii"))
 
 
 def bin_ser_token(value: Token) -> bytearray:
-    data = encode_integer(HEADER_BITS, len(value))
+    data = bin_header(STYPE.TOKEN)
+    data += encode_integer(len(value))
     data += value.encode("ascii")
-    return add_type(data, STYPE.TOKEN)
+    return data

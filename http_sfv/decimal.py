@@ -2,7 +2,7 @@ from decimal import Decimal
 from typing import Tuple, Union
 
 from .integer import parse_number
-from .util_binary import decode_integer, encode_integer, add_type, STYPE, HEADER_BITS
+from .util_binary import decode_integer, encode_integer, bin_header, STYPE
 
 
 INT_DIGITS = 12
@@ -33,13 +33,15 @@ def ser_decimal(input_decimal: Union[Decimal, float]) -> str:
     )
 
 
-def bin_parse_decimal(data: bytes) -> Tuple[int, Decimal]:
+def bin_parse_decimal(data: bytearray) -> Tuple[int, Decimal]:
     """
     Payload: Integer i, Integer f - indicating the integer and fractional components in use
     """
     ## TODO: sign
-    bytes_consumed, integer_component = decode_integer(HEADER_BITS, data)
-    offset, fractional_component = decode_integer(1, data[bytes_consumed:])
+    header = data.pop(0)
+    bytes_consumed, integer_component = decode_integer(data)
+    bytes_consumed += 1  # header
+    offset, fractional_component = decode_integer(data[bytes_consumed:])
     return bytes_consumed + offset, Decimal()  # FIXME
 
 
@@ -49,6 +51,7 @@ def bin_ser_decimal(value: Decimal) -> bytearray:
     abs_decimal = value.copy_abs()
     integer_component = int(abs_decimal)
     fractional_component = int(str(abs_decimal.quantize(PRECISION).normalize() % 1)[2:])
-    data = encode_integer(integer_component, HEADER_BITS)
-    data += encode_integer(fractional_component, 0)
-    return add_type(data, STYPE.DECIMAL)
+    data = bin_header(STYPE.DECIMAL)
+    data += encode_integer(integer_component)
+    data += encode_integer(fractional_component)
+    return data

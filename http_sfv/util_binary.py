@@ -1,21 +1,8 @@
 from enum import IntEnum
-from typing import Tuple
+from typing import Tuple, Union
 
 
-__doc__ = """
-Each structure has a one-byte header, whose bits are:
-
-|ttttxxxx|
-
-- The first four `t` bits indicate the type of the structure. Each type has a specific payload
-- The last four `x` bits are available for the structure's use
-Each structure is self-delimiting.
-"""
-
-# FIXME: value content validation
-
-HEADER_BITS = 4
-HEADER_MASK = 0b00001111
+HEADER_BITS = 5
 
 
 class TLTYPE(IntEnum):
@@ -23,6 +10,7 @@ class TLTYPE(IntEnum):
     DICTIONARY = 1
     LIST = 2
     ITEM = 3
+
 
 class STYPE(IntEnum):
     INNER_LIST = 1
@@ -35,77 +23,50 @@ class STYPE(IntEnum):
     BOOLEAN = 8
 
 
-def add_type(data: bytearray, sf_type: STYPE) -> bytearray:
+def bin_header(
+    sf_type: Union[TLTYPE, STYPE],
+    parameters: bool = False,
+    flag1: bool = False,
+    flag2: bool = False,
+) -> bytearray:
+    data = bytearray([0])
     data[0] |= sf_type << HEADER_BITS
     return data
 
 
-#### From hyper hpack
-
-# Precompute 2^i for 1-8 for use in prefix calcs.
-# Zero index is not used but there to save a subtraction
-# as prefix numbers are not zero indexed.
-_PREFIX_BIT_MAX_NUMBERS = [(2**i) - 1 for i in range(9)]
-
-
-def decode_integer(prefix_bits: int, data: bytes) -> Tuple[int, int]:
-    """
-    This decodes an integer according to the wacky integer encoding rules
-    defined in the HPACK spec. Returns a tuple of the decoded integer and the
-    number of bytes that were consumed from ``data`` in order to get that
-    integer.
-    """
-    if prefix_bits < 1 or prefix_bits > 8:
-        raise ValueError(f"Prefix bits must be between 1 and 8, got {prefix_bits}")
-
-    max_number = _PREFIX_BIT_MAX_NUMBERS[prefix_bits]
-    index = 1
-    shift = 0
-    mask = 0xFF >> (8 - prefix_bits)
-
-    try:
-        number = data[0] & mask
-        if number == max_number:
-            while True:
-                next_byte = data[index]
-                index += 1
-
-                if next_byte >= 128:
-                    number += (next_byte - 128) << shift
-                else:
-                    number += next_byte << shift
-                    break
-                shift += 7
-
-    except IndexError:
-        raise ValueError("Unable to decode HPACK integer representation from %r" % data)
-
-    return index, number
+def decode_integer(data: bytearray) -> Tuple[int, int]:
+    val = data[0]
+    prefix = val >> 6
+    length = 1 << prefix
+    val = val & 0x3F
+    for i in range(1, length):
+        val = (val << 8) + data[i]
+    return length, val
 
 
-def encode_integer(integer: int, prefix_bits: int) -> bytearray:
-    """
-    This encodes an integer according to the wacky integer encoding rules
-    defined in the HPACK spec.
-    """
+UINT8 = 256
 
-    if integer < 0:
-        raise ValueError(f"Can only encode positive integers, got {integer}")
 
-    if prefix_bits < 1 or prefix_bits > 8:
-        raise ValueError(f"Prefix bits must be between 1 and 8, got {prefix_bits}")
-
-    max_number = _PREFIX_BIT_MAX_NUMBERS[prefix_bits]
-
-    if integer < max_number:
-        return bytearray([integer])  # Seriously?
-    elements = [max_number]
-    integer -= max_number
-
-    while integer >= 128:
-        elements.append((integer & 127) + 128)
-        integer >>= 7
-
-    elements.append(integer)
-
-    return bytearray(elements)
+def encode_integer(i: int) -> bytearray:
+    if i <= 63:
+        return bytearray([i])
+    if i <= 16383:
+        return bytearray([i >> 8 | 0x40, i % UINT8])
+    if i <= 1073741823:
+        return bytearray(
+            [i >> 24 | 0x80, (i >> 16) % UINT8, (i >> 8) % UINT8, i % UINT8]
+        )
+    if i <= 4611686018427387903:
+        return bytearray(
+            [
+                (i >> 56) % UINT8 | 0xC0,
+                (i >> 48) % UINT8,
+                (i >> 40) % UINT8,
+                (i >> 32) % UINT8,
+                (i >> 24) % UINT8,
+                (i >> 16) % UINT8,
+                (i >> 8) % UINT8,
+                i % UINT8,
+            ]
+        )
+    raise ValueError(f"{i} doesn't fit into 62 bits")

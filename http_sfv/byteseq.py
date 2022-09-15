@@ -3,7 +3,7 @@ import binascii
 from string import ascii_letters, digits
 from typing import Tuple
 
-from .util_binary import decode_integer, encode_integer, add_type, STYPE, HEADER_BITS
+from .util_binary import decode_integer, encode_integer, bin_header, STYPE
 
 BYTE_DELIMIT = ord(b":")
 B64CONTENT = set((ascii_letters + digits + "+/=").encode("ascii"))
@@ -30,16 +30,19 @@ def ser_byteseq(byteseq: bytes) -> str:
     return f":{base64.standard_b64encode(byteseq).decode('ascii')}:"
 
 
-def bin_parse_byteseq(data: bytes) -> Tuple[int, bytes]:
+def bin_parse_byteseq(data: bytearray) -> Tuple[int, bytes]:
     """
     Payload: Integer l, l bytes of content
     """
-    bytes_consumed, length = decode_integer(HEADER_BITS, data)
+    bytes_consumed = 1  # header
+    offset, length = decode_integer(data[bytes_consumed:])
+    bytes_consumed += offset
     end = bytes_consumed + length
     return end, data[bytes_consumed:end]
 
 
 def bin_ser_byteseq(value: bytes) -> bytearray:
-    data = encode_integer(HEADER_BITS, len(value))
+    data = bin_header(STYPE.BYTESEQ)
+    data += encode_integer(len(value))
     data += value
-    return add_type(data, STYPE.BYTESEQ)
+    return data

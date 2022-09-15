@@ -39,7 +39,7 @@ from .util_binary import HEADER_BITS, TLTYPE
 structures = {"dictionary": Dictionary, "list": List, "item": Item}
 
 
-def parse_binary(data: bytes) -> Tuple[int, StructuredFieldValue]:
+def parse_binary(data: bytearray) -> Tuple[int, StructuredFieldValue]:
     tltype = data[0] >> HEADER_BITS
     if tltype == TLTYPE.DICTIONARY:
         dictionary = Dictionary()
