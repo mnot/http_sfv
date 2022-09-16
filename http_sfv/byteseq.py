@@ -35,7 +35,7 @@ def bin_parse_byteseq(data: bytearray) -> Tuple[int, bytes]:
     bytes_consumed, length = decode_integer(data[cursor:])
     cursor += bytes_consumed
     end = cursor + length
-    return end, data[cursor:end]
+    return end, bytes(data[cursor:end])
 
 
 def bin_ser_byteseq(value: bytes, parameters: bool) -> bytearray:
