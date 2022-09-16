@@ -2,7 +2,7 @@ from decimal import Decimal
 from typing import Tuple, Union
 
 from .integer import parse_number
-from .util_binary import decode_integer, encode_integer, bin_header, STYPE
+from .util_binary import decode_integer, encode_integer, bin_header, extract_flags, STYPE
 
 
 INT_DIGITS = 12
@@ -34,24 +34,19 @@ def ser_decimal(input_decimal: Union[Decimal, float]) -> str:
 
 
 def bin_parse_decimal(data: bytearray) -> Tuple[int, Decimal]:
-    """
-    Payload: Integer i, Integer f - indicating the integer and fractional components in use
-    """
-    ## TODO: sign
-    header = data.pop(0)
-    bytes_consumed, integer_component = decode_integer(data)
-    bytes_consumed += 1  # header
-    offset, fractional_component = decode_integer(data[bytes_consumed:])
-    return bytes_consumed + offset, Decimal()  # FIXME
+    cursor = 1 # header
+    sign = 1 if extract_flags(data[0])[0] else -1
+    bytes_consumed, int_a = decode_integer(data[cursor:])
+    cursor += bytes_consumed
+    bytes_consumed, int_b = decode_integer(data[cursor:])
+    cursor += bytes_consumed
+    return cursor, sign * Decimal(int_a) / int_b
 
 
 def bin_ser_decimal(value: Decimal, parameters: bool) -> bytearray:
-    ## TODO: sign
-    input_decimal = round(value, FRAC_DIGITS)
-    abs_decimal = value.copy_abs()
-    integer_component = int(abs_decimal)
-    fractional_component = int(str(abs_decimal.quantize(PRECISION).normalize() % 1)[2:])
-    data = bin_header(STYPE.DECIMAL, parameters=parameters)
-    data += encode_integer(integer_component)
-    data += encode_integer(fractional_component)
+    int_a, int_b = value.as_integer_ratio()
+    sign = int_a >= 0
+    data = bin_header(STYPE.DECIMAL, parameters=parameters, flag1=sign)
+    data += encode_integer(abs(int_a))
+    data += encode_integer(int_b)
     return data
