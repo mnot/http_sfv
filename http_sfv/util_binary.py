@@ -31,7 +31,17 @@ def bin_header(
 ) -> bytearray:
     data = bytearray([0])
     data[0] |= sf_type << HEADER_BITS
+    if parameters:
+        data[0] |= 1 << 2
+    if flag1:
+        data[0] |= 1 << 1
+    if flag2:
+        data[0] |= 1 << 0
     return data
+
+
+def extract_flags(header: int) -> Tuple[bool, bool]:
+    return ((header & 0b00000010) > 0, (header & 0b00000001) > 0)
 
 
 def decode_integer(data: bytearray) -> Tuple[int, int]:

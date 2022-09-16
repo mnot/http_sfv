@@ -35,7 +35,14 @@ from .util import (
     parse_key,
     ser_key,
 )
-from .util_binary import decode_integer, bin_header, TLTYPE, STYPE, HEADER_BITS
+from .util_binary import (
+    encode_integer,
+    decode_integer,
+    bin_header,
+    TLTYPE,
+    STYPE,
+    HEADER_BITS,
+)
 from .util_json import value_to_json, value_from_json
 
 
@@ -90,9 +97,10 @@ class Item(StructuredFieldValue):
         return bytes_consumed
 
     def to_binary(self) -> bytearray:
-        data = bin_header(TLTYPE.ITEM)
+        data = bin_header(TLTYPE.ITEM, parameters=bool(self.params))
         data += bin_ser_bare_item(self.value)
-        # FIXME: parameters
+        if self.params:
+            data += self.params.to_binary()
         return data
 
 
@@ -154,7 +162,13 @@ class Parameters(dict):
         return bytes_consumed
 
     def to_binary(self) -> bytearray:
-        pass  # FIXME
+        data = bin_header(STYPE.PARAMETER)
+        data += encode_integer(len(self))
+        for member in self:
+            data += encode_integer(len(member))
+            data += member.encode("ascii")
+            data += self[member].to_binary()
+        return data
 
 
 SingleItemType = Union[BareItemType, Item]
@@ -226,7 +240,7 @@ class InnerList(UserList):
         return bytes_consumed
 
     def to_binary(self) -> bytearray:
-        data = bin_header(TLTYPE.ITEM)
+        data = bin_header(STYPE.INNER_LIST)
         data += bin_ser_bare_item(self)
         return data
 

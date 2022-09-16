@@ -31,14 +31,11 @@ def ser_byteseq(byteseq: bytes) -> str:
 
 
 def bin_parse_byteseq(data: bytearray) -> Tuple[int, bytes]:
-    """
-    Payload: Integer l, l bytes of content
-    """
-    bytes_consumed = 1  # header
-    offset, length = decode_integer(data[bytes_consumed:])
-    bytes_consumed += offset
-    end = bytes_consumed + length
-    return end, data[bytes_consumed:end]
+    cursor = 1  # header
+    bytes_consumed, length = decode_integer(data[cursor:])
+    cursor += bytes_consumed
+    end = cursor + length
+    return end, data[cursor:end]
 
 
 def bin_ser_byteseq(value: bytes, parameters: bool) -> bytearray:

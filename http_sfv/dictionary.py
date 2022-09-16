@@ -83,22 +83,19 @@ class Dictionary(UserDict, StructuredFieldValue):
         """
         Payload: Integer num, num x (Integer keyLen, structure) pairs
         """
-        bytes_consumed = 1  # header
-        offset, member_count = decode_integer(data[bytes_consumed:])
-        bytes_consumed += offset
-        print(f"decoded member count: {member_count}")
+        cursor = 1  # header
+        bytes_consumed, member_count = decode_integer(data[cursor:])
+        cursor += bytes_consumed
         for _ in range(member_count):
-            offset, key_len = decode_integer(data[bytes_consumed:])
-            bytes_consumed += offset
-            key_end = bytes_consumed + key_len
-            print(f"decoded name length: {key_len}")
-            name = data[bytes_consumed:key_end].decode("ascii")
-            print(f"decoded name: {name}")
-            bytes_consumed = key_end
-            offset, value = bin_parse_item_or_inner_list(data[bytes_consumed:])
-            bytes_consumed += offset
+            bytes_consumed, key_len = decode_integer(data[cursor:])
+            cursor += bytes_consumed
+            key_end = cursor + key_len
+            name = data[cursor:key_end].decode("ascii")
+            cursor = key_end
+            bytes_consumed, value = bin_parse_item_or_inner_list(data[cursor:])
+            cursor += bytes_consumed
             self[name] = value
-        return bytes_consumed
+        return cursor
 
     def to_binary(self) -> bytearray:
         data = bin_header(TLTYPE.DICTIONARY)

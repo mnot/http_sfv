@@ -45,14 +45,11 @@ def ser_string(inval: str) -> str:
 
 
 def bin_parse_string(data: bytearray) -> Tuple[int, str]:
-    """
-    Payload: Integer l, l bytes of content
-    """
-    bytes_consumed = 1  # header
-    offset, length = decode_integer(data)
-    bytes_consumed += offset
-    end = bytes_consumed + length
-    return end, data[bytes_consumed:end].decode("ascii")
+    cursor = 1  # header
+    bytes_consumed, length = decode_integer(data[cursor:])
+    cursor += bytes_consumed
+    end = cursor + length
+    return end, data[cursor:end].decode("ascii")
 
 
 def bin_ser_string(value: str, parameters: bool) -> bytearray:

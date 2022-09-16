@@ -1,6 +1,6 @@
 from typing import Tuple
 
-from .util_binary import bin_header, STYPE
+from .util_binary import bin_header, extract_flags, STYPE
 
 QUESTION = ord(b"?")
 ONE = ord(b"1")
@@ -22,13 +22,8 @@ def ser_boolean(inval: bool) -> str:
 
 
 def bin_parse_boolean(data: bytearray) -> Tuple[int, bool]:
-    """
-    Payload: Integer l, b000 remaining bits, b indicating the Boolean value
-    """
-    return 1, (data[0] & 0b00000010) > 0
+    return 1, extract_flags(data[0])[0]
 
 
 def bin_ser_boolean(value: bool, parameters: bool) -> bytearray:
-    if value:
-        return bin_header(STYPE.BOOLEAN, parameters=parameters, flag1=True)
-    return bin_header(STYPE.BOOLEAN, parameters=parameters, flag1=False)
+    return bin_header(STYPE.BOOLEAN, parameters=parameters, flag1=value)

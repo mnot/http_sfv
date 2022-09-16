@@ -28,14 +28,11 @@ def ser_token(token: Token) -> str:
 
 
 def bin_parse_token(data: bytearray) -> Tuple[int, Token]:
-    """
-    Payload: Integer l, l bytes of content
-    """
-    bytes_consumed = 1  # header
-    offset, length = decode_integer(data)
-    bytes_consumed += offset
-    end = bytes_consumed + length
-    return end, Token(data[bytes_consumed:end].decode("ascii"))
+    cursor = 1  # header
+    bytes_consumed, length = decode_integer(data[cursor:])
+    cursor += bytes_consumed
+    end = cursor + length
+    return end, Token(data[cursor:end].decode("ascii"))
 
 
 def bin_ser_token(value: Token, parameters: bool) -> bytearray:
