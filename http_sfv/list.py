@@ -5,7 +5,14 @@ from typing_extensions import SupportsIndex
 from .item import Item, InnerList, itemise, AllItemType, PAREN_OPEN
 from .types import JsonListType
 from .util import StructuredFieldValue, discard_http_ows
-from .util_binary import encode_integer, decode_integer, bin_header, STYPE, TLTYPE, HEADER_BITS
+from .util_binary import (
+    encode_integer,
+    decode_integer,
+    bin_header,
+    STYPE,
+    TLTYPE,
+    HEADER_BITS,
+)
 
 
 COMMA = ord(b",")

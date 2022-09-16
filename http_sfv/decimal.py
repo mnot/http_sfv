@@ -2,7 +2,13 @@ from decimal import Decimal
 from typing import Tuple, Union
 
 from .integer import parse_number
-from .util_binary import decode_integer, encode_integer, bin_header, extract_flags, STYPE
+from .util_binary import (
+    decode_integer,
+    encode_integer,
+    bin_header,
+    extract_flags,
+    STYPE,
+)
 
 
 INT_DIGITS = 12
@@ -34,7 +40,7 @@ def ser_decimal(input_decimal: Union[Decimal, float]) -> str:
 
 
 def bin_parse_decimal(data: bytearray) -> Tuple[int, Decimal]:
-    cursor = 1 # header
+    cursor = 1  # header
     sign = 1 if extract_flags(data[0])[0] else -1
     bytes_consumed, int_a = decode_integer(data[cursor:])
     cursor += bytes_consumed

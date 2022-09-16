@@ -89,7 +89,7 @@ class Item(StructuredFieldValue):
         self.params.from_json(params)
 
     def from_binary(self, data: bytearray) -> int:
-        bytes_consumed = 1  # header
+        bytes_consumed = 0  # header
         offset, self.value = bin_parse_bare_item(data[bytes_consumed:])
         bytes_consumed += offset
         # FIXME: flag for params
@@ -97,7 +97,8 @@ class Item(StructuredFieldValue):
         return bytes_consumed
 
     def to_binary(self) -> bytearray:
-        data = bin_header(TLTYPE.ITEM, parameters=bool(self.params))
+        #        data = bin_header(TLTYPE.ITEM, parameters=bool(self.params))
+        data = bytearray()
         data += bin_ser_bare_item(self.value)
         if self.params:
             data += self.params.to_binary()
