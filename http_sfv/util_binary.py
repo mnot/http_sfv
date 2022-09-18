@@ -44,6 +44,10 @@ def extract_flags(header: int) -> Tuple[bool, bool]:
     return ((header & 0b00000010) > 0, (header & 0b00000001) > 0)
 
 
+def has_params(header: int) -> bool:
+    return (header & 0b00000100) > 0
+
+
 def decode_integer(data: bytearray) -> Tuple[int, int]:
     val = data[0]
     prefix = val >> 6

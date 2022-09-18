@@ -9,6 +9,7 @@ from .util_binary import (
     encode_integer,
     decode_integer,
     bin_header,
+    has_params,
     STYPE,
     TLTYPE,
     HEADER_BITS,
@@ -108,8 +109,14 @@ def parse_item_or_inner_list(data: bytes) -> Tuple[int, Union[Item, InnerList]]:
 
 def bin_parse_item_or_inner_list(data: bytearray) -> Tuple[int, Union[InnerList, Item]]:
     stype = data[0] >> HEADER_BITS
+    thing: Union[InnerList, Item]
     if stype == STYPE.INNER_LIST:
-        inner_list = InnerList()
-        return inner_list.from_binary(data), inner_list
-    item = Item()
-    return item.from_binary(data), item
+        thing = InnerList()
+        bytes_consumed = thing.from_binary(data)
+    else:
+        thing = Item()
+        bytes_consumed = thing.from_binary(data)
+    if has_params(data[0]):
+        offset = thing.params.from_binary(data[bytes_consumed:])
+        bytes_consumed += offset
+    return bytes_consumed, thing

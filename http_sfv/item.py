@@ -39,6 +39,7 @@ from .util_binary import (
     encode_integer,
     decode_integer,
     bin_header,
+    has_params,
     TLTYPE,
     STYPE,
     HEADER_BITS,
@@ -89,19 +90,18 @@ class Item(StructuredFieldValue):
         self.params.from_json(params)
 
     def from_binary(self, data: bytearray) -> int:
-        bytes_consumed = 0  # header
-        offset, self.value = bin_parse_bare_item(data[bytes_consumed:])
-        bytes_consumed += offset
-        # FIXME: flag for params
-        #        offset = self.params.from_binary(data[bytes_consumed:])
+        bytes_consumed, self.value = bin_parse_bare_item(data)
+        if has_params(data[0]):
+            bytes_consumed += self.params.from_binary(data[bytes_consumed:])
         return bytes_consumed
 
     def to_binary(self) -> bytearray:
-        #        data = bin_header(TLTYPE.ITEM, parameters=bool(self.params))
         data = bytearray()
-        data += bin_ser_bare_item(self.value)
-        if self.params:
+        if len(self.params):
+            data += bin_ser_bare_item(self.value, parameters=True)
             data += self.params.to_binary()
+        else:
+            data += bin_ser_bare_item(self.value)
         return data
 
 
@@ -237,14 +237,18 @@ class InnerList(UserList):
             offset, member = bin_parse_bare_item(data[bytes_consumed:])
             bytes_consumed += offset
             self.append(member)
-        # FIXME: parameters
+        if has_params(data[0]):
+            self.params.from_binary(data[bytes_consumed:])
         return bytes_consumed
 
     def to_binary(self) -> bytearray:
-        data = bin_header(STYPE.INNER_LIST)
+        params = bool(len(self.params))
+        data = bin_header(STYPE.INNER_LIST, parameters=params)
         data += encode_integer(len(self))
         for member in self:
             data += self[member].to_binary()
+        if params:
+            data += self.params.to_binary()
         return data
 
 
