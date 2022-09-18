@@ -242,7 +242,9 @@ class InnerList(UserList):
 
     def to_binary(self) -> bytearray:
         data = bin_header(STYPE.INNER_LIST)
-        data += bin_ser_bare_item(self)
+        data += encode_integer(len(self))
+        for member in self:
+            data += self[member].to_binary()
         return data
 
 
