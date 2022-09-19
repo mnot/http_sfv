@@ -40,9 +40,8 @@ from .util_binary import (
     decode_integer,
     bin_header,
     has_params,
-    TLTYPE,
     STYPE,
-    HEADER_BITS,
+    HEADER_OFFSET,
 )
 from .util_json import value_to_json, value_from_json
 
@@ -296,7 +295,7 @@ def ser_bare_item(item: BareItemType) -> str:
 
 
 def bin_parse_bare_item(data: bytearray) -> Tuple[int, BareItemType]:
-    stype = data[0] >> HEADER_BITS
+    stype = data[0] >> HEADER_OFFSET
     if stype == STYPE.INTEGER:
         return bin_parse_integer(data)
     if stype == STYPE.DECIMAL:

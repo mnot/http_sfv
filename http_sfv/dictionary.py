@@ -9,7 +9,7 @@ from .util import (
     ser_key,
     parse_key,
 )
-from .util_binary import decode_integer, encode_integer, bin_header, TLTYPE
+from .util_binary import decode_integer, encode_integer, bin_header, STYPE
 
 
 EQUALS = ord(b"=")
@@ -98,7 +98,7 @@ class Dictionary(UserDict, StructuredFieldValue):
         return cursor
 
     def to_binary(self) -> bytearray:
-        data = bin_header(TLTYPE.DICTIONARY)
+        data = bin_header(STYPE.DICTIONARY)
         data += encode_integer(len(self))
         for member in self:
             data += encode_integer(len(member))

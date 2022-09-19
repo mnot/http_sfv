@@ -1,36 +1,32 @@
 from enum import IntEnum
-from typing import Tuple, Union
+from typing import Tuple
 
 
-HEADER_BITS = 5
-
-
-class TLTYPE(IntEnum):
-    RAW = 0
-    DICTIONARY = 1
-    LIST = 2
-    ITEM = 3
+HEADER_OFFSET = 3
 
 
 class STYPE(IntEnum):
-    INNER_LIST = 1
-    PARAMETER = 2
-    INTEGER = 3
-    DECIMAL = 4
-    STRING = 5
-    TOKEN = 6
-    BYTESEQ = 7
-    BOOLEAN = 8
+    LITERAL = 0
+    LIST = 1
+    DICTIONARY = 2
+    INNER_LIST = 3
+    PARAMETER = 4
+    INTEGER = 5
+    DECIMAL = 6
+    STRING = 7
+    TOKEN = 8
+    BYTESEQ = 9
+    BOOLEAN = 10
 
 
 def bin_header(
-    sf_type: Union[TLTYPE, STYPE],
+    sf_type: STYPE,
     parameters: bool = False,
     flag1: bool = False,
     flag2: bool = False,
 ) -> bytearray:
     data = bytearray([0])
-    data[0] |= sf_type << HEADER_BITS
+    data[0] |= sf_type << HEADER_OFFSET
     if parameters:
         data[0] |= 1 << 2
     if flag1:

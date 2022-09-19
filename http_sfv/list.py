@@ -11,8 +11,7 @@ from .util_binary import (
     bin_header,
     has_params,
     STYPE,
-    TLTYPE,
-    HEADER_BITS,
+    HEADER_OFFSET,
 )
 
 
@@ -87,7 +86,7 @@ class List(UserList, StructuredFieldValue):
         return bytes_consumed
 
     def to_binary(self) -> bytearray:
-        data = bin_header(TLTYPE.LIST)
+        data = bin_header(STYPE.LIST)
         data += encode_integer(len(self))
         for member in self:
             data += self[member].to_binary()
@@ -108,7 +107,7 @@ def parse_item_or_inner_list(data: bytes) -> Tuple[int, Union[Item, InnerList]]:
 
 
 def bin_parse_item_or_inner_list(data: bytearray) -> Tuple[int, Union[InnerList, Item]]:
-    stype = data[0] >> HEADER_BITS
+    stype = data[0] >> HEADER_OFFSET
     thing: Union[InnerList, Item]
     if stype == STYPE.INNER_LIST:
         thing = InnerList()
