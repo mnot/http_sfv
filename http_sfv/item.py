@@ -245,7 +245,7 @@ class InnerList(UserList):
         data = bin_header(STYPE.INNER_LIST, parameters=params)
         data += encode_integer(len(self))
         for member in self:
-            data += self[member].to_binary()
+            data += member.to_binary()
         if params:
             data += self.params.to_binary()
         return data
