@@ -312,6 +312,8 @@ def bin_parse_bare_item(data: bytearray) -> Tuple[int, BareItemType]:
 
 
 def bin_ser_bare_item(item: BareItemType, parameters: bool = False) -> bytearray:
+    if isinstance(item, bool):
+        return bin_ser_boolean(item, parameters)
     if isinstance(item, int):
         return bin_ser_integer(item, parameters)
     if isinstance(item, float):
@@ -324,8 +326,6 @@ def bin_ser_bare_item(item: BareItemType, parameters: bool = False) -> bytearray
         return bin_ser_token(item, parameters)
     if isinstance(item, Decimal):
         return bin_ser_decimal(item, parameters)
-    if isinstance(item, bool):
-        return bin_ser_boolean(item, parameters)
     raise ValueError("Can't serialise; unrecognised item with type {stype}.")
 
 
