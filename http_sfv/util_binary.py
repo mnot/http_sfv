@@ -46,8 +46,7 @@ def has_params(header: int) -> bool:
 
 def decode_integer(data: bytearray) -> Tuple[int, int]:
     val = data[0]
-    prefix = val >> 6
-    length = 1 << prefix
+    length = 1 << (val >> 6)
     val = val & 0x3F
     for i in range(1, length):
         val = (val << 8) + data[i]
