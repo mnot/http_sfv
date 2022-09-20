@@ -19,6 +19,14 @@ COMMA = ord(b",")
 
 
 class List(UserList, StructuredFieldValue):
+    __slots__ = ["data"]
+
+    def __init__(self, initlist: list = None) -> None:
+        if initlist is not None:
+            self.data = [itemise(i) for i in initlist]
+        else:
+            self.data = []
+
     def parse_content(self, data: bytes) -> int:
         bytes_consumed = 0
         data_len = len(data)
@@ -26,7 +34,7 @@ class List(UserList, StructuredFieldValue):
             while True:
                 offset, member = parse_item_or_inner_list(data[bytes_consumed:])
                 bytes_consumed += offset
-                self.append(member)
+                self.data.append(member)
                 bytes_consumed += discard_http_ows(data[bytes_consumed:])
                 if bytes_consumed == data_len:
                     return bytes_consumed
@@ -55,6 +63,8 @@ class List(UserList, StructuredFieldValue):
         else:
             self.data[index] = itemise(cast(AllItemType, value))
 
+    # FIXME: __contains__, __index__, extend, __add__, __radd__
+
     def append(self, item: AllItemType) -> None:
         self.data.append(itemise(item))
 
@@ -62,14 +72,14 @@ class List(UserList, StructuredFieldValue):
         self.data.insert(i, itemise(item))
 
     def to_json(self) -> JsonListType:
-        return [i.to_json() for i in self]
+        return [i.to_json() for i in self.data]
 
     def from_json(self, json_data: JsonListType) -> None:
         for i in json_data:
             if isinstance(i[0], list):
-                self.append(InnerList())
+                self.data.append(InnerList())
             else:
-                self.append(Item())
+                self.data.append(Item())
             self[-1].from_json(i)
 
     def from_binary(self, data: bytearray) -> int:
@@ -87,9 +97,9 @@ class List(UserList, StructuredFieldValue):
 
     def to_binary(self) -> bytearray:
         data = bin_header(STYPE.LIST)
-        data += encode_integer(len(self))
-        for member in self:
-            data += self[member].to_binary()
+        data += encode_integer(len(self.data))
+        for member in self.data:
+            data += member.to_binary()
         return data
 
 

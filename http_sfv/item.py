@@ -54,6 +54,8 @@ INNERLIST_DELIMS = set(b" )")
 
 
 class Item(StructuredFieldValue):
+    __slots__ = ["value", "params"]
+
     def __init__(self, value: BareItemType = None) -> None:
         self.value = value
         self.params = Parameters()
@@ -166,7 +168,7 @@ class Parameters(dict):
         for member in self:
             data.append(len(member))  # fixme: catch too many
             data += member.encode("ascii")
-            data += self[member].to_binary()
+            data += bin_ser_bare_item(self[member])
         return data
 
 
@@ -174,6 +176,8 @@ SingleItemType = Union[BareItemType, Item]
 
 
 class InnerList(UserList):
+    __slots__ = ("data", "params")
+
     def __init__(self, values: _List[Union[Item, SingleItemType]] = None) -> None:
         UserList.__init__(self, [itemise(v) for v in values or []])
         self.params = Parameters()
@@ -297,10 +301,10 @@ def ser_bare_item(item: BareItemType) -> str:
 _bin_parse_map = {
     STYPE.INTEGER: bin_parse_integer,
     STYPE.DECIMAL: bin_parse_decimal,
-    STYPE.BOOLEAN: bin_parse_boolean,
-    STYPE.BYTESEQ: bin_parse_byteseq,
     STYPE.STRING: bin_parse_string,
     STYPE.TOKEN: bin_parse_token,
+    STYPE.BYTESEQ: bin_parse_byteseq,
+    STYPE.BOOLEAN: bin_parse_boolean,
 }
 
 
@@ -309,7 +313,7 @@ def bin_parse_bare_item(data: bytearray) -> Tuple[int, BareItemType]:
         return _bin_parse_map[data[0] >> HEADER_OFFSET](data)  # type: ignore
     except KeyError as why:
         raise ValueError(
-            "Item with type '{data[0] >> HEADER_OFFSET}' can't be identified"
+            f"Item with type '{data[0] >> HEADER_OFFSET}' can't be identified"
         ) from why
 
 
@@ -328,7 +332,7 @@ def bin_ser_bare_item(item: BareItemType, parameters: bool = False) -> bytearray
         return bin_ser_token(item, parameters)
     if isinstance(item, Decimal):
         return bin_ser_decimal(item, parameters)
-    raise ValueError("Can't serialise; unrecognised item with type {stype}.")
+    raise ValueError(f"Can't serialise; unrecognised item with type {type(item)}.")
 
 
 def itemise(

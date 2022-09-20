@@ -17,6 +17,8 @@ COMMA = ord(b",")
 
 
 class Dictionary(UserDict, StructuredFieldValue):
+    __slots__ = ["data"]
+
     def parse_content(self, data: bytes) -> int:
         bytes_consumed = 0
         data_len = len(data)
