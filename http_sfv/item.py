@@ -55,7 +55,6 @@ INNERLIST_DELIMS = set(b" )")
 
 class Item(StructuredFieldValue):
     def __init__(self, value: BareItemType = None) -> None:
-        StructuredFieldValue.__init__(self)
         self.value = value
         self.params = Parameters()
 
@@ -294,21 +293,22 @@ def ser_bare_item(item: BareItemType) -> str:
     raise ValueError(f"Can't serialise; unrecognised item with type {type(item)}")
 
 
+_bin_parse_map = {
+    STYPE.INTEGER: bin_parse_integer,
+    STYPE.DECIMAL: bin_parse_decimal,
+    STYPE.BOOLEAN: bin_parse_boolean,
+    STYPE.BYTESEQ: bin_parse_byteseq,
+    STYPE.STRING: bin_parse_string,
+    STYPE.TOKEN: bin_parse_token,
+}
+
+
 def bin_parse_bare_item(data: bytearray) -> Tuple[int, BareItemType]:
     stype = data[0] >> HEADER_OFFSET
-    if stype == STYPE.INTEGER:
-        return bin_parse_integer(data)
-    if stype == STYPE.DECIMAL:
-        return bin_parse_decimal(data)
-    if stype == STYPE.BOOLEAN:
-        return bin_parse_boolean(data)
-    if stype == STYPE.BYTESEQ:
-        return bin_parse_byteseq(data)
-    if stype == STYPE.STRING:
-        return bin_parse_string(data)
-    if stype == STYPE.TOKEN:
-        return bin_parse_token(data)
-    raise ValueError(f"Item with binary type '{stype}' can't be identified")
+    try:
+        return _bin_parse_map[stype](data)  # type: ignore
+    except KeyError as why:
+        raise ValueError("Item with type '{stype}' can't be identified") from why
 
 
 def bin_ser_bare_item(item: BareItemType, parameters: bool = False) -> bytearray:
