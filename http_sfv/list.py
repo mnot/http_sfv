@@ -124,7 +124,4 @@ def bin_parse_item_or_inner_list(data: bytearray) -> Tuple[int, Union[InnerList,
     else:
         thing = Item()
         bytes_consumed = thing.from_binary(data)
-    if has_params(data[0]):
-        offset = thing.params.from_binary(data[bytes_consumed:])
-        bytes_consumed += offset
     return bytes_consumed, thing
