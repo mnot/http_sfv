@@ -90,11 +90,11 @@ class Dictionary(UserDict, StructuredFieldValue):
             bytes_consumed, key_len = decode_integer(data[cursor:])
             cursor += bytes_consumed
             key_end = cursor + key_len
-            name = data[cursor:key_end].decode("ascii")
+            key = data[cursor:key_end].decode("ascii")
             cursor = key_end
             bytes_consumed, value = bin_parse_item_or_inner_list(data[cursor:])
             cursor += bytes_consumed
-            self[name] = value
+            self[key] = value
         return cursor
 
     def to_binary(self) -> bytearray:
