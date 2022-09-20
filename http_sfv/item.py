@@ -304,11 +304,12 @@ _bin_parse_map = {
 
 
 def bin_parse_bare_item(data: bytearray) -> Tuple[int, BareItemType]:
-    stype = data[0] >> HEADER_OFFSET
     try:
-        return _bin_parse_map[stype](data)  # type: ignore
+        return _bin_parse_map[data[0] >> HEADER_OFFSET](data)  # type: ignore
     except KeyError as why:
-        raise ValueError("Item with type '{stype}' can't be identified") from why
+        raise ValueError(
+            "Item with type '{data[0] >> HEADER_OFFSET}' can't be identified"
+        ) from why
 
 
 def bin_ser_bare_item(item: BareItemType, parameters: bool = False) -> bytearray:

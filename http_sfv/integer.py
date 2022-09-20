@@ -35,10 +35,8 @@ def ser_integer(inval: int) -> str:
 
 def bin_parse_integer(data: bytearray) -> Tuple[int, int]:
     sign = 1 if extract_flags(data[0])[0] else -1
-    cursor = 1  # header
-    bytes_consumed, integer = decode_integer(data[cursor:])
-    cursor += bytes_consumed
-    return cursor, integer * sign
+    bytes_consumed, integer = decode_integer(data[1:])
+    return bytes_consumed + 1, integer * sign
 
 
 def bin_ser_integer(value: int, parameters: bool) -> bytearray:

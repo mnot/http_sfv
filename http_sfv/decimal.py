@@ -41,12 +41,13 @@ def ser_decimal(input_decimal: Union[Decimal, float]) -> str:
 
 def bin_parse_decimal(data: bytearray) -> Tuple[int, Decimal]:
     cursor = 1  # header
-    sign = 1 if extract_flags(data[0])[0] else -1
     bytes_consumed, int_a = decode_integer(data[cursor:])
     cursor += bytes_consumed
     bytes_consumed, int_b = decode_integer(data[cursor:])
     cursor += bytes_consumed
-    return cursor, sign * Decimal(int_a) / int_b
+    if extract_flags(data[0])[0]:
+        return cursor, Decimal(int_a) / int_b
+    return cursor, (Decimal(int_a) / int_b) * -1
 
 
 def bin_ser_decimal(value: Decimal, parameters: bool) -> bytearray:
