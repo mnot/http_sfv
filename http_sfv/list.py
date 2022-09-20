@@ -107,9 +107,8 @@ def parse_item_or_inner_list(data: bytes) -> Tuple[int, Union[Item, InnerList]]:
 
 
 def bin_parse_item_or_inner_list(data: bytearray) -> Tuple[int, Union[InnerList, Item]]:
-    stype = data[0] >> HEADER_OFFSET
     thing: Union[InnerList, Item]
-    if stype == STYPE.INNER_LIST:
+    if data[0] >> HEADER_OFFSET == STYPE.INNER_LIST:
         thing = InnerList()
         bytes_consumed = thing.from_binary(data)
     else:

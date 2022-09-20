@@ -87,8 +87,8 @@ class Dictionary(UserDict, StructuredFieldValue):
         bytes_consumed, member_count = decode_integer(data[cursor:])
         cursor += bytes_consumed
         for _ in range(member_count):
-            bytes_consumed, key_len = decode_integer(data[cursor:])
-            cursor += bytes_consumed
+            key_len = data[cursor]
+            cursor += 1
             key_end = cursor + key_len
             key = data[cursor:key_end].decode("ascii")
             cursor = key_end
@@ -101,7 +101,7 @@ class Dictionary(UserDict, StructuredFieldValue):
         data = bin_header(STYPE.DICTIONARY)
         data += encode_integer(len(self))
         for member in self:
-            data += encode_integer(len(member))
+            data.append(len(member))  # fixme: catch too many
             data += member.encode("ascii")
             data += self[member].to_binary()
         return data

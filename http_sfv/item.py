@@ -89,8 +89,8 @@ class Item(StructuredFieldValue):
 
     def from_binary(self, data: bytearray) -> int:
         bytes_consumed, self.value = bin_parse_bare_item(data)
-        if has_params(data[0]):
-            bytes_consumed += self.params.from_binary(data[bytes_consumed:])
+        #        if has_params(data[0]):
+        #            bytes_consumed += self.params.from_binary(data[bytes_consumed:])
         return bytes_consumed
 
     def to_binary(self) -> bytearray:
@@ -150,8 +150,8 @@ class Parameters(dict):
         offset, member_count = decode_integer(data[bytes_consumed:])
         bytes_consumed += offset
         for _ in range(member_count):
-            offset, key_len = decode_integer(data[bytes_consumed:])
-            bytes_consumed += offset
+            key_len = data[bytes_consumed]
+            bytes_consumed += 1
             key_end = bytes_consumed + key_len
             name = data[bytes_consumed:key_end].decode("ascii")
             bytes_consumed = key_end
@@ -164,7 +164,7 @@ class Parameters(dict):
         data = bin_header(STYPE.PARAMETER)
         data += encode_integer(len(self))
         for member in self:
-            data += encode_integer(len(member))
+            data.append(len(member))  # fixme: catch too many
             data += member.encode("ascii")
             data += self[member].to_binary()
         return data
@@ -232,11 +232,12 @@ class InnerList(UserList):
         offset, member_count = decode_integer(data[bytes_consumed:])
         bytes_consumed += offset
         for _ in range(member_count):
+            params = has_params(data[bytes_consumed])
             offset, member = bin_parse_bare_item(data[bytes_consumed:])
             bytes_consumed += offset
             self.append(member)
-        if has_params(data[0]):
-            self.params.from_binary(data[bytes_consumed:])
+            if params:
+                self.params.from_binary(data[bytes_consumed:])
         return bytes_consumed
 
     def to_binary(self) -> bytearray:
