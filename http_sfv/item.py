@@ -91,8 +91,8 @@ class Item(StructuredFieldValue):
 
     def from_binary(self, data: bytearray) -> int:
         bytes_consumed, self.value = bin_parse_bare_item(data)
-        #        if has_params(data[0]):
-        #            bytes_consumed += self.params.from_binary(data[bytes_consumed:])
+        if has_params(data[0]):
+            bytes_consumed += self.params.from_binary(data[bytes_consumed:])
         return bytes_consumed
 
     def to_binary(self) -> bytearray:
@@ -155,11 +155,11 @@ class Parameters(dict):
             key_len = data[bytes_consumed]
             bytes_consumed += 1
             key_end = bytes_consumed + key_len
-            name = data[bytes_consumed:key_end].decode("ascii")
+            key = data[bytes_consumed:key_end].decode("ascii")
             bytes_consumed = key_end
             offset, value = bin_parse_bare_item(data[bytes_consumed:])
             bytes_consumed += offset
-            self[name] = value
+            self[key] = value
         return bytes_consumed
 
     def to_binary(self) -> bytearray:
