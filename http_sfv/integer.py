@@ -42,6 +42,8 @@ def bin_parse_integer(data: bytearray) -> Tuple[int, int]:
 
 
 def bin_ser_integer(value: int, parameters: bool) -> bytearray:
+    if not MIN_INT <= value <= MAX_INT:
+        raise ValueError("Input is out of Integer range.")
     sign = value >= 0
     data = bin_header(STYPE.INTEGER, parameters=parameters, flag1=sign)
     data += encode_integer(abs(value))
