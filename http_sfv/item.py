@@ -77,10 +77,14 @@ def bin_parse_item(
 
 
 def ser_item(item: ItemType) -> str:
+    if not isinstance(item, tuple):
+        item = (item, {})
     return f"{ser_bare_item(item[0])}{ser_params(item[1])}"
 
 
 def bin_ser_item(item: ItemType) -> bytes:
+    if not isinstance(item, tuple):
+        item = (item, {})
     data = []
     if len(item[1]):
         data.append(bin_ser_bare_item(item[0], parameters=True))
@@ -184,12 +188,16 @@ def bin_parse_innerlist(data: bytes, cursor: int) -> Tuple[int, InnerListType]:
 
 
 def ser_innerlist(inner_list: InnerListType) -> str:
+    if not isinstance(inner_list, tuple):
+        inner_list = (inner_list, {})
     return (
         f"({' '.join([ser_item(i) for i in inner_list[0]])}){ser_params(inner_list[1])}"
     )
 
 
 def bin_ser_innerlist(inner_list: InnerListType) -> bytes:
+    if not isinstance(inner_list, tuple):
+        inner_list = (inner_list, {})
     params = bool(len(inner_list[1]))
     data = [bin_header(STYPE.INNER_LIST, parameters=params)]
     data.append(encode_integer(len(inner_list[0])))

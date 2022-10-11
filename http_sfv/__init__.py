@@ -43,9 +43,7 @@ from .util import discard_ows
 from .util_binary import HEADER_OFFSET, STYPE
 
 
-def parse_text(
-    value: bytes, name: str = None, tltype: str = None
-) -> StructuredType:
+def parse_text(value: bytes, name: str = None, tltype: str = None) -> StructuredType:
     structure: StructuredType
     if name is not None:
         tltype = retrofit.get(name.lower(), None)

@@ -1,4 +1,4 @@
-from typing import Tuple, Union, List
+from typing import Tuple, Union, List, cast
 
 from .item import (
     PAREN_OPEN,
@@ -85,12 +85,16 @@ def bin_parse_item_or_inner_list(
 
 
 def ser_item_or_inner_list(thing: ItemOrInnerListType) -> str:
-    if isinstance(thing[0], List):
-        return ser_innerlist(thing)
-    return ser_item(thing)
+    if not isinstance(thing, tuple):
+        thing = cast(ItemType, (thing, {}))
+    if isinstance(cast(InnerListType, thing)[0], List):
+        return ser_innerlist(cast(InnerListType, thing))
+    return ser_item(cast(ItemType, thing))
 
 
 def bin_ser_item_or_inner_list(thing: ItemOrInnerListType) -> bytes:
-    if isinstance(thing[0], List):
-        return bin_ser_innerlist(thing)
-    return bin_ser_item(thing)
+    if not isinstance(thing, tuple):
+        thing = cast(ItemType, (thing, {}))
+    if isinstance(cast(InnerListType, thing)[0], List):
+        return bin_ser_innerlist(cast(InnerListType, thing))
+    return bin_ser_item(cast(ItemType, thing))
