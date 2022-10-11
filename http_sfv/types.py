@@ -8,10 +8,10 @@ class Token(UserString):
 
 
 BareItemType = Union[int, float, str, bool, Decimal, bytes, Token]
-JsonBareType = Union[int, float, str, bool, Decimal, Dict]
-
-JsonParamType = List[Tuple[str, JsonBareType]]
-JsonItemType = Tuple[JsonBareType, JsonParamType]
-JsonInnerListType = Tuple[List[JsonItemType], JsonParamType]
-JsonListType = List[Union[JsonItemType, JsonInnerListType]]
-JsonDictType = List[Tuple[str, Union[JsonItemType, JsonInnerListType]]]
+ParamsType = Dict[str, BareItemType]
+ItemType = Tuple[BareItemType, ParamsType]
+InnerListType = Tuple[List[ItemType], ParamsType]
+ItemOrInnerListType = Union[ItemType, InnerListType]
+ListType = List[Union[ItemType, InnerListType]]
+DictionaryType = Dict[str, Union[ItemType, InnerListType]]
+StructuredType = Union[ItemType, ListType, DictionaryType]

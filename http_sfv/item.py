@@ -1,7 +1,6 @@
-from collections import UserList
 from decimal import Decimal
-from typing import List as _List, Tuple, Union, Any, Iterable, cast
-from typing_extensions import SupportsIndex
+from typing import Tuple, List
+
 
 from .boolean import parse_boolean, ser_boolean, bin_parse_boolean, bin_ser_boolean
 from .byteseq import (
@@ -28,9 +27,13 @@ from .token import (
     Token,
     TOKEN_START_CHARS,
 )
-from .types import BareItemType, JsonItemType, JsonParamType, JsonInnerListType
+from .types import (
+    BareItemType,
+    InnerListType,
+    ItemType,
+    ParamsType,
+)
 from .util import (
-    StructuredFieldValue,
     discard_ows,
     parse_key,
     ser_key,
@@ -43,7 +46,6 @@ from .util_binary import (
     STYPE,
     HEADER_OFFSET,
 )
-from .util_json import value_to_json, value_from_json
 
 
 SEMICOLON = ord(b";")
@@ -53,206 +55,155 @@ PAREN_CLOSE = ord(b")")
 INNERLIST_DELIMS = set(b" )")
 
 
-class Item(StructuredFieldValue):
-    __slots__ = ["value", "params"]
+def parse_item(data: bytes) -> Tuple[int, Tuple[BareItemType, ParamsType]]:
+    try:
+        bytes_consumed, value = parse_bare_item(data)
+        param_bytes_consumed, params = parse_params(data[bytes_consumed:])
+        bytes_consumed += param_bytes_consumed
+    except Exception as why:
+        raise ValueError from why
+    return bytes_consumed, (value, params)
 
-    def __init__(self, value: BareItemType = None) -> None:
-        self.value = value
-        self.params = Parameters()
 
-    def parse_content(self, data: bytes) -> int:
+def bin_parse_item(data: bytearray) -> Tuple[int, Tuple[BareItemType, ParamsType]]:
+    bytes_consumed, value = bin_parse_bare_item(data)
+    if has_params(data[0]):
+        params_bytes_consumed, params = bin_parse_params(data[bytes_consumed:])
+        bytes_consumed += params_bytes_consumed
+    else:
+        params = {}
+    return bytes_consumed, (value, params)
+
+
+def ser_item(item: ItemType) -> str:
+    return f"{ser_bare_item(item[0])}{ser_params(item[1])}"
+
+
+def bin_ser_item(item: ItemType) -> bytearray:
+    data = bytearray()
+    if len(item[1]):
+        data += bin_ser_bare_item(item[0], parameters=True)
+        data += bin_ser_params(item[1])
+    else:
+        data += bin_ser_bare_item(item[0])
+    return data
+
+
+def parse_params(data: bytes) -> Tuple[int, ParamsType]:
+    bytes_consumed = 0
+    params = {}
+    while True:
         try:
-            bytes_consumed, self.value = parse_bare_item(data)
-            bytes_consumed += self.params.parse(data[bytes_consumed:])
-        except Exception as why:
-            self.value = None
-            raise ValueError from why
-        return bytes_consumed
-
-    def __str__(self) -> str:
-        return f"{ser_bare_item(self.value)}{str(self.params)}"
-
-    def __eq__(self, other: Any) -> bool:
-        if isinstance(other, Item):
-            return self.value == other.value
-        return bool(self.value == other)
-
-    def to_json(self) -> JsonItemType:
-        value = value_to_json(self.value)
-        return (value, self.params.to_json())
-
-    def from_json(self, json_data: JsonItemType) -> None:
-        try:
-            [value, params] = json_data
-        except ValueError as why:
-            raise ValueError(json_data) from why
-        self.value = value_from_json(value)
-        self.params.from_json(params)
-
-    def from_binary(self, data: bytearray) -> int:
-        bytes_consumed, self.value = bin_parse_bare_item(data)
-        if has_params(data[0]):
-            bytes_consumed += self.params.from_binary(data[bytes_consumed:])
-        return bytes_consumed
-
-    def to_binary(self) -> bytearray:
-        data = bytearray()
-        if len(self.params):
-            data += bin_ser_bare_item(self.value, parameters=True)
-            data += self.params.to_binary()
-        else:
-            data += bin_ser_bare_item(self.value)
-        return data
-
-
-class Parameters(dict):
-    def parse(self, data: bytes) -> int:
-        bytes_consumed = 0
-        while True:
-            try:
-                if data[bytes_consumed] != SEMICOLON:
-                    break
-            except IndexError:
+            if data[bytes_consumed] != SEMICOLON:
                 break
-            bytes_consumed += 1  # consume the ";"
-            bytes_consumed += discard_ows(data[bytes_consumed:])
-            offset, param_name = parse_key(data[bytes_consumed:])
-            bytes_consumed += offset
-            param_value: BareItemType = True
-            try:
-                if data[bytes_consumed] == EQUALS:
-                    bytes_consumed += 1  # consume the "="
-                    offset, param_value = parse_bare_item(data[bytes_consumed:])
-                    bytes_consumed += offset
-            except IndexError:
-                pass
-            self[param_name] = param_value
-        return bytes_consumed
-
-    def __str__(self) -> str:
-        return "".join(
-            [
-                f";{ser_key(k)}{f'={ser_bare_item(v)}' if v is not True else ''}"
-                for k, v in self.items()
-            ]
-        )
-
-    def to_json(self) -> JsonParamType:
-        return [(k, value_to_json(v)) for (k, v) in self.items()]
-
-    def from_json(self, json_data: JsonParamType) -> None:
-        for (name, value) in json_data:
-            self[name] = value_from_json(value)
-
-    def from_binary(self, data: bytearray) -> int:
-        """
-        Payload: Integer num, item, num x (Integer keyLen, structure) pairs
-        """
-        bytes_consumed = 1  # header
-        offset, member_count = decode_integer(data[bytes_consumed:])
+        except IndexError:
+            break
+        bytes_consumed += 1  # consume the ";"
+        bytes_consumed += discard_ows(data[bytes_consumed:])
+        offset, param_name = parse_key(data[bytes_consumed:])
         bytes_consumed += offset
-        for _ in range(member_count):
-            key_len = data[bytes_consumed]
-            bytes_consumed += 1
-            key_end = bytes_consumed + key_len
-            key = data[bytes_consumed:key_end].decode("ascii")
-            bytes_consumed = key_end
-            offset, value = bin_parse_bare_item(data[bytes_consumed:])
-            bytes_consumed += offset
-            self[key] = value
-        return bytes_consumed
-
-    def to_binary(self) -> bytearray:
-        data = bin_header(STYPE.PARAMETER)
-        data += encode_integer(len(self))
-        for member in self:
-            data.append(len(member))  # fixme: catch too many
-            data += member.encode("ascii")
-            data += bin_ser_bare_item(self[member])
-        return data
-
-
-SingleItemType = Union[BareItemType, Item]
-
-
-class InnerList(UserList):
-    __slots__ = ("data", "params")
-
-    def __init__(self, values: _List[Union[Item, SingleItemType]] = None) -> None:
-        UserList.__init__(self, [itemise(v) for v in values or []])
-        self.params = Parameters()
-
-    def parse(self, data: bytes) -> int:
-        bytes_consumed = 1  # consume the "("
-        while True:
-            bytes_consumed += discard_ows(data[bytes_consumed:])
-            if data[bytes_consumed] == PAREN_CLOSE:
-                bytes_consumed += 1
-                bytes_consumed += self.params.parse(data[bytes_consumed:])
-                return bytes_consumed
-            item = Item()
-            bytes_consumed += item.parse_content(data[bytes_consumed:])
-            self.data.append(item)
-            try:
-                if data[bytes_consumed] not in INNERLIST_DELIMS:
-                    raise ValueError("Inner list bad delimitation")
-            except IndexError as why:
-                raise ValueError("End of inner list not found") from why
-
-    def __str__(self) -> str:
-        return f"({' '.join([str(i) for i in self.data])}){self.params}"
-
-    def __setitem__(
-        self,
-        index: Union[SupportsIndex, slice],
-        value: Union[SingleItemType, Iterable[SingleItemType]],
-    ) -> None:
-        if isinstance(index, slice):
-            self.data[index] = [itemise(v) for v in value]  # type: ignore
-        else:
-            self.data[index] = itemise(cast(SingleItemType, value))
-
-    def append(self, item: SingleItemType) -> None:
-        self.data.append(itemise(item))
-
-    def insert(self, i: int, item: SingleItemType) -> None:
-        self.data.insert(i, itemise(item))
-
-    def to_json(self) -> JsonInnerListType:
-        return ([i.to_json() for i in self.data], self.params.to_json())
-
-    def from_json(self, json_data: JsonInnerListType) -> None:
+        param_value: BareItemType = True
         try:
-            values, params = json_data
-        except ValueError as why:
-            raise ValueError(json_data) from why
-        for i in values:
-            self.data.append(Item())
-            self[-1].from_json(i)
-        self.params.from_json(params)
+            if data[bytes_consumed] == EQUALS:
+                bytes_consumed += 1  # consume the "="
+                offset, param_value = parse_bare_item(data[bytes_consumed:])
+                bytes_consumed += offset
+        except IndexError:
+            pass
+        params[param_name] = param_value
+    return bytes_consumed, params
 
-    def from_binary(self, data: bytearray) -> int:
-        bytes_consumed = 1  # header
-        offset, member_count = decode_integer(data[bytes_consumed:])
+
+def bin_parse_params(data: bytearray) -> Tuple[int, ParamsType]:
+    bytes_consumed = 1  # header
+    params = {}
+    offset, member_count = decode_integer(data[bytes_consumed:])
+    bytes_consumed += offset
+    for _ in range(member_count):
+        key_len = data[bytes_consumed]
+        bytes_consumed += 1
+        key_end = bytes_consumed + key_len
+        key = data[bytes_consumed:key_end].decode("ascii")
+        bytes_consumed = key_end
+        offset, value = bin_parse_bare_item(data[bytes_consumed:])
         bytes_consumed += offset
-        for _ in range(member_count):
-            params = has_params(data[bytes_consumed])
-            offset, member = bin_parse_bare_item(data[bytes_consumed:])
-            bytes_consumed += offset
-            self.append(member)
-            if params:
-                self.params.from_binary(data[bytes_consumed:])
-        return bytes_consumed
+        params[key] = value
+    return bytes_consumed, params
 
-    def to_binary(self) -> bytearray:
-        params = bool(len(self.params))
-        data = bin_header(STYPE.INNER_LIST, parameters=params)
-        data += encode_integer(len(self))
-        for member in self:
-            data += member.to_binary()
+
+def ser_params(params: ParamsType) -> str:
+    return "".join(
+        [
+            f";{ser_key(k)}{f'={ser_bare_item(v)}' if v is not True else ''}"
+            for k, v in params.items()
+        ]
+    )
+
+
+def bin_ser_params(params: ParamsType) -> bytearray:
+    data = bin_header(STYPE.PARAMETER)
+    data += encode_integer(len(params))
+    for member in params:
+        data.append(len(member))  # fixme: catch too many
+        data += member.encode("ascii")
+        data += bin_ser_bare_item(params[member])
+    return data
+
+
+def parse_innerlist(data: bytes) -> Tuple[int, InnerListType]:
+    bytes_consumed = 1  # consume the "("
+    inner_list: List[ItemType] = []
+    while True:
+        bytes_consumed += discard_ows(data[bytes_consumed:])
+        if data[bytes_consumed] == PAREN_CLOSE:
+            bytes_consumed += 1
+            params_consumed, params = parse_params(data[bytes_consumed:])
+            bytes_consumed += params_consumed
+            return bytes_consumed, (inner_list, params)
+        item_consumed, item = parse_item(data[bytes_consumed:])
+        bytes_consumed += item_consumed
+        inner_list.append(item)
+        try:
+            if data[bytes_consumed] not in INNERLIST_DELIMS:
+                raise ValueError("Inner list bad delimitation")
+        except IndexError as why:
+            raise ValueError("End of inner list not found") from why
+        return bytes_consumed, (inner_list, params)
+
+
+def bin_parse_innerlist(data: bytearray) -> Tuple[int, InnerListType]:
+    bytes_consumed = 1  # header
+    inner_list: List[ItemType] = []
+    offset, member_count = decode_integer(data[bytes_consumed:])
+    bytes_consumed += offset
+    for _ in range(member_count):
+        params = has_params(data[bytes_consumed])
+        offset, member = bin_parse_item(data[bytes_consumed:])
+        bytes_consumed += offset
+        inner_list.append(member)
         if params:
-            data += self.params.to_binary()
-        return data
+            params_consumed, parameters = bin_parse_params(data[bytes_consumed:])
+            bytes_consumed += params_consumed
+        else:
+            parameters = {}
+    return bytes_consumed, (inner_list, parameters)
+
+
+def ser_innerlist(inner_list: InnerListType) -> str:
+    return (
+        f"({' '.join([ser_item(i) for i in inner_list[0]])}){ser_params(inner_list[1])}"
+    )
+
+
+def bin_ser_innerlist(inner_list: InnerListType) -> bytearray:
+    params = bool(len(inner_list[1]))
+    data = bin_header(STYPE.INNER_LIST, parameters=params)
+    data += encode_integer(len(inner_list[0]))
+    for member in inner_list[0]:
+        data += bin_ser_item(member)
+    if params:
+        data += bin_ser_params(inner_list[1])
+    return data
 
 
 _parse_map = {
@@ -277,6 +228,25 @@ def parse_bare_item(data: bytes) -> Tuple[int, BareItemType]:
         ) from why
 
 
+_bin_parse_map = {
+    STYPE.INTEGER: bin_parse_integer,
+    STYPE.DECIMAL: bin_parse_decimal,
+    STYPE.STRING: bin_parse_string,
+    STYPE.TOKEN: bin_parse_token,
+    STYPE.BYTESEQ: bin_parse_byteseq,
+    STYPE.BOOLEAN: bin_parse_boolean,
+}
+
+
+def bin_parse_bare_item(data: bytearray) -> Tuple[int, BareItemType]:
+    try:
+        return _bin_parse_map[data[0] >> HEADER_OFFSET](data)  # type: ignore
+    except KeyError as why:
+        raise ValueError(
+            f"Item with type '{data[0] >> HEADER_OFFSET}' can't be identified"
+        ) from why
+
+
 _ser_map = {
     int: ser_integer,
     float: ser_decimal,
@@ -298,25 +268,6 @@ def ser_bare_item(item: BareItemType) -> str:
     raise ValueError(f"Can't serialise; unrecognised item with type {type(item)}")
 
 
-_bin_parse_map = {
-    STYPE.INTEGER: bin_parse_integer,
-    STYPE.DECIMAL: bin_parse_decimal,
-    STYPE.STRING: bin_parse_string,
-    STYPE.TOKEN: bin_parse_token,
-    STYPE.BYTESEQ: bin_parse_byteseq,
-    STYPE.BOOLEAN: bin_parse_boolean,
-}
-
-
-def bin_parse_bare_item(data: bytearray) -> Tuple[int, BareItemType]:
-    try:
-        return _bin_parse_map[data[0] >> HEADER_OFFSET](data)  # type: ignore
-    except KeyError as why:
-        raise ValueError(
-            f"Item with type '{data[0] >> HEADER_OFFSET}' can't be identified"
-        ) from why
-
-
 def bin_ser_bare_item(item: BareItemType, parameters: bool = False) -> bytearray:
     if isinstance(item, bool):
         return bin_ser_boolean(item, parameters)
@@ -333,16 +284,3 @@ def bin_ser_bare_item(item: BareItemType, parameters: bool = False) -> bytearray
     if isinstance(item, Decimal):
         return bin_ser_decimal(item, parameters)
     raise ValueError(f"Can't serialise; unrecognised item with type {type(item)}.")
-
-
-def itemise(
-    thing: Union[BareItemType, InnerList, Item, _List]
-) -> Union[InnerList, Item]:
-    if isinstance(thing, (Item, InnerList)):
-        return thing
-    if isinstance(thing, list):
-        return InnerList(thing)
-    return Item(thing)
-
-
-AllItemType = Union[BareItemType, Item, InnerList]

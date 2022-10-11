@@ -27,31 +27,52 @@ THE SOFTWARE.
 
 __version__ = "0.9.8"
 
-from typing import Tuple
+from typing import Tuple, List, Dict
 
-from .dictionary import Dictionary
-from .list import List
-from .item import Item, InnerList
-from .token import Token
-from .util import StructuredFieldValue
+from .dictionary import (
+    parse_dictionary,
+    bin_parse_dictionary,
+    ser_dictionary,
+    bin_ser_dictionary,
+)
+from .item import parse_item, bin_parse_item, ser_item, bin_ser_item
+from .list import parse_list, bin_parse_list, ser_list, bin_ser_list
+from .retrofit import retrofit
+from .types import StructuredType, Token
 from .util_binary import HEADER_OFFSET, STYPE
 
-structures = {"dictionary": Dictionary, "list": List, "item": Item}
+
+def parse_text(name: str, value: bytes) -> Tuple[int, StructuredType]:
+    tltype = retrofit[name.lower()]
+    if tltype == "dictionary":
+        return parse_dictionary(value)
+    if tltype == "list":
+        return parse_list(value)
+    if tltype == "item":
+        return parse_item(value)
+    raise ValueError("unrecognised top-level type")
 
 
-def parse_binary(data: bytearray) -> Tuple[int, StructuredFieldValue]:
+def parse_binary(data: bytearray) -> Tuple[int, StructuredType]:
     tltype = data[0] >> HEADER_OFFSET
     if tltype == STYPE.DICTIONARY:
-        dictionary = Dictionary()
-        bytes_consumed = dictionary.from_binary(data)
-        return bytes_consumed, dictionary
+        return bin_parse_dictionary(data)
     if tltype == STYPE.LIST:
-        list_ = List()
-        bytes_consumed = list_.from_binary(data)
-        return bytes_consumed, list_
-    else:
-        item = Item()
-        # Item() doesn't consume the top-level byte
-        bytes_consumed = item.from_binary(data[1:])
-        return bytes_consumed + 1, item
-    raise ValueError(f"Top-level structured type '{tltype}' not recognized.")
+        return bin_parse_list(data)
+    return bin_parse_item(data)
+
+
+def ser_text(structure: StructuredType) -> str:
+    if isinstance(structure, Dict):
+        return ser_dictionary(structure)
+    if isinstance(structure, List):
+        return ser_list(structure)
+    return ser_item(structure)
+
+
+def ser_binary(structure: StructuredType) -> bytearray:
+    if isinstance(structure, Dict):
+        return bin_ser_dictionary(structure)
+    if isinstance(structure, List):
+        return bin_ser_list(structure)
+    return bin_ser_item(structure)
