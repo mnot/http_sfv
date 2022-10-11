@@ -39,21 +39,29 @@ from .item import parse_item, bin_parse_item, ser_item, bin_ser_item
 from .list import parse_list, bin_parse_list, ser_list, bin_ser_list
 from .retrofit import retrofit
 from .types import StructuredType, Token
+from .util import discard_ows
 from .util_binary import HEADER_OFFSET, STYPE
 
 
 def parse_text(
-    value: str, name: str = None, tltype: str = None
+    value: bytes, name: str = None, tltype: str = None
 ) -> Tuple[int, StructuredType]:
-    if name != None:
+    structure: StructuredType
+    if name is not None:
         tltype = retrofit.get(name.lower(), None)
+    cursor = discard_ows(value)
     if tltype == "dictionary":
-        return parse_dictionary(value)
-    if tltype == "list":
-        return parse_list(value)
-    if tltype == "item":
-        return parse_item(value)
-    raise ValueError("unrecognised top-level type")
+        bytes_consumed, structure = parse_dictionary(value[cursor:])
+    elif tltype == "list":
+        bytes_consumed, structure = parse_list(value[cursor:])
+    elif tltype == "item":
+        bytes_consumed, structure = parse_item(value[cursor:])
+    else:
+        raise KeyError("unrecognised top-level type")
+    cursor += bytes_consumed
+    if discard_ows(value[cursor:]) < len(value) - cursor:
+        raise ValueError("Trailing characters after value.")
+    return bytes_consumed, structure
 
 
 def parse_binary(data: bytes) -> Tuple[int, StructuredType]:
