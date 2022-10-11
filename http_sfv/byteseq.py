@@ -32,14 +32,13 @@ def ser_byteseq(byteseq: bytes) -> str:
 
 def bin_parse_byteseq(data: bytes) -> Tuple[int, bytes]:
     cursor = 1  # header
-    bytes_consumed, length = decode_integer(data[cursor:])
-    cursor += bytes_consumed
+    cursor, length = decode_integer(data, cursor)
     end = cursor + length
     return end, bytes(data[cursor:end])
 
 
 def bin_ser_byteseq(value: bytes, parameters: bool) -> bytes:
-    data = bin_header(STYPE.BYTESEQ, parameters=parameters)
-    data += encode_integer(len(value))
-    data += value
-    return data
+    data = [bin_header(STYPE.BYTESEQ, parameters=parameters)]
+    data.append(encode_integer(len(value)))
+    data.append(value)
+    return b"".join(data)

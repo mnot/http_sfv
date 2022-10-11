@@ -46,14 +46,13 @@ def ser_string(inval: str) -> str:
 
 def bin_parse_string(data: bytes) -> Tuple[int, str]:
     cursor = 1  # header
-    bytes_consumed, length = decode_integer(data[cursor:])
-    cursor += bytes_consumed
+    cursor, length = decode_integer(data, cursor)
     end = cursor + length
     return end, data[cursor:end].decode("ascii")
 
 
 def bin_ser_string(value: str, parameters: bool) -> bytes:
-    data = bin_header(STYPE.STRING, parameters=parameters)
-    data += encode_integer(len(value))
-    data += value.encode("ascii")
-    return data
+    data = [bin_header(STYPE.STRING, parameters=parameters)]
+    data.append(encode_integer(len(value)))
+    data.append(value.encode("ascii"))
+    return b"".join(data)

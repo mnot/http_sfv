@@ -54,8 +54,7 @@ def parse_dictionary(data: bytes) -> Tuple[int, DictionaryType]:
 def bin_parse_dictionary(data: bytes) -> Tuple[int, DictionaryType]:
     cursor = 1  # header
     dictionary = {}
-    bytes_consumed, member_count = decode_integer(data[cursor:])
-    cursor += bytes_consumed
+    cursor, member_count = decode_integer(data, cursor)
     for _ in range(member_count):
         key_len = data[cursor]
         cursor += 1

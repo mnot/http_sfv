@@ -45,15 +45,14 @@ def parse_list(data: bytes) -> Tuple[int, ListType]:
 
 
 def bin_parse_list(data: bytes) -> Tuple[int, ListType]:
-    bytes_consumed = 1  # header
+    cursor = 1  # header
     _list = []
-    offset, member_count = decode_integer(data[bytes_consumed:])
-    bytes_consumed += offset
+    cursor, member_count = decode_integer(data, cursor)
     for _ in range(member_count):
-        offset, member = bin_parse_item_or_inner_list(data[bytes_consumed:])
-        bytes_consumed += offset
+        offset, member = bin_parse_item_or_inner_list(data[cursor:])
+        cursor += offset
         _list.append(member)
-    return bytes_consumed, _list
+    return cursor, _list
 
 
 def ser_list(_list: ListType) -> str:
@@ -63,11 +62,11 @@ def ser_list(_list: ListType) -> str:
 
 
 def bin_ser_list(_list: ListType) -> bytes:
-    data = bin_header(STYPE.LIST)
-    data += encode_integer(len(_list))
+    data = [bin_header(STYPE.LIST)]
+    data.append(encode_integer(len(_list)))
     for member in _list:
-        data += bin_ser_item_or_inner_list(member)
-    return data
+        data.append(bin_ser_item_or_inner_list(member))
+    return b"".join(data)
 
 
 def parse_item_or_inner_list(data: bytes) -> Tuple[int, Union[ItemType, InnerListType]]:

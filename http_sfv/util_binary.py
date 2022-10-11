@@ -44,13 +44,13 @@ def has_params(header: int) -> bool:
     return (header & 0b00000100) > 0
 
 
-def decode_integer(data: bytes) -> Tuple[int, int]:
-    val = data[0]
-    length = 1 << (val >> 6)
+def decode_integer(data: bytes, cursor: int = 0) -> Tuple[int, int]:
+    val = data[cursor]
+    end = cursor + (1 << (val >> 6))
     val = val & 0x3F
-    for i in range(1, length):
+    for i in range(cursor + 1, end):
         val = (val << 8) + data[i]
-    return length, val
+    return end, val
 
 
 UINT8 = 256

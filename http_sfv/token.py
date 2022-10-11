@@ -29,14 +29,13 @@ def ser_token(token: Token) -> str:
 
 def bin_parse_token(data: bytes) -> Tuple[int, Token]:
     cursor = 1  # header
-    bytes_consumed, length = decode_integer(data[cursor:])
-    cursor += bytes_consumed
+    cursor, length = decode_integer(data, cursor)
     end = cursor + length
     return end, Token(data[cursor:end].decode("ascii"))
 
 
 def bin_ser_token(value: Token, parameters: bool) -> bytes:
-    data = bin_header(STYPE.TOKEN, parameters=parameters)
-    data += encode_integer(len(value))
-    data += value.encode("ascii")
-    return data
+    data = [bin_header(STYPE.TOKEN, parameters=parameters)]
+    data.append(encode_integer(len(value)))
+    data.append(value.encode("ascii"))
+    return b"".join(data)

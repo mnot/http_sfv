@@ -80,13 +80,13 @@ def ser_item(item: ItemType) -> str:
 
 
 def bin_ser_item(item: ItemType) -> bytes:
-    data = bytes()
+    data = []
     if len(item[1]):
-        data += bin_ser_bare_item(item[0], parameters=True)
-        data += bin_ser_params(item[1])
+        data.append(bin_ser_bare_item(item[0], parameters=True))
+        data.append(bin_ser_params(item[1]))
     else:
-        data += bin_ser_bare_item(item[0])
-    return data
+        data.append(bin_ser_bare_item(item[0]))
+    return b"".join(data)
 
 
 def parse_params(data: bytes) -> Tuple[int, ParamsType]:
@@ -115,20 +115,19 @@ def parse_params(data: bytes) -> Tuple[int, ParamsType]:
 
 
 def bin_parse_params(data: bytes) -> Tuple[int, ParamsType]:
-    bytes_consumed = 1  # header
+    cursor = 1  # header
     params = {}
-    offset, member_count = decode_integer(data[bytes_consumed:])
-    bytes_consumed += offset
+    cursor, member_count = decode_integer(data, cursor)
     for _ in range(member_count):
-        key_len = data[bytes_consumed]
-        bytes_consumed += 1
-        key_end = bytes_consumed + key_len
-        key = data[bytes_consumed:key_end].decode("ascii")
-        bytes_consumed = key_end
-        offset, value = bin_parse_bare_item(data[bytes_consumed:])
-        bytes_consumed += offset
+        key_len = data[cursor]
+        cursor += 1
+        key_end = cursor + key_len
+        key = data[cursor:key_end].decode("ascii")
+        cursor = key_end
+        offset, value = bin_parse_bare_item(data[cursor:])
+        cursor += offset
         params[key] = value
-    return bytes_consumed, params
+    return cursor, params
 
 
 def ser_params(params: ParamsType) -> str:
@@ -172,21 +171,20 @@ def parse_innerlist(data: bytes) -> Tuple[int, InnerListType]:
 
 
 def bin_parse_innerlist(data: bytes) -> Tuple[int, InnerListType]:
-    bytes_consumed = 1  # header
+    cursor = 1  # header
     inner_list: List[ItemType] = []
-    offset, member_count = decode_integer(data[bytes_consumed:])
-    bytes_consumed += offset
+    cursor, member_count = decode_integer(data, cursor)
     for _ in range(member_count):
-        params = has_params(data[bytes_consumed])
-        offset, member = bin_parse_item(data[bytes_consumed:])
-        bytes_consumed += offset
+        params = has_params(data[cursor])
+        offset, member = bin_parse_item(data[cursor:])
+        cursor += offset
         inner_list.append(member)
         if params:
-            params_consumed, parameters = bin_parse_params(data[bytes_consumed:])
-            bytes_consumed += params_consumed
+            params_consumed, parameters = bin_parse_params(data[cursor:])
+            cursor += params_consumed
         else:
             parameters = {}
-    return bytes_consumed, (inner_list, parameters)
+    return cursor, (inner_list, parameters)
 
 
 def ser_innerlist(inner_list: InnerListType) -> str:
@@ -197,13 +195,13 @@ def ser_innerlist(inner_list: InnerListType) -> str:
 
 def bin_ser_innerlist(inner_list: InnerListType) -> bytes:
     params = bool(len(inner_list[1]))
-    data = bin_header(STYPE.INNER_LIST, parameters=params)
-    data += encode_integer(len(inner_list[0]))
+    data = [bin_header(STYPE.INNER_LIST, parameters=params)]
+    data.append(encode_integer(len(inner_list[0])))
     for member in inner_list[0]:
-        data += bin_ser_item(member)
+        data.append(bin_ser_item(member))
     if params:
-        data += bin_ser_params(inner_list[1])
-    return data
+        data.append(bin_ser_params(inner_list[1]))
+    return b"".join(data)
 
 
 _parse_map = {
