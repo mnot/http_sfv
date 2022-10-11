@@ -2,7 +2,7 @@ from decimal import Decimal
 from string import digits
 from typing import Tuple, Union
 
-from .util_binary import (
+from http_sfv.util_binary import (
     decode_integer,
     encode_integer,
     bin_header,

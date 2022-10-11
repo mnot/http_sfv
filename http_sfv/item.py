@@ -2,24 +2,35 @@ from decimal import Decimal
 from typing import Tuple, List
 
 
-from .boolean import parse_boolean, ser_boolean, bin_parse_boolean, bin_ser_boolean
-from .byteseq import (
+from http_sfv.boolean import (
+    parse_boolean,
+    ser_boolean,
+    bin_parse_boolean,
+    bin_ser_boolean,
+)
+from http_sfv.byteseq import (
     parse_byteseq,
     ser_byteseq,
     bin_parse_byteseq,
     bin_ser_byteseq,
     BYTE_DELIMIT,
 )
-from .decimal import ser_decimal, bin_parse_decimal, bin_ser_decimal
-from .integer import (
+from http_sfv.decimal import ser_decimal, bin_parse_decimal, bin_ser_decimal
+from http_sfv.integer import (
     parse_number,
     ser_integer,
     bin_parse_integer,
     bin_ser_integer,
     NUMBER_START_CHARS,
 )
-from .string import parse_string, ser_string, bin_parse_string, bin_ser_string, DQUOTE
-from .token import (
+from http_sfv.string import (
+    parse_string,
+    ser_string,
+    bin_parse_string,
+    bin_ser_string,
+    DQUOTE,
+)
+from http_sfv.token import (
     parse_token,
     ser_token,
     bin_parse_token,
@@ -27,18 +38,18 @@ from .token import (
     Token,
     TOKEN_START_CHARS,
 )
-from .types import (
+from http_sfv.types import (
     BareItemType,
     InnerListType,
     ItemType,
     ParamsType,
 )
-from .util import (
+from http_sfv.util import (
     discard_ows,
     parse_key,
     ser_key,
 )
-from .util_binary import (
+from http_sfv.util_binary import (
     encode_integer,
     decode_integer,
     bin_header,

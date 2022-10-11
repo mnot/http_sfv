@@ -1,9 +1,9 @@
 from typing import Tuple
 
-from .item import ser_item, bin_ser_item, parse_params, ser_params
-from .list import parse_item_or_inner_list, bin_parse_item_or_inner_list
-from .types import DictionaryType
-from .util import (
+from http_sfv.item import ser_item, bin_ser_item, parse_params, ser_params
+from http_sfv.list import parse_item_or_inner_list, bin_parse_item_or_inner_list
+from http_sfv.types import DictionaryType
+from http_sfv.util import (
     discard_http_ows,
     ser_key,
     parse_key,

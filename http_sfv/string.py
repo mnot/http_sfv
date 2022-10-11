@@ -1,6 +1,6 @@
 from typing import Tuple
 
-from .util_binary import decode_integer, encode_integer, bin_header, STYPE
+from http_sfv.util_binary import decode_integer, encode_integer, bin_header, STYPE
 
 DQUOTE = ord('"')
 BACKSLASH = ord("\\")

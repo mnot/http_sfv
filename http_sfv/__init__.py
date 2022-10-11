@@ -29,18 +29,18 @@ __version__ = "0.9.8"
 
 from typing import Tuple, List, Dict
 
-from .dictionary import (
+from http_sfv.dictionary import (
     parse_dictionary,
     bin_parse_dictionary,
     ser_dictionary,
     bin_ser_dictionary,
 )
-from .item import parse_item, bin_parse_item, ser_item, bin_ser_item
-from .list import parse_list, bin_parse_list, ser_list, bin_ser_list
-from .retrofit import retrofit
-from .types import StructuredType, Token
-from .util import discard_ows
-from .util_binary import HEADER_OFFSET, STYPE
+from http_sfv.item import parse_item, bin_parse_item, ser_item, bin_ser_item
+from http_sfv.list import parse_list, bin_parse_list, ser_list, bin_ser_list
+from http_sfv.retrofit import retrofit
+from http_sfv.types import StructuredType, Token
+from http_sfv.util import discard_ows
+from http_sfv.util_binary import HEADER_OFFSET, STYPE
 
 
 def parse_text(value: bytes, name: str = None, tltype: str = None) -> StructuredType:

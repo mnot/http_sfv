@@ -1,8 +1,8 @@
 from string import ascii_letters, digits
 from typing import Tuple
 
-from .types import Token
-from .util_binary import decode_integer, encode_integer, bin_header, STYPE
+from http_sfv.types import Token
+from http_sfv.util_binary import decode_integer, encode_integer, bin_header, STYPE
 
 
 TOKEN_START_CHARS = set((ascii_letters + "*").encode("ascii"))

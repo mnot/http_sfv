@@ -1,6 +1,6 @@
 from typing import Tuple, Union, List, cast
 
-from .item import (
+from http_sfv.item import (
     PAREN_OPEN,
     parse_item,
     parse_innerlist,
@@ -11,9 +11,9 @@ from .item import (
     ser_innerlist,
     bin_ser_innerlist,
 )
-from .types import ListType, ItemType, InnerListType, ItemOrInnerListType
-from .util import discard_http_ows
-from .util_binary import (
+from http_sfv.types import ListType, ItemType, InnerListType, ItemOrInnerListType
+from http_sfv.util import discard_http_ows
+from http_sfv.util_binary import (
     encode_integer,
     decode_integer,
     bin_header,

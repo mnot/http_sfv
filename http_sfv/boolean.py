@@ -1,6 +1,6 @@
 from typing import Tuple
 
-from .util_binary import bin_header, extract_flags, STYPE
+from http_sfv.util_binary import bin_header, extract_flags, STYPE
 
 QUESTION = ord(b"?")
 ONE = ord(b"1")
