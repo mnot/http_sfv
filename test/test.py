@@ -8,7 +8,7 @@ from pathlib import Path
 import sys
 from typing import Any, List, Union
 
-from http_sfv import structures
+from http_sfv import parse_text, ser_text, Token
 
 FAIL = "\033[91m"
 WARN = "\033[93m"
@@ -47,7 +47,7 @@ def run_suite(suite_name: str, suite: List) -> None:
             if parse_fail_reason:
                 print(f"    -   reason: {parse_fail_reason}")
 
-        if not test.get("must_fail", False):
+        if False and not test.get("must_fail", False):
             suite_tests += 1
             ser_success, serialised, ser_expected, ser_fail_reason = test_serialise(
                 test
@@ -71,32 +71,61 @@ def test_parse(test: dict) -> Union[bool, Any, str]:
     parse_success = False
     parse_fail_reason = None
     test_success = False
-    field = structures[test["header_type"]]()
     try:
-        field.parse(b", ".join([v.encode('utf-8') for v in test["raw"]]))
+        field_value = b", ".join([v.encode('utf-8') for v in test["raw"]])
+        structure = parse_text(field_value, tltype=test["header_type"])[1]
         parse_success = True
     except ValueError as why:
         parse_fail_reason = why.args
+        structure = {}
     except Exception as why:
         sys.stderr.write(f"*** TEST ERROR in {test['name']}\n")
         raise
     if test.get("must_fail", False):
         test_success = not parse_success
     else:
-        test_success = test["expected"] == norm(field.to_json())
-    return test_success, norm(field.to_json()), parse_fail_reason
+        test_success = test["expected"] == norm(structure)
+    return test_success, norm(structure), parse_fail_reason
 
-def norm(injson: Any) -> Any:
-    return json.loads(json.dumps(injson), parse_float=decimal.Decimal)
+def norm(structure: Any) -> Any:
+    if isinstance(structure, dict):
+        structure = [[k, adjust(v)] for k,v in structure.items()]
+    elif isinstance(structure, list):
+        structure = [adjust(i) for i in structure]
+    else:
+        structure = adjust(structure)
+    return json.loads(json.dumps(structure, default=objhandler), parse_float=decimal.Decimal)
+
+def adjust(thing: Any) -> Any:
+    if isinstance(thing, tuple) and len(thing) == 2:
+        if isinstance(thing[0], decimal.Decimal):
+            thing = [float(thing[0]), thing[1]]
+        if isinstance(thing[1], decimal.Decimal):
+            thing = [thing[0], float(thing[1])]
+        if isinstance(thing[0], list):
+            thing = [[adjust(i) for i in thing[0]], thing[1]]
+        if isinstance(thing[1], dict):
+            thing = [thing[0], [adjust((k,v)) for k,v in thing[1].items()]]
+    return thing
+
+def objhandler(inobj: Any) -> dict:
+    if isinstance(inobj, Token):
+        return {
+            "__type": "token",
+            "value": str(inobj)
+        }
+    if isinstance(inobj, bytes):
+        return {
+            "__type": "binary",
+            "value": base64.b32encode(inobj).decode('ascii')
+        }
 
 def test_serialise(test: dict) -> Union[bool, str, str, str]:
     expected = test.get("canonical", test["raw"])
     output = None
     serialise_fail_reason = None
-    field = structures[test["header_type"]]()
-    field.from_json(test["expected"])
     try:
-        output = str(field)
+        output = ser_text(test["expected"])
     except ValueError as why:
         serialise_fail_reason = why.args[0]
     except Exception:
