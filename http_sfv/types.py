@@ -7,6 +7,9 @@ class Token(UserString):
     def __init__(self, seq: str):
         self.data = seq
 
+    def __repr__(self):
+        return f'Token("{self.data}")'
+
 
 BareItemType = Union[int, float, str, bool, Decimal, bytes, Token]
 ParamsType = Dict[str, BareItemType]
