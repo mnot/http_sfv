@@ -151,6 +151,7 @@ def bin_ser_params(params: ParamsType) -> bytes:
 def parse_innerlist(data: bytes) -> Tuple[int, InnerListType]:
     bytes_consumed = 1  # consume the "("
     inner_list: List[ItemType] = []
+    params: ParamsType = {}
     while True:
         bytes_consumed += discard_ows(data[bytes_consumed:])
         if data[bytes_consumed] == PAREN_CLOSE:
