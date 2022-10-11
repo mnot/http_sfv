@@ -21,8 +21,8 @@ def ser_boolean(inval: bool) -> str:
     return f"?{inval and '1' or '0'}"
 
 
-def bin_parse_boolean(data: bytes) -> Tuple[int, bool]:
-    return 1, extract_flags(data[0])[0]
+def bin_parse_boolean(data: bytes, cursor: int) -> Tuple[int, bool]:
+    return cursor + 1, extract_flags(data[cursor])[0]  # +1 for header
 
 
 def bin_ser_boolean(value: bool, parameters: bool) -> bytes:

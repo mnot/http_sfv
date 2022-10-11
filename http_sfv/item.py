@@ -65,14 +65,15 @@ def parse_item(data: bytes) -> Tuple[int, Tuple[BareItemType, ParamsType]]:
     return bytes_consumed, (value, params)
 
 
-def bin_parse_item(data: bytes) -> Tuple[int, Tuple[BareItemType, ParamsType]]:
-    bytes_consumed, value = bin_parse_bare_item(data)
-    if has_params(data[0]):
-        params_bytes_consumed, params = bin_parse_params(data[bytes_consumed:])
-        bytes_consumed += params_bytes_consumed
-    else:
-        params = {}
-    return bytes_consumed, (value, params)
+def bin_parse_item(
+    data: bytes, cursor: int
+) -> Tuple[int, Tuple[BareItemType, ParamsType]]:
+    if has_params(data[cursor]):
+        cursor, value = bin_parse_bare_item(data, cursor)
+        cursor, parameters = bin_parse_params(data, cursor)
+        return cursor, (value, parameters)
+    cursor, value = bin_parse_bare_item(data, cursor)
+    return cursor, (value, {})
 
 
 def ser_item(item: ItemType) -> str:
@@ -114,18 +115,16 @@ def parse_params(data: bytes) -> Tuple[int, ParamsType]:
     return bytes_consumed, params
 
 
-def bin_parse_params(data: bytes) -> Tuple[int, ParamsType]:
-    cursor = 1  # header
+def bin_parse_params(data: bytes, cursor: int) -> Tuple[int, ParamsType]:
     params = {}
-    cursor, member_count = decode_integer(data, cursor)
+    cursor, member_count = decode_integer(data, cursor + 1)  # +1 for header
     for _ in range(member_count):
         key_len = data[cursor]
         cursor += 1
         key_end = cursor + key_len
         key = data[cursor:key_end].decode("ascii")
         cursor = key_end
-        offset, value = bin_parse_bare_item(data[cursor:])
-        cursor += offset
+        cursor, value = bin_parse_bare_item(data, cursor)
         params[key] = value
     return cursor, params
 
@@ -170,18 +169,15 @@ def parse_innerlist(data: bytes) -> Tuple[int, InnerListType]:
         return bytes_consumed, (inner_list, params)
 
 
-def bin_parse_innerlist(data: bytes) -> Tuple[int, InnerListType]:
-    cursor = 1  # header
+def bin_parse_innerlist(data: bytes, cursor: int) -> Tuple[int, InnerListType]:
     inner_list: List[ItemType] = []
-    cursor, member_count = decode_integer(data, cursor)
+    cursor, member_count = decode_integer(data, cursor + 1)  # +1 for header
     for _ in range(member_count):
         params = has_params(data[cursor])
-        offset, member = bin_parse_item(data[cursor:])
-        cursor += offset
+        cursor, member = bin_parse_item(data, cursor)
         inner_list.append(member)
         if params:
-            params_consumed, parameters = bin_parse_params(data[cursor:])
-            cursor += params_consumed
+            cursor, parameters = bin_parse_params(data, cursor)
         else:
             parameters = {}
     return cursor, (inner_list, parameters)
@@ -236,12 +232,12 @@ _bin_parse_map = {
 }
 
 
-def bin_parse_bare_item(data: bytes) -> Tuple[int, BareItemType]:
+def bin_parse_bare_item(data: bytes, cursor: int) -> Tuple[int, BareItemType]:
     try:
-        return _bin_parse_map[data[0] >> HEADER_OFFSET](data)  # type: ignore
+        return _bin_parse_map[data[cursor] >> HEADER_OFFSET](data, cursor)  # type: ignore
     except KeyError as why:
         raise ValueError(
-            f"Item with type '{data[0] >> HEADER_OFFSET}' can't be identified"
+            f"Item with type '{data[cursor] >> HEADER_OFFSET}' can't be identified"
         ) from why
 
 

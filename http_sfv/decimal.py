@@ -39,11 +39,10 @@ def ser_decimal(input_decimal: Union[Decimal, float]) -> str:
     )
 
 
-def bin_parse_decimal(data: bytes) -> Tuple[int, Decimal]:
-    cursor = 1  # header
-    cursor, int_a = decode_integer(data, cursor)
+def bin_parse_decimal(data: bytes, cursor: int) -> Tuple[int, Decimal]:
+    cursor, int_a = decode_integer(data, cursor + 1)  # +1 for header
     cursor, int_b = decode_integer(data, cursor)
-    if extract_flags(data[0])[0]:
+    if extract_flags(data[cursor])[0]:
         return cursor, Decimal(int_a) / int_b
     return cursor, (Decimal(int_a) / int_b) * -1
 

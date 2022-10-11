@@ -51,18 +51,16 @@ def parse_dictionary(data: bytes) -> Tuple[int, DictionaryType]:
         raise ValueError from why
 
 
-def bin_parse_dictionary(data: bytes) -> Tuple[int, DictionaryType]:
-    cursor = 1  # header
+def bin_parse_dictionary(data: bytes, cursor: int) -> Tuple[int, DictionaryType]:
     dictionary = {}
-    cursor, member_count = decode_integer(data, cursor)
+    cursor, member_count = decode_integer(data, cursor + 1)  # +1 for header
     for _ in range(member_count):
         key_len = data[cursor]
         cursor += 1
         key_end = cursor + key_len
         key = data[cursor:key_end].decode("ascii")
         cursor = key_end
-        bytes_consumed, value = bin_parse_item_or_inner_list(data[cursor:])
-        cursor += bytes_consumed
+        cursor, value = bin_parse_item_or_inner_list(data, cursor)
         dictionary[key] = value
     return cursor, dictionary
 

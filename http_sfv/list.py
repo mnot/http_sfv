@@ -44,13 +44,11 @@ def parse_list(data: bytes) -> Tuple[int, ListType]:
             raise ValueError("Trailing comma at end of list")
 
 
-def bin_parse_list(data: bytes) -> Tuple[int, ListType]:
-    cursor = 1  # header
+def bin_parse_list(data: bytes, cursor: int) -> Tuple[int, ListType]:
     _list = []
-    cursor, member_count = decode_integer(data, cursor)
+    cursor, member_count = decode_integer(data, cursor + 1)  # +1 for header
     for _ in range(member_count):
-        offset, member = bin_parse_item_or_inner_list(data[cursor:])
-        cursor += offset
+        cursor, member = bin_parse_item_or_inner_list(data, cursor)
         _list.append(member)
     return cursor, _list
 
@@ -79,11 +77,11 @@ def parse_item_or_inner_list(data: bytes) -> Tuple[int, Union[ItemType, InnerLis
 
 
 def bin_parse_item_or_inner_list(
-    data: bytes,
+    data: bytes, cursor: int
 ) -> Tuple[int, Union[ItemType, InnerListType]]:
     if data[0] >> HEADER_OFFSET == STYPE.INNER_LIST:
-        return bin_parse_innerlist(data)
-    return bin_parse_item(data)
+        return bin_parse_innerlist(data, cursor)
+    return bin_parse_item(data, cursor)
 
 
 def ser_item_or_inner_list(thing: ItemOrInnerListType) -> str:

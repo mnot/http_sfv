@@ -56,10 +56,10 @@ def parse_text(name: str, value: bytes) -> Tuple[int, StructuredType]:
 def parse_binary(data: bytes) -> Tuple[int, StructuredType]:
     tltype = data[0] >> HEADER_OFFSET
     if tltype == STYPE.DICTIONARY:
-        return bin_parse_dictionary(data)
+        return bin_parse_dictionary(data, 0)
     if tltype == STYPE.LIST:
-        return bin_parse_list(data)
-    return bin_parse_item(data)
+        return bin_parse_list(data, 0)
+    return bin_parse_item(data, 0)
 
 
 def ser_text(structure: StructuredType) -> str:

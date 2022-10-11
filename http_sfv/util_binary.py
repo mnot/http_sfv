@@ -44,7 +44,7 @@ def has_params(header: int) -> bool:
     return (header & 0b00000100) > 0
 
 
-def decode_integer(data: bytes, cursor: int = 0) -> Tuple[int, int]:
+def decode_integer(data: bytes, cursor: int) -> Tuple[int, int]:
     val = data[cursor]
     end = cursor + (1 << (val >> 6))
     val = val & 0x3F

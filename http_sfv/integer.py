@@ -33,9 +33,9 @@ def ser_integer(inval: int) -> str:
     return output
 
 
-def bin_parse_integer(data: bytes) -> Tuple[int, int]:
-    sign = 1 if extract_flags(data[0])[0] else -1
-    cursor, integer = decode_integer(data, 1)
+def bin_parse_integer(data: bytes, cursor: int) -> Tuple[int, int]:
+    sign = 1 if extract_flags(data[cursor])[0] else -1
+    cursor, integer = decode_integer(data, cursor + 1)  # +1 for header
     return cursor, integer * sign
 
 

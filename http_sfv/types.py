@@ -4,8 +4,8 @@ from typing import Union, Dict, List, Tuple
 
 
 class Token(UserString):
-    pass
-
+    def __init__(self, seq: str):
+        self.data = seq
 
 BareItemType = Union[int, float, str, bool, Decimal, bytes, Token]
 ParamsType = Dict[str, BareItemType]

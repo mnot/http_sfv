@@ -44,9 +44,8 @@ def ser_string(inval: str) -> str:
     return f'"{escaped}"'
 
 
-def bin_parse_string(data: bytes) -> Tuple[int, str]:
-    cursor = 1  # header
-    cursor, length = decode_integer(data, cursor)
+def bin_parse_string(data: bytes, cursor: int) -> Tuple[int, str]:
+    cursor, length = decode_integer(data, cursor + 1)  # +1 for header
     end = cursor + length
     return end, data[cursor:end].decode("ascii")
 
