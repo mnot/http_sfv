@@ -42,8 +42,11 @@ from .types import StructuredType, Token
 from .util_binary import HEADER_OFFSET, STYPE
 
 
-def parse_text(name: str, value: bytes) -> Tuple[int, StructuredType]:
-    tltype = retrofit[name.lower()]
+def parse_text(
+    value: str, name: str = None, tltype: str = None
+) -> Tuple[int, StructuredType]:
+    if name != None:
+        tltype = retrofit.get(name.lower(), None)
     if tltype == "dictionary":
         return parse_dictionary(value)
     if tltype == "list":
