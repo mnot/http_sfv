@@ -7,6 +7,7 @@ class Token(UserString):
     def __init__(self, seq: str):
         self.data = seq
 
+
 BareItemType = Union[int, float, str, bool, Decimal, bytes, Token]
 ParamsType = Dict[str, BareItemType]
 ItemType = Tuple[BareItemType, ParamsType]
