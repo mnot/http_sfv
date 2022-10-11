@@ -167,7 +167,6 @@ def parse_innerlist(data: bytes) -> Tuple[int, InnerListType]:
                 raise ValueError("Inner list bad delimitation")
         except IndexError as why:
             raise ValueError("End of inner list not found") from why
-        return bytes_consumed, (inner_list, params)
 
 
 def bin_parse_innerlist(data: bytes, cursor: int) -> Tuple[int, InnerListType]:
