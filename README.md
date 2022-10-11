@@ -11,93 +11,56 @@ _Currently, this implements draft 19 of the specification._
 
 ## Python API
 
-There are three top-level types for Structured Field Values; `Dictionary`, `List` and `Item`. After instantiation, each can be used to parse a string HTTP header field value by calling `.parse()`:
+Textual HTTP headers can be parsed by calling `parse_text`; the return value is a data structure that represents the field value.
 
 ~~~ python
->>> from http_sfv import List
->>> my_list = List()
->>> my_list.parse(b"foo; a=1, bar; b=2")
+>>> from http_sfv import parse_text, ser_text
+>>> parse_text(b"foo; a=1, bar; b=2", tltype="dictionary")
+{'foo': (True, {'a': 1}), 'bar': (True, {'b': 2})}
 ~~~
 
-Note that `.parse()` takes a bytes-like object. If you want to parse a string, please `.encode()` it first.
+Note that `.parse()` takes a bytes-like object as the first argument. If you want to parse a string, please `.encode()` it first.
 
-Members of Lists and Dictionaries are available by normal Pythonic list and dictionary methods, respectively:
+Because the library needs to know which kind of field it is, you need to hint this when calling `parse_text`. There are two ways to do this:
+
+1. Using `tltype`, whose value should be one of 'dictionary', 'list', or 'item'.
+2. Using `name` to indicate a field name that has a registered type, per [the retrofit draft](https://httpwg.org/http-extensions/draft-ietf-httpbis-retrofit.html).
+
+Note that if you use `name`, a `KeyError` will be raised if the type associated with the name isn't known.
+
+Dictionaries are represented as Python dictionaries; Lists are represented as Python lists, and Items are represented using the following Python types:
+
+* Integers: `int`
+* Decimals: `float`
+* Strings: `str`
+* Tokens: `http_sfv.Token` // a `UserString`
+* Byte Sequences: `bytes`
+* Booleans: `bool`
+
+Inner Lists are represented as lists as well.
+
+Structured Types that can have parameters (including Dictionary and List members as well as singular Items and Inner Lists) are represented as a tuple of `(value, parameters)` where parameters is a dictionary.
+
+So, a single item that's a Token with one parameter whose value is an integer will be represented like this:
 
 ~~~ python
->>> my_list
-[<http_sfv.item.Item object at 0x106d25190>, <http_sfv.item.Item object at 0x106d25210>]
->>> my_list[0]
-<http_sfv.item.Item object at 0x106d25190>
+>>> parse_text(b"foo; a=1", tltype="item")
+(Token("foo"), {'a': 1})
 ~~~
 
-Items (whether top-level or inside a list or dictionary value) can have their values accessed with the `.value` property:
+Note that even if there aren't parameters, a tuple will still be returned, as in soem items on this List:
 
 ~~~ python
->>> my_list[0].value
-'foo'
+>>> parse_text(b"a, b; q=5, c", tltype="list")
+[(Token("a"), {}), (Token("b"), {'q': 5}), (Token("c"), {})]
 ~~~
 
-Parameters on Items (and Inner Lists) can be accessed using the `.params` property, which is a dictionary:
+To serialise that data structure back to a textual Structured Field, use `ser_text`:
 
 ~~~ python
->>> my_list[0].params['a']
-1
-~~~
-
-Note that Tokens and Strings both evaluate as Python strings, but Tokens have a different class:
-
-~~~ python
->>> type(my_list[0].value)
-<class 'http_sfv.token.Token'>
-~~~
-
-That means that you need to create Tokens explicitly:
-
-~~~ python
->>> from http_sfv import Token
->>> my_list.append(Token('bar'))
->>> my_list[-1]
-'bar'
-~~~
-
-If you compare two Items, they'll be considered to be equivalent if their values match, even when their parameters are different:
-
-~~~ python
->>> Token('foo') in my_list  # note that my_list's 'foo' has a parameter
-True
->>> my_list.count(Token("foo"))
-1
-~~~
-
-Inner Lists can be added by passing a list:
-
-~~~ python
->>> my_list.append(['another_thing', 'and_another'])
->>> print(my_list)
-foo;a=1, bar;b=2, bar, ("another_thing" "and_another")
->>> my_list[-1][-1].params['a'] = True
-~~~
-
-Dictionaries, Lists, and Items can be instantiated with a value:
-
-~~~ python
->>> from http_sfv import Dictionary
->>> my_dictionary = Dictionary({'a': '1', 'b': 2, 'c': Token('foo')})
->>> my_dictionary
-{'a': <http_sfv.item.Item object at 0x106a94c40>, 'b': <http_sfv.item.Item object at 0x106a94d00>, 'c': <http_sfv.item.Item object at 0x106a94dc0>}
-~~~
-
-Once instantiated, parameters can then be accessed:
-
-~~~ python
->>> my_dictionary['b'].params['1'] = 2.0
-~~~
-
-Finally, to serialise a field value, just evaluate it as a string:
-
-~~~ python
->>> print(my_dictionary)
-a=1, b=2;b1=2.0, c=foo
+>>> field = parse_text(b"a, b; q=5, c", tltype="list")
+>>> ser_text(field)
+'a, b;q=5, c'
 ~~~
 
 
