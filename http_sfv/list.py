@@ -9,7 +9,6 @@ from .util_binary import (
     encode_integer,
     decode_integer,
     bin_header,
-    has_params,
     STYPE,
     HEADER_OFFSET,
 )
