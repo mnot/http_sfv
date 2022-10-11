@@ -39,7 +39,7 @@ def ser_decimal(input_decimal: Union[Decimal, float]) -> str:
     )
 
 
-def bin_parse_decimal(data: bytearray) -> Tuple[int, Decimal]:
+def bin_parse_decimal(data: bytes) -> Tuple[int, Decimal]:
     cursor = 1  # header
     bytes_consumed, int_a = decode_integer(data[cursor:])
     cursor += bytes_consumed
@@ -50,7 +50,7 @@ def bin_parse_decimal(data: bytearray) -> Tuple[int, Decimal]:
     return cursor, (Decimal(int_a) / int_b) * -1
 
 
-def bin_ser_decimal(value: Decimal, parameters: bool) -> bytearray:
+def bin_ser_decimal(value: Decimal, parameters: bool) -> bytes:
     int_a, int_b = value.as_integer_ratio()
     sign = int_a >= 0
     data = bin_header(STYPE.DECIMAL, parameters=parameters, flag1=sign)

@@ -53,7 +53,7 @@ def parse_text(name: str, value: bytes) -> Tuple[int, StructuredType]:
     raise ValueError("unrecognised top-level type")
 
 
-def parse_binary(data: bytearray) -> Tuple[int, StructuredType]:
+def parse_binary(data: bytes) -> Tuple[int, StructuredType]:
     tltype = data[0] >> HEADER_OFFSET
     if tltype == STYPE.DICTIONARY:
         return bin_parse_dictionary(data)
@@ -70,7 +70,7 @@ def ser_text(structure: StructuredType) -> str:
     return ser_item(structure)
 
 
-def ser_binary(structure: StructuredType) -> bytearray:
+def ser_binary(structure: StructuredType) -> bytes:
     if isinstance(structure, Dict):
         return bin_ser_dictionary(structure)
     if isinstance(structure, List):

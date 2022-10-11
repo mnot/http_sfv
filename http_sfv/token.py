@@ -27,7 +27,7 @@ def ser_token(token: Token) -> str:
     return str(token)
 
 
-def bin_parse_token(data: bytearray) -> Tuple[int, Token]:
+def bin_parse_token(data: bytes) -> Tuple[int, Token]:
     cursor = 1  # header
     bytes_consumed, length = decode_integer(data[cursor:])
     cursor += bytes_consumed
@@ -35,7 +35,7 @@ def bin_parse_token(data: bytearray) -> Tuple[int, Token]:
     return end, Token(data[cursor:end].decode("ascii"))
 
 
-def bin_ser_token(value: Token, parameters: bool) -> bytearray:
+def bin_ser_token(value: Token, parameters: bool) -> bytes:
     data = bin_header(STYPE.TOKEN, parameters=parameters)
     data += encode_integer(len(value))
     data += value.encode("ascii")

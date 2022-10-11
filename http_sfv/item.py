@@ -65,7 +65,7 @@ def parse_item(data: bytes) -> Tuple[int, Tuple[BareItemType, ParamsType]]:
     return bytes_consumed, (value, params)
 
 
-def bin_parse_item(data: bytearray) -> Tuple[int, Tuple[BareItemType, ParamsType]]:
+def bin_parse_item(data: bytes) -> Tuple[int, Tuple[BareItemType, ParamsType]]:
     bytes_consumed, value = bin_parse_bare_item(data)
     if has_params(data[0]):
         params_bytes_consumed, params = bin_parse_params(data[bytes_consumed:])
@@ -79,8 +79,8 @@ def ser_item(item: ItemType) -> str:
     return f"{ser_bare_item(item[0])}{ser_params(item[1])}"
 
 
-def bin_ser_item(item: ItemType) -> bytearray:
-    data = bytearray()
+def bin_ser_item(item: ItemType) -> bytes:
+    data = bytes()
     if len(item[1]):
         data += bin_ser_bare_item(item[0], parameters=True)
         data += bin_ser_params(item[1])
@@ -114,7 +114,7 @@ def parse_params(data: bytes) -> Tuple[int, ParamsType]:
     return bytes_consumed, params
 
 
-def bin_parse_params(data: bytearray) -> Tuple[int, ParamsType]:
+def bin_parse_params(data: bytes) -> Tuple[int, ParamsType]:
     bytes_consumed = 1  # header
     params = {}
     offset, member_count = decode_integer(data[bytes_consumed:])
@@ -140,14 +140,14 @@ def ser_params(params: ParamsType) -> str:
     )
 
 
-def bin_ser_params(params: ParamsType) -> bytearray:
-    data = bin_header(STYPE.PARAMETER)
-    data += encode_integer(len(params))
+def bin_ser_params(params: ParamsType) -> bytes:
+    data = [bin_header(STYPE.PARAMETER)]
+    data.append(encode_integer(len(params)))
     for member in params:
-        data.append(len(member))  # fixme: catch too many
-        data += member.encode("ascii")
-        data += bin_ser_bare_item(params[member])
-    return data
+        data.append(len(member).to_bytes(1, "big"))
+        data.append(member.encode("ascii"))
+        data.append(bin_ser_bare_item(params[member]))
+    return b"".join(data)
 
 
 def parse_innerlist(data: bytes) -> Tuple[int, InnerListType]:
@@ -171,7 +171,7 @@ def parse_innerlist(data: bytes) -> Tuple[int, InnerListType]:
         return bytes_consumed, (inner_list, params)
 
 
-def bin_parse_innerlist(data: bytearray) -> Tuple[int, InnerListType]:
+def bin_parse_innerlist(data: bytes) -> Tuple[int, InnerListType]:
     bytes_consumed = 1  # header
     inner_list: List[ItemType] = []
     offset, member_count = decode_integer(data[bytes_consumed:])
@@ -195,7 +195,7 @@ def ser_innerlist(inner_list: InnerListType) -> str:
     )
 
 
-def bin_ser_innerlist(inner_list: InnerListType) -> bytearray:
+def bin_ser_innerlist(inner_list: InnerListType) -> bytes:
     params = bool(len(inner_list[1]))
     data = bin_header(STYPE.INNER_LIST, parameters=params)
     data += encode_integer(len(inner_list[0]))
@@ -238,7 +238,7 @@ _bin_parse_map = {
 }
 
 
-def bin_parse_bare_item(data: bytearray) -> Tuple[int, BareItemType]:
+def bin_parse_bare_item(data: bytes) -> Tuple[int, BareItemType]:
     try:
         return _bin_parse_map[data[0] >> HEADER_OFFSET](data)  # type: ignore
     except KeyError as why:
@@ -268,7 +268,7 @@ def ser_bare_item(item: BareItemType) -> str:
     raise ValueError(f"Can't serialise; unrecognised item with type {type(item)}")
 
 
-def bin_ser_bare_item(item: BareItemType, parameters: bool = False) -> bytearray:
+def bin_ser_bare_item(item: BareItemType, parameters: bool = False) -> bytes:
     if isinstance(item, bool):
         return bin_ser_boolean(item, parameters)
     if isinstance(item, int):

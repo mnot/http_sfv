@@ -30,7 +30,7 @@ def ser_byteseq(byteseq: bytes) -> str:
     return f":{base64.standard_b64encode(byteseq).decode('ascii')}:"
 
 
-def bin_parse_byteseq(data: bytearray) -> Tuple[int, bytes]:
+def bin_parse_byteseq(data: bytes) -> Tuple[int, bytes]:
     cursor = 1  # header
     bytes_consumed, length = decode_integer(data[cursor:])
     cursor += bytes_consumed
@@ -38,7 +38,7 @@ def bin_parse_byteseq(data: bytearray) -> Tuple[int, bytes]:
     return end, bytes(data[cursor:end])
 
 
-def bin_ser_byteseq(value: bytes, parameters: bool) -> bytearray:
+def bin_ser_byteseq(value: bytes, parameters: bool) -> bytes:
     data = bin_header(STYPE.BYTESEQ, parameters=parameters)
     data += encode_integer(len(value))
     data += value

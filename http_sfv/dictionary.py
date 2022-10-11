@@ -51,7 +51,7 @@ def parse_dictionary(data: bytes) -> Tuple[int, DictionaryType]:
         raise ValueError from why
 
 
-def bin_parse_dictionary(data: bytearray) -> Tuple[int, DictionaryType]:
+def bin_parse_dictionary(data: bytes) -> Tuple[int, DictionaryType]:
     cursor = 1  # header
     dictionary = {}
     bytes_consumed, member_count = decode_integer(data[cursor:])
@@ -82,11 +82,11 @@ def ser_dictionary(dictionary: DictionaryType) -> str:
     )
 
 
-def bin_ser_dictionary(dictionary: DictionaryType) -> bytearray:
-    data = bin_header(STYPE.DICTIONARY)
-    data += encode_integer(len(dictionary))
+def bin_ser_dictionary(dictionary: DictionaryType) -> bytes:
+    data = [bin_header(STYPE.DICTIONARY)]
+    data.append(encode_integer(len(dictionary)))
     for member in dictionary:
-        data.append(len(member))  # fixme: catch too many
-        data += member.encode("ascii")
-        data += bin_ser_item(dictionary[member])  # type: ignore
-    return data
+        data.append(len(member).to_bytes(1, "big"))
+        data.append(member.encode("ascii"))
+        data.append(bin_ser_item(dictionary[member]))  # type: ignore
+    return b"".join(data)

@@ -33,13 +33,13 @@ def ser_integer(inval: int) -> str:
     return output
 
 
-def bin_parse_integer(data: bytearray) -> Tuple[int, int]:
+def bin_parse_integer(data: bytes) -> Tuple[int, int]:
     sign = 1 if extract_flags(data[0])[0] else -1
     bytes_consumed, integer = decode_integer(data[1:])
     return bytes_consumed + 1, integer * sign
 
 
-def bin_ser_integer(value: int, parameters: bool) -> bytearray:
+def bin_ser_integer(value: int, parameters: bool) -> bytes:
     if not MIN_INT <= value <= MAX_INT:
         raise ValueError("Input is out of Integer range.")
     sign = value >= 0

@@ -44,7 +44,7 @@ def parse_list(data: bytes) -> Tuple[int, ListType]:
             raise ValueError("Trailing comma at end of list")
 
 
-def bin_parse_list(data: bytearray) -> Tuple[int, ListType]:
+def bin_parse_list(data: bytes) -> Tuple[int, ListType]:
     bytes_consumed = 1  # header
     _list = []
     offset, member_count = decode_integer(data[bytes_consumed:])
@@ -62,7 +62,7 @@ def ser_list(_list: ListType) -> str:
     return ", ".join([ser_item_or_inner_list(m) for m in _list])
 
 
-def bin_ser_list(_list: ListType) -> bytearray:
+def bin_ser_list(_list: ListType) -> bytes:
     data = bin_header(STYPE.LIST)
     data += encode_integer(len(_list))
     for member in _list:
@@ -80,7 +80,7 @@ def parse_item_or_inner_list(data: bytes) -> Tuple[int, Union[ItemType, InnerLis
 
 
 def bin_parse_item_or_inner_list(
-    data: bytearray,
+    data: bytes,
 ) -> Tuple[int, Union[ItemType, InnerListType]]:
     if data[0] >> HEADER_OFFSET == STYPE.INNER_LIST:
         return bin_parse_innerlist(data)
@@ -93,7 +93,7 @@ def ser_item_or_inner_list(thing: ItemOrInnerListType) -> str:
     return ser_item(thing)
 
 
-def bin_ser_item_or_inner_list(thing: ItemOrInnerListType) -> bytearray:
+def bin_ser_item_or_inner_list(thing: ItemOrInnerListType) -> bytes:
     if isinstance(thing[0], List):
         return bin_ser_innerlist(thing)
     return bin_ser_item(thing)
