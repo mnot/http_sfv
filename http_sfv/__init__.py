@@ -45,7 +45,7 @@ from .util_binary import HEADER_OFFSET, STYPE
 
 def parse_text(
     value: bytes, name: str = None, tltype: str = None
-) -> Tuple[int, StructuredType]:
+) -> StructuredType:
     structure: StructuredType
     if name is not None:
         tltype = retrofit.get(name.lower(), None)
@@ -61,7 +61,7 @@ def parse_text(
     cursor += bytes_consumed
     if discard_ows(value[cursor:]) < len(value) - cursor:
         raise ValueError("Trailing characters after value.")
-    return bytes_consumed, structure
+    return structure
 
 
 def parse_binary(data: bytes) -> Tuple[int, StructuredType]:

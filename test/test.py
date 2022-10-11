@@ -73,7 +73,7 @@ def test_parse(test: dict) -> Union[bool, Any, str]:
     test_success = False
     try:
         field_value = b", ".join([v.encode('utf-8') for v in test["raw"]])
-        structure = parse_text(field_value, tltype=test["header_type"])[1]
+        structure = parse_text(field_value, tltype=test["header_type"])
         parse_success = True
     except ValueError as why:
         parse_fail_reason = why.args
