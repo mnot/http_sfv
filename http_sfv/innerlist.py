@@ -1,4 +1,4 @@
-from typing import Tuple, List
+from typing import Tuple, List, cast, Union
 
 from http_sfv.item import (
     parse_item,
@@ -16,6 +16,7 @@ from http_sfv.types import (
     InnerListType,
     ItemType,
     ParamsType,
+    ItemOrInnerListType,
 )
 from http_sfv.util import discard_ows
 from http_sfv.util_binary import (
@@ -24,6 +25,7 @@ from http_sfv.util_binary import (
     bin_header,
     has_params,
     STYPE,
+    HEADER_OFFSET,
 )
 
 PAREN_OPEN = ord(b"(")
@@ -85,3 +87,36 @@ def bin_ser_innerlist(inner_list: InnerListType) -> bytes:
     if params:
         data.append(bin_ser_params(inner_list[1]))
     return b"".join(data)
+
+
+def parse_item_or_inner_list(data: bytes) -> Tuple[int, Union[ItemType, InnerListType]]:
+    try:
+        if data[0] == PAREN_OPEN:
+            return parse_innerlist(data)
+    except IndexError:
+        pass
+    return parse_item(data)
+
+
+def bin_parse_item_or_inner_list(
+    data: bytes, cursor: int
+) -> Tuple[int, Union[ItemType, InnerListType]]:
+    if data[0] >> HEADER_OFFSET == STYPE.INNER_LIST:
+        return bin_parse_innerlist(data, cursor)
+    return bin_parse_item(data, cursor)
+
+
+def ser_item_or_inner_list(thing: ItemOrInnerListType) -> str:
+    if not isinstance(thing, tuple):
+        thing = cast(ItemType, (thing, {}))
+    if isinstance(cast(InnerListType, thing)[0], List):
+        return ser_innerlist(cast(InnerListType, thing))
+    return ser_item(cast(ItemType, thing))
+
+
+def bin_ser_item_or_inner_list(thing: ItemOrInnerListType) -> bytes:
+    if not isinstance(thing, tuple):
+        thing = cast(ItemType, (thing, {}))
+    if isinstance(cast(InnerListType, thing)[0], List):
+        return bin_ser_innerlist(cast(InnerListType, thing))
+    return bin_ser_item(cast(ItemType, thing))
