@@ -63,6 +63,23 @@ To serialise that data structure back to a textual Structured Field, use `ser_te
 'a, b;q=5, c'
 ~~~
 
+When using `ser_text`, if an Item or Inner List doesn't have parameters, they can be omitted; for example:
+
+~~~ python
+>>> structure = [5, 6, (7, {"with": "param"})]
+>>> ser_text(structure)
+'5, 6, 7;with="param"'
+~~~
+
+However, `parse_text` will always produce tuples for Items and Inner Lists, even when there are no parameters:
+
+~~~ python
+>>> parse_text(bytes(ser_text(structure), encoding='ascii'), tltype='list')
+[(5, {}), (6, {}), (7, {'with': 'param'})]
+~~~
+
+Note that `ser_text` produces a string, not a bytes-like object.
+
 
 ## Command Line Use
 
