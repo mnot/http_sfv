@@ -5,7 +5,7 @@ from typing_extensions import TypeAlias
 
 
 class Token(UserString):
-    def __init__(self, seq: str):
+    def __init__(self, seq: str):  # pylint: disable=W0231
         self.data = seq
 
     def __repr__(self) -> str:
