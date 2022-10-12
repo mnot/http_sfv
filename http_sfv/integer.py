@@ -1,6 +1,6 @@
 from decimal import Decimal
 from string import digits
-from typing import Tuple, Union
+from typing import Tuple, Union, cast
 
 from http_sfv.util_binary import (
     decode_integer,
@@ -20,7 +20,7 @@ MINUS = ord(b"-")
 
 
 def parse_integer(data: bytes) -> Tuple[int, int]:
-    return parse_number(data)  # type: ignore
+    return cast(Tuple[int, int], parse_number(data))
 
 
 def ser_integer(inval: int) -> str:
