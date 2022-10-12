@@ -80,32 +80,3 @@ However, `parse_text` will always produce tuples for Items and Inner Lists, even
 
 Note that `ser_text` produces a string, not a bytes-like object.
 
-
-## Command Line Use
-
-You can validate and examine the data model of a field value by calling the library on the command line, using `-d`, `-l` and `-i` to denote dictionaries, lists or items respectively; e.g.,
-
-~~~ example
-> python3 -m http_sfv -i "foo;bar=baz"
-[
-    {
-        "__type": "token",
-        "value": "foo"
-    },
-    {
-        "bar": {
-            "__type": "token",
-            "value": "baz"
-        }
-    }
-]
-~~~
-
-or:
-
-~~~ example
-> python3 -m http_sfv -i "foo;&bar=baz"
-FAIL: Key does not begin with lcalpha or * at: &bar=baz
-~~~
-
-Note that if successful, the output is in the JSON format used by the [test suite](https://github.com/httpwg/structured-header-tests/).
