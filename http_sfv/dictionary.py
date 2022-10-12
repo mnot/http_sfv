@@ -9,7 +9,11 @@ from http_sfv.util import (
     ser_key,
     parse_key,
 )
-from .util_binary import decode_integer, encode_integer, bin_header, STYPE
+from .util_binary import (
+    bin_len_header,
+    extract_len,
+    STYPE,
+)
 
 
 EQUALS = ord(b"=")
@@ -54,7 +58,7 @@ def parse_dictionary(data: bytes) -> Tuple[int, DictionaryType]:
 
 def bin_parse_dictionary(data: bytes, cursor: int) -> Tuple[int, DictionaryType]:
     dictionary = {}
-    cursor, member_count = decode_integer(data, cursor + 1)  # +1 for header
+    cursor, member_count = extract_len(data, cursor)
     for _ in range(member_count):
         key_len = data[cursor]
         cursor += 1
@@ -81,8 +85,7 @@ def ser_dictionary(dictionary: DictionaryType) -> str:
 
 
 def bin_ser_dictionary(dictionary: DictionaryType) -> bytes:
-    data = [bin_header(STYPE.DICTIONARY)]
-    data.append(encode_integer(len(dictionary)))
+    data = [bin_len_header(STYPE.DICTIONARY, len(dictionary))]
     for member in dictionary:
         data.append(len(member).to_bytes(1, "big"))
         data.append(member.encode("ascii"))

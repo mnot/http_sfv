@@ -9,10 +9,9 @@ from http_sfv.innerlist import (
 from http_sfv.types import ListType
 from http_sfv.util import discard_http_ows
 from http_sfv.util_binary import (
-    encode_integer,
-    decode_integer,
-    bin_header,
     STYPE,
+    extract_len,
+    bin_len_header,
 )
 
 
@@ -40,7 +39,7 @@ def parse_list(data: bytes) -> Tuple[int, ListType]:
 
 def bin_parse_list(data: bytes, cursor: int) -> Tuple[int, ListType]:
     _list = []
-    cursor, member_count = decode_integer(data, cursor + 1)  # +1 for header
+    cursor, member_count = extract_len(data, cursor)
     for _ in range(member_count):
         cursor, member = bin_parse_item_or_inner_list(data, cursor)
         _list.append(member)
@@ -54,8 +53,7 @@ def ser_list(_list: ListType) -> str:
 
 
 def bin_ser_list(_list: ListType) -> bytes:
-    data = [bin_header(STYPE.LIST)]
-    data.append(encode_integer(len(_list)))
+    data = [bin_len_header(STYPE.LIST, len(_list))]
     for member in _list:
         data.append(bin_ser_item_or_inner_list(member))
     return b"".join(data)

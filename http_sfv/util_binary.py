@@ -36,6 +36,26 @@ def bin_header(
     return bytes(data)
 
 
+def bin_len_header(
+    sf_type: STYPE,
+    length: int = 0,
+) -> bytes:
+    data = bytearray([0])
+    data[0] |= sf_type << HEADER_OFFSET
+    if 0 < length < 8:
+        data[0] |= length
+    else:
+        data += encode_integer(length)
+    return bytes(data)
+
+
+def extract_len(data: bytes, cursor: int) -> Tuple[int, int]:
+    compact_len = data[cursor] & 0b00000111
+    if compact_len != 0:
+        return cursor + 1, compact_len
+    return decode_integer(data, cursor + 1)
+
+
 def extract_flags(header: int) -> Tuple[bool, bool]:
     return ((header & 0b00000010) > 0, (header & 0b00000001) > 0)
 

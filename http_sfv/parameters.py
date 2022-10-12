@@ -16,9 +16,8 @@ from http_sfv.util import (
     ser_key,
 )
 from http_sfv.util_binary import (
-    encode_integer,
-    decode_integer,
-    bin_header,
+    bin_len_header,
+    extract_len,
     STYPE,
 )
 
@@ -54,7 +53,7 @@ def parse_params(data: bytes) -> Tuple[int, ParamsType]:
 
 def bin_parse_params(data: bytes, cursor: int) -> Tuple[int, ParamsType]:
     params = {}
-    cursor, member_count = decode_integer(data, cursor + 1)  # +1 for header
+    cursor, member_count = extract_len(data, cursor)
     for _ in range(member_count):
         key_len = data[cursor]
         cursor += 1
@@ -76,8 +75,7 @@ def ser_params(params: ParamsType) -> str:
 
 
 def bin_ser_params(params: ParamsType) -> bytes:
-    data = [bin_header(STYPE.PARAMETER)]
-    data.append(encode_integer(len(params)))
+    data = [bin_len_header(STYPE.PARAMETER, len(params))]
     for member in params:
         data.append(len(member).to_bytes(1, "big"))
         data.append(member.encode("ascii"))
