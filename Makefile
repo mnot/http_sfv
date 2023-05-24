@@ -28,6 +28,9 @@ perf: venv
 typecheck: venv
 	PYTHONPATH=$(VENV) $(VENV)/python -m mypy $(PROJECT)
 
+pyright: venv
+	PYTHONPATH=$(VENV) $(VENV)/python -m pyright $(PROJECT)
+
 .PHONY: fuzz
 fuzz-%: venv
 	$(BLAB) -l test/ -e "sf.sf-$*" | PYTHONPATH=$(VENV) $(VENV)/python -m http_sfv --$* --stdin

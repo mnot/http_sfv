@@ -20,6 +20,14 @@ warn_unreachable = true
 strict_optional = false
 show_error_codes = true
 
+[tool.pyright]
+include = ["http_sfv"]
+defineConstant = { DEBUG = true }
+venv = ".venv"
+reportMissingImports = true
+pythonVersion = "3.11"
+pythonPlatform = "Darwin"
+
 
 [tool.pylint.basic]
 function-rgx = "[a-z_][a-z0-9_]{1,30}$"
