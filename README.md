@@ -7,7 +7,7 @@ This is a [Python 3](https://python.org/) library implementing parsing and seria
 
 The library's initial purpose is to prove the algorithms in the specification; as a result, it is not at all optimised. It tracks the specification closely, but since it is not yet an RFC, may change at any time.
 
-_Currently, this implements draft 19 of the specification._
+_Currently, this implements [draft-ietf-httpbis-sfbis-03](https://datatracker.ietf.org/doc/draft-ietf-httpbis-sfbis/)._
 
 ## Python API
 
