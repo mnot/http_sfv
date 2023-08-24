@@ -1,8 +1,8 @@
 import base64
+from datetime import datetime
 from decimal import Decimal
 
-from .token import Token
-from .types import BareItemType, JsonBareType
+from .types import BareItemType, JsonBareType, Token, DisplayString
 
 
 def value_to_json(value: BareItemType) -> JsonBareType:
@@ -15,6 +15,10 @@ def value_to_json(value: BareItemType) -> JsonBareType:
         return {"__type": "token", "value": str(value)}
     if isinstance(value, Decimal):
         return float(value)
+    if isinstance(value, datetime):
+        return {"__type": "date", "value": value.timestamp()}
+    if isinstance(value, DisplayString):
+        return {"__type": "displaystring", "value": str(value)}
     return value
 
 
@@ -25,6 +29,10 @@ def value_from_json(value: JsonBareType) -> BareItemType:
                 return Token(value["value"])
             if value["__type"] == "binary":
                 return base64.b32decode(value["value"])
+            if value["__type"] == "date":
+                return datetime.fromtimestamp(value["value"])
+            if value["__type"] == "displaystring":
+                return DisplayString(value["value"])
             raise Exception(f"Unrecognised data type {value['__type']}")
         raise Exception("Dictionary as Item")
     return value

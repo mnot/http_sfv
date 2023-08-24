@@ -60,6 +60,8 @@ That means that you need to create Tokens explicitly:
 'bar'
 ~~~
 
+Likewise, Display Strings are represented using DisplayString objects; Dates as `datetime.datetime` objects.
+
 If you compare two Items, they'll be considered to be equivalent if their values match, even when their parameters are different:
 
 ~~~ python

@@ -1,4 +1,5 @@
 from collections import UserList
+from datetime import datetime
 from decimal import Decimal
 from typing import List as _List, Tuple, Union, Any, Iterable, cast
 from typing_extensions import SupportsIndex
@@ -9,6 +10,8 @@ from .decimal import ser_decimal
 from .integer import parse_number, ser_integer, NUMBER_START_CHARS
 from .string import parse_string, ser_string, DQUOTE
 from .token import parse_token, ser_token, Token, TOKEN_START_CHARS
+from .date import parse_date, ser_date
+from .display_string import parse_display_string, ser_display_string, DisplayString
 from .types import BareItemType, JsonItemType, JsonParamType, JsonInnerListType
 from .util import (
     StructuredFieldValue,
@@ -98,7 +101,7 @@ class Parameters(dict):
         return [(k, value_to_json(v)) for (k, v) in self.items()]
 
     def from_json(self, json_data: JsonParamType) -> None:
-        for (name, value) in json_data:
+        for name, value in json_data:
             self[name] = value_from_json(value)
 
 
@@ -164,6 +167,8 @@ _parse_map = {
     DQUOTE: parse_string,
     BYTE_DELIMIT: parse_byteseq,
     ord(b"?"): parse_boolean,
+    ord(b"@"): parse_date,
+    ord(b"%"): parse_display_string,
 }
 for c in TOKEN_START_CHARS:
     _parse_map[c] = parse_token
@@ -200,6 +205,10 @@ def ser_bare_item(item: BareItemType) -> str:
         return ser_token(item)
     if isinstance(item, Decimal):
         return ser_decimal(item)
+    if isinstance(item, datetime):
+        return ser_date(item)
+    if isinstance(item, DisplayString):
+        return ser_display_string(item)
     raise ValueError(f"Can't serialise; unrecognised item with type {type(item)}")
 
 

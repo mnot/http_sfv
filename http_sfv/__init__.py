@@ -27,11 +27,12 @@ THE SOFTWARE.
 
 __version__ = "0.9.8"
 
+# Item type wrappers
+from .types import DisplayString, Token
 
 # Top-level structures
 from .dictionary import Dictionary
 from .list import List
 from .item import Item, InnerList
-from .token import Token
 
 structures = {"dictionary": Dictionary, "list": List, "item": Item}

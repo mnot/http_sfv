@@ -1,13 +1,20 @@
 from collections import UserString
+from datetime import datetime
 from decimal import Decimal
 from typing import Union, Dict, List, Tuple
 
 
-class Token(UserString):
+class Token(str):
     pass
 
 
-BareItemType = Union[int, float, str, bool, Decimal, bytes, Token]
+class DisplayString(str):
+    pass
+
+
+BareItemType = Union[
+    int, float, str, bool, Decimal, bytes, Token, datetime, DisplayString
+]
 JsonBareType = Union[int, float, str, bool, Decimal, Dict]
 
 JsonParamType = List[Tuple[str, JsonBareType]]
