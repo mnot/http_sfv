@@ -25,6 +25,8 @@ def parse_display_string(data: bytes) -> Tuple[int, DisplayString]:
             except IndexError as why:
                 raise ValueError("Incomplete percent encoding") from why
             bytes_consumed += 2
+            if next_chars.lower() != next_chars:
+                raise ValueError("Uppercase percent encoding")
             try:
                 octet = int(next_chars, base=16)
             except ValueError as why:
