@@ -11,6 +11,8 @@ _Currently, this implements [draft-ietf-httpbis-sfbis-03](https://datatracker.ie
 
 ## Python API
 
+### Parsing
+
 Textual HTTP headers can be parsed by calling `parse`; the return value is a data structure that represents the field value.
 
 ~~~ python
@@ -19,7 +21,9 @@ Textual HTTP headers can be parsed by calling `parse`; the return value is a dat
 {'foo': (True, {'a': 1}), 'bar': (True, {'b': 2})}
 ~~~
 
-Note that `.parse()` takes a bytes-like object as the first argument. If you want to parse a string, please `.encode()` it first.
+`parse()` takes a bytes-like object as the first argument. If you want to parse a string, please `.encode()` it first.
+
+#### Indicating Top-Level Type
 
 Because the library needs to know which kind of field it is, you need to hint this when calling `parse`. There are two ways to do this:
 
@@ -28,7 +32,11 @@ Because the library needs to know which kind of field it is, you need to hint th
 
 Note that if you use `name`, a `KeyError` will be raised if the type associated with the name isn't known.
 
-Dictionaries are represented as Python dictionaries; Lists are represented as Python lists, and Items are represented using the following Python types:
+### Types
+
+In the returned data, Dictionaries are represented as Python dictionaries; Lists are represented as Python lists, and Items are the bare type.
+
+Bare types are represented using the following Python types:
 
 * Integers: `int`
 * Decimals: `float`
@@ -40,6 +48,8 @@ Dictionaries are represented as Python dictionaries; Lists are represented as Py
 * Display Strings: `http_sfv.DisplayString` (a `UserString`)
 
 Inner Lists are represented as lists as well.
+
+### Parameters
 
 Structured Types that can have parameters (including Dictionary and List members as well as singular Items and Inner Lists) are represented as a tuple of `(value, parameters)` where parameters is a dictionary.
 
@@ -56,6 +66,8 @@ Note that even if there aren't parameters, a tuple will still be returned, as in
 >>> parse(b"a, b; q=5, c", tltype="list")
 [(Token("a"), {}), (Token("b"), {'q': 5}), (Token("c"), {})]
 ~~~
+
+### Serialisation
 
 To serialise that data structure back to a textual Structured Field, use `ser`:
 
