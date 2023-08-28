@@ -2,14 +2,6 @@ from decimal import Decimal
 from typing import Tuple, Union, cast
 
 from http_sfv.integer import parse_number
-from http_sfv.util_binary import (
-    decode_integer,
-    encode_integer,
-    bin_header,
-    extract_flags,
-    STYPE,
-)
-
 
 INT_DIGITS = 12
 FRAC_DIGITS = 3
@@ -37,20 +29,3 @@ def ser_decimal(input_decimal: Union[Decimal, float]) -> str:
         f"{'-' if input_decimal < 0 else ''}{integer_component_s}."
         f"{str(fractional_component)[2:] if fractional_component else '0'}"
     )
-
-
-def bin_parse_decimal(data: bytes, cursor: int) -> Tuple[int, Decimal]:
-    cursor, int_a = decode_integer(data, cursor + 1)  # +1 for header
-    cursor, int_b = decode_integer(data, cursor)
-    if extract_flags(data[cursor])[0]:
-        return cursor, Decimal(int_a) / int_b
-    return cursor, (Decimal(int_a) / int_b) * -1
-
-
-def bin_ser_decimal(value: Decimal, parameters: bool) -> bytes:
-    int_a, int_b = value.as_integer_ratio()
-    sign = int_a >= 0
-    data = [bin_header(STYPE.DECIMAL, parameters=parameters, flag1=sign)]
-    data.append(encode_integer(abs(int_a)))
-    data.append(encode_integer(int_b))
-    return b"".join(data)

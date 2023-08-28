@@ -2,14 +2,6 @@ from decimal import Decimal
 from string import digits
 from typing import Tuple, Union, cast
 
-from http_sfv.util_binary import (
-    decode_integer,
-    encode_integer,
-    bin_header,
-    extract_flags,
-    STYPE,
-)
-
 MAX_INT = 999999999999999
 MIN_INT = -999999999999999
 
@@ -17,6 +9,8 @@ DIGITS = set(digits.encode("ascii"))
 NUMBER_START_CHARS = set((digits + "-").encode("ascii"))
 PERIOD = ord(b".")
 MINUS = ord(b"-")
+INTEGER = "integer"
+DECIMAL = "decimal"
 
 
 def parse_integer(data: bytes) -> Tuple[int, int]:
@@ -31,25 +25,6 @@ def ser_integer(inval: int) -> str:
         output += "-"
     output += str(abs(inval))
     return output
-
-
-def bin_parse_integer(data: bytes, cursor: int) -> Tuple[int, int]:
-    sign = 1 if extract_flags(data[cursor])[0] else -1
-    cursor, integer = decode_integer(data, cursor + 1)  # +1 for header
-    return cursor, integer * sign
-
-
-def bin_ser_integer(value: int, parameters: bool) -> bytes:
-    if not MIN_INT <= value <= MAX_INT:
-        raise ValueError("Input is out of Integer range.")
-    sign = value >= 0
-    data = bin_header(STYPE.INTEGER, parameters=parameters, flag1=sign)
-    data += encode_integer(abs(value))
-    return data
-
-
-INTEGER = "integer"
-DECIMAL = "decimal"
 
 
 def parse_number(data: bytes) -> Tuple[int, Union[int, Decimal]]:

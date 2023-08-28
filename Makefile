@@ -6,10 +6,6 @@ TESTS=test/tests/*.json
 .PHONY: run
 run: test
 
-.PHONY: bintest
-bintest: venv
-	PYTHONPATH=.:$(VENV) $(VENV)/python test/binary.py ~/Projects/http_samples/mnot/*.har
-
 .PHONY: test
 test: $(TESTS) venv
 	PYTHONPATH=.:$(VENV) $(VENV)/python test/test.py $(TESTS)

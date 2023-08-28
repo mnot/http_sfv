@@ -1,19 +1,10 @@
 from typing import Tuple
 
-from http_sfv.item import ser_item, bin_ser_item
-from http_sfv.innerlist import parse_item_or_inner_list, bin_parse_item_or_inner_list
+from http_sfv.item import ser_item
+from http_sfv.innerlist import parse_item_or_inner_list
 from http_sfv.parameters import parse_params, ser_params
 from http_sfv.types import DictionaryType
-from http_sfv.util import (
-    discard_http_ows,
-    ser_key,
-    parse_key,
-)
-from .util_binary import (
-    bin_len_header,
-    extract_len,
-    STYPE,
-)
+from http_sfv.util import discard_http_ows, ser_key, parse_key
 
 
 EQUALS = ord(b"=")
@@ -56,20 +47,6 @@ def parse_dictionary(data: bytes) -> Tuple[int, DictionaryType]:
         raise ValueError from why
 
 
-def bin_parse_dictionary(data: bytes, cursor: int) -> Tuple[int, DictionaryType]:
-    dictionary = {}
-    cursor, member_count = extract_len(data, cursor)
-    for _ in range(member_count):
-        key_len = data[cursor]
-        cursor += 1
-        key_end = cursor + key_len
-        key = data[cursor:key_end].decode("ascii")
-        cursor = key_end
-        cursor, value = bin_parse_item_or_inner_list(data, cursor)
-        dictionary[key] = value
-    return cursor, dictionary
-
-
 def ser_dictionary(dictionary: DictionaryType) -> str:
     if len(dictionary) == 0:
         raise ValueError("No contents; field should not be emitted")
@@ -82,12 +59,3 @@ def ser_dictionary(dictionary: DictionaryType) -> str:
             for m, n in dictionary.items()
         ]
     )
-
-
-def bin_ser_dictionary(dictionary: DictionaryType) -> bytes:
-    data = [bin_len_header(STYPE.DICTIONARY, len(dictionary))]
-    for member in dictionary:
-        data.append(len(member).to_bytes(1, "big"))
-        data.append(member.encode("ascii"))
-        data.append(bin_ser_item(dictionary[member]))  # type: ignore
-    return b"".join(data)

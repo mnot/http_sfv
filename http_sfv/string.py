@@ -1,7 +1,5 @@
 from typing import Tuple
 
-from http_sfv.util_binary import decode_integer, encode_integer, bin_header, STYPE
-
 DQUOTE = ord('"')
 BACKSLASH = ord("\\")
 DQUOTEBACKSLASH = set([DQUOTE, BACKSLASH])
@@ -42,16 +40,3 @@ def ser_string(inval: str) -> str:
         raise ValueError("String contains disallowed characters")
     escaped = inval.replace("\\", "\\\\").replace('"', '\\"')
     return f'"{escaped}"'
-
-
-def bin_parse_string(data: bytes, cursor: int) -> Tuple[int, str]:
-    cursor, length = decode_integer(data, cursor + 1)  # +1 for header
-    end = cursor + length
-    return end, data[cursor:end].decode("ascii")
-
-
-def bin_ser_string(value: str, parameters: bool) -> bytes:
-    data = [bin_header(STYPE.STRING, parameters=parameters)]
-    data.append(encode_integer(len(value)))
-    data.append(value.encode("ascii"))
-    return b"".join(data)

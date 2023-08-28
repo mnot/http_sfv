@@ -1,25 +1,8 @@
 from typing import Tuple
 
-from http_sfv.bare_item import (
-    parse_bare_item,
-    bin_parse_bare_item,
-    ser_bare_item,
-    bin_ser_bare_item,
-)
-from http_sfv.types import (
-    BareItemType,
-    ParamsType,
-)
-from http_sfv.util import (
-    discard_ows,
-    parse_key,
-    ser_key,
-)
-from http_sfv.util_binary import (
-    bin_len_header,
-    extract_len,
-    STYPE,
-)
+from http_sfv.bare_item import parse_bare_item, ser_bare_item
+from http_sfv.types import BareItemType, ParamsType
+from http_sfv.util import discard_ows, parse_key, ser_key
 
 PAREN_OPEN = ord(b"(")
 SEMICOLON = ord(b";")
@@ -51,20 +34,6 @@ def parse_params(data: bytes) -> Tuple[int, ParamsType]:
     return bytes_consumed, params
 
 
-def bin_parse_params(data: bytes, cursor: int) -> Tuple[int, ParamsType]:
-    params = {}
-    cursor, member_count = extract_len(data, cursor)
-    for _ in range(member_count):
-        key_len = data[cursor]
-        cursor += 1
-        key_end = cursor + key_len
-        key = data[cursor:key_end].decode("ascii")
-        cursor = key_end
-        cursor, value = bin_parse_bare_item(data, cursor)
-        params[key] = value
-    return cursor, params
-
-
 def ser_params(params: ParamsType) -> str:
     return "".join(
         [
@@ -72,12 +41,3 @@ def ser_params(params: ParamsType) -> str:
             for k, v in params.items()
         ]
     )
-
-
-def bin_ser_params(params: ParamsType) -> bytes:
-    data = [bin_len_header(STYPE.PARAMETER, len(params))]
-    for member in params:
-        data.append(len(member).to_bytes(1, "big"))
-        data.append(member.encode("ascii"))
-        data.append(bin_ser_bare_item(params[member]))
-    return b"".join(data)
