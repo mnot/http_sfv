@@ -52,16 +52,3 @@ def ser_key(key: str) -> str:
     return key
 
 
-class StructuredFieldValue:
-    def parse(self, data: bytes) -> None:
-        bytes_consumed = discard_ows(data)
-        bytes_consumed += self.parse_content(data[bytes_consumed:])
-        bytes_consumed += discard_ows(data[bytes_consumed:])
-        if data[bytes_consumed:]:
-            raise ValueError("Trailing text after parsed value")
-
-    def parse_content(self, data: bytes) -> int:
-        raise NotImplementedError
-
-    def __str__(self) -> str:
-        raise NotImplementedError
