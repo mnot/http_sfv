@@ -15,36 +15,33 @@ def parse_dictionary(data: bytes) -> Tuple[int, DictionaryType]:
     bytes_consumed = 0
     dictionary = {}
     data_len = len(data)
-    try:
-        while True:
-            offset, this_key = parse_key(data[bytes_consumed:])
+    while True:
+        offset, this_key = parse_key(data[bytes_consumed:])
+        bytes_consumed += offset
+        try:
+            is_equals = data[bytes_consumed] == EQUALS
+        except IndexError:
+            is_equals = False
+        if is_equals:
+            bytes_consumed += 1  # consume the "="
+            offset, member = parse_item_or_inner_list(data[bytes_consumed:])
             bytes_consumed += offset
-            try:
-                is_equals = data[bytes_consumed] == EQUALS
-            except IndexError:
-                is_equals = False
-            if is_equals:
-                bytes_consumed += 1  # consume the "="
-                offset, member = parse_item_or_inner_list(data[bytes_consumed:])
-                bytes_consumed += offset
-            else:
-                params_consumed, params = parse_params(data[bytes_consumed:])
-                bytes_consumed += params_consumed
-                member = (True, params)
-            dictionary[this_key] = member
-            bytes_consumed += discard_http_ows(data[bytes_consumed:])
-            if bytes_consumed == data_len:
-                return bytes_consumed, dictionary
-            if data[bytes_consumed] != COMMA:
-                raise ValueError(
-                    f"Dictionary member '{this_key}' has trailing characters"
-                )
-            bytes_consumed += 1
-            bytes_consumed += discard_http_ows(data[bytes_consumed:])
-            if bytes_consumed == data_len:
-                raise ValueError("Dictionary has trailing comma")
-    except Exception as why:
-        raise ValueError from why
+        else:
+            params_consumed, params = parse_params(data[bytes_consumed:])
+            bytes_consumed += params_consumed
+            member = (True, params)
+        dictionary[this_key] = member
+        bytes_consumed += discard_http_ows(data[bytes_consumed:])
+        if bytes_consumed == data_len:
+            return bytes_consumed, dictionary
+        if data[bytes_consumed] != COMMA:
+            raise ValueError(
+                f"Dictionary member '{this_key}' has trailing characters"
+            )
+        bytes_consumed += 1
+        bytes_consumed += discard_http_ows(data[bytes_consumed:])
+        if bytes_consumed == data_len:
+            raise ValueError("Dictionary has trailing comma")
 
 
 def ser_dictionary(dictionary: DictionaryType) -> str:

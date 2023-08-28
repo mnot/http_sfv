@@ -10,12 +10,9 @@ EQUALS = ord(b"=")
 
 
 def parse_item(data: bytes) -> Tuple[int, Tuple[BareItemType, ParamsType]]:
-    try:
-        bytes_consumed, value = parse_bare_item(data)
-        param_bytes_consumed, params = parse_params(data[bytes_consumed:])
-        bytes_consumed += param_bytes_consumed
-    except Exception as why:
-        raise ValueError from why
+    bytes_consumed, value = parse_bare_item(data)
+    param_bytes_consumed, params = parse_params(data[bytes_consumed:])
+    bytes_consumed += param_bytes_consumed
     return bytes_consumed, (value, params)
 
 
