@@ -9,6 +9,7 @@ import sys
 from typing import Any, List, Union
 
 from http_sfv import parse, ser, Token, DisplayString
+from http_sfv.util import to_json
 
 FAIL = "\033[91m"
 WARN = "\033[93m"
@@ -94,7 +95,7 @@ def norm(structure: Any) -> Any:
         structure = [adjust(i) for i in structure]
     else:
         structure = adjust(structure)
-    return json.loads(json.dumps(structure, default=objhandler), parse_float=decimal.Decimal)
+    return json.loads(to_json(structure), parse_float=decimal.Decimal)
 
 def adjust(thing: Any) -> Any:
     if isinstance(thing, tuple) and len(thing) == 2:
@@ -107,28 +108,6 @@ def adjust(thing: Any) -> Any:
         if isinstance(thing[1], dict):
             thing = [thing[0], [adjust((k,v)) for k,v in thing[1].items()]]
     return thing
-
-def objhandler(inobj: Any) -> dict:
-    if isinstance(inobj, Token):
-        return {
-            "__type": "token",
-            "value": str(inobj)
-        }
-    if isinstance(inobj, bytes):
-        return {
-            "__type": "binary",
-            "value": base64.b32encode(inobj).decode('ascii')
-        }
-    if isinstance(inobj, datetime):
-        return {
-            "__type": "date",
-            "value": inobj.timestamp()
-        }
-    if isinstance(inobj, DisplayString):
-        return {
-            "__type": "displaystring",
-            "value": str(inobj)
-        }
 
 def test_serialise(test: dict) -> Union[bool, str, str, str]:
     expected = test.get("canonical", test["raw"])

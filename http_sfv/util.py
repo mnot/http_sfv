@@ -1,5 +1,10 @@
+import base64
+from datetime import datetime
+import json
 from string import ascii_lowercase, ascii_uppercase, digits
-from typing import Tuple
+from typing import Tuple, Any, Union
+
+from .types import StructuredType, Token, DisplayString
 
 SPACE = ord(b" ")
 HTTP_OWS = set(b" \t")
@@ -52,3 +57,17 @@ def ser_key(key: str) -> str:
     return key
 
 
+def to_json(structure: StructuredType, **args: Any) -> str:
+    return json.dumps(structure, default=json_translate, **args)
+
+
+def json_translate(inobj: Any) -> Union[Any, dict]:
+    if isinstance(inobj, Token):
+        return {"__type": "token", "value": str(inobj)}
+    if isinstance(inobj, bytes):
+        return {"__type": "binary", "value": base64.b32encode(inobj).decode("ascii")}
+    if isinstance(inobj, datetime):
+        return {"__type": "date", "value": inobj.timestamp()}
+    if isinstance(inobj, DisplayString):
+        return {"__type": "displaystring", "value": str(inobj)}
+    return inobj
