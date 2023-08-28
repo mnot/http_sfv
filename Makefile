@@ -38,7 +38,10 @@ $(BLAB): $(BLAB).c
 
 .PHONY: fuzz-%
 fuzz-%: venv $(BLAB)
-	$(BLAB) -l test/ -e "sf.sf-$*" | PYTHONPATH=$(VENV) $(VENV)/python -m http_sfv --$* --stdin
+	while [ true ];\
+	do\
+		$(BLAB) -l test -e "sf.sf-$*" -f 200 | PYTHONPATH=$(VENV) $(VENV)/python -m http_sfv --$* --stdin || exit 1;\
+	done
 
 .PHONY: tidy
 tidy: venv
