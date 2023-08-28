@@ -39,12 +39,21 @@ sf {
 		| sf-binary
 		| sf-boolean
 		| sf-date
+        | sf-displaystring
 
 	sf-integer = ( "-" )?  DIGIT{1,15}
 
 	sf-decimal = ( "-" )?  DIGIT{1,12}  "."  DIGIT{1,3}
 
 	sf-date = "@" sf-integer
+
+    sf-displaystring = "%" DQUOTE *uchr DQUOTE
+
+    uchr = chr | uescaped
+
+    uescaped = "%" HEXDIG HEXDIG
+
+    HEXDIG = DIGIT | "a" | "b" | "c" | "d" | "e" | "f"
 
 	chr = unescaped
 		| escaped
