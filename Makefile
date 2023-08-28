@@ -21,7 +21,7 @@ update-tests:
 
 .PHONY: perf
 perf: venv
-	PYTHONPATH=$(VENV) $(VENV)/python test/test_perf.py
+	PYTHONPATH=. $(VENV)/python test/test_perf.py
 
 .PHONY: typecheck
 typecheck: venv
