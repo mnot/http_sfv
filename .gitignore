@@ -7,3 +7,4 @@ __pycache__
 .mypy_cache
 *.egg-info
 .venv/
+test/blab*

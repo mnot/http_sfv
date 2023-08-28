@@ -1,5 +1,5 @@
 PROJECT=http_sfv
-BLAB=blab
+BLAB=test/blab
 TESTS=test/tests/*.json
 
 # for running from IDEs (e.g., TextMate)
@@ -30,8 +30,14 @@ typecheck: venv
 pyright: venv
 	PYTHONPATH=$(VENV) $(VENV)/python -m pyright $(PROJECT)
 
-.PHONY: fuzz
-fuzz-%: venv
+$(BLAB).c:
+	curl https://haltp.org/files/blab-0.2.c.gz | gzip -d > $@
+
+$(BLAB): $(BLAB).c
+	sha256sum -c test/download.sha256 && cc -O -o $@ $<
+
+.PHONY: fuzz-%
+fuzz-%: venv $(BLAB)
 	$(BLAB) -l test/ -e "sf.sf-$*" | PYTHONPATH=$(VENV) $(VENV)/python -m http_sfv --$* --stdin
 
 .PHONY: tidy
@@ -43,9 +49,9 @@ lint: venv
 	PYTHONPATH=$(VENV) $(VENV)/pylint --output-format=colorized $(PROJECT)
 
 .PHONY: clean
-clean:
+clean: clean-venv
 	find . -d -type d -name __pycache__ -exec rm -rf {} \;
-	rm -rf build dist MANIFEST $(PROJECT).egg-info .venv .mypy_cache *.log
+	rm -rf build dist MANIFEST $(PROJECT).egg-info .mypy_cache *.log test/blab*
 
 
 #############################################################################
