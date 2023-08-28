@@ -123,7 +123,8 @@ Alternatively, you can pass the field name with the `-n` option, provided that i
         true,
         {}
     ]
-}~~~
+}
+~~~
 
 Note that if successful, the output is in the JSON format used by the [test suite](https://github.com/httpwg/structured-header-tests/).
 
