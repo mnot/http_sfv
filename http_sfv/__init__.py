@@ -33,7 +33,7 @@ from http_sfv.dictionary import parse_dictionary, ser_dictionary
 from http_sfv.item import parse_item, ser_item
 from http_sfv.list import parse_list, ser_list
 from http_sfv.retrofit import retrofit
-from http_sfv.types import StructuredType, Token
+from http_sfv.types import StructuredType, Token, DisplayString
 from http_sfv.util import discard_ows
 
 

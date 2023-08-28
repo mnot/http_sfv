@@ -1,13 +1,14 @@
 
 import base64
 from collections import OrderedDict
+from datetime import datetime
 import decimal
 import json
 from pathlib import Path
 import sys
 from typing import Any, List, Union
 
-from http_sfv import parse_text, ser_text, Token
+from http_sfv import parse_text, ser_text, Token, DisplayString
 
 FAIL = "\033[91m"
 WARN = "\033[93m"
@@ -117,6 +118,16 @@ def objhandler(inobj: Any) -> dict:
         return {
             "__type": "binary",
             "value": base64.b32encode(inobj).decode('ascii')
+        }
+    if isinstance(inobj, datetime):
+        return {
+            "__type": "date",
+            "value": inobj.timestamp()
+        }
+    if isinstance(inobj, DisplayString):
+        return {
+            "__type": "displaystring",
+            "value": str(inobj)
         }
 
 def test_serialise(test: dict) -> Union[bool, str, str, str]:

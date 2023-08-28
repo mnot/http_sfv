@@ -7,7 +7,7 @@ This is a [Python 3](https://python.org/) library implementing parsing and seria
 
 The library's initial purpose is to prove the algorithms in the specification; as a result, it is not at all optimised. It tracks the specification closely, but since it is not yet an RFC, may change at any time.
 
-_Currently, this implements draft 19 of the specification._
+_Currently, this implements [draft-ietf-httpbis-sfbis-03](https://datatracker.ietf.org/doc/draft-ietf-httpbis-sfbis/)._
 
 ## Python API
 
@@ -33,9 +33,11 @@ Dictionaries are represented as Python dictionaries; Lists are represented as Py
 * Integers: `int`
 * Decimals: `float`
 * Strings: `str`
-* Tokens: `http_sfv.Token` // a `UserString`
+* Tokens: `http_sfv.Token` (a `UserString`)
 * Byte Sequences: `bytes`
 * Booleans: `bool`
+* Dates: `datetime.datetime`
+* Display Strings: `http_sfv.DisplayString` (a `UserString`)
 
 Inner Lists are represented as lists as well.
 
@@ -79,4 +81,3 @@ However, `parse_text` will always produce tuples for Items and Inner Lists, even
 ~~~
 
 Note that `ser_text` produces a string, not a bytes-like object.
-

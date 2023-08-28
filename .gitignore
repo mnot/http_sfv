@@ -6,4 +6,8 @@ MANIFEST
 __pycache__
 .mypy_cache
 *.egg-info
+<<<<<<< HEAD
 .venv/
+=======
+.venv
+>>>>>>> 735b2cc38d55009209b8eb259586a8374a1d2d78
