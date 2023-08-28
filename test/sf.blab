@@ -37,8 +37,8 @@ sf {
 	sf-token = ALPHA | "*"  ( tchar | ":" | "/" )*
 	sf-binary = ":" base64-safe* ":"
 	sf-boolean = "?" ( "0" | "1" )
-	sf-date = "@" sf-integer
-    sf-displaystring = "%" DQUOTE ( unescaped | percent-escaped-safe )* DQUOTE
+	sf-date = "@" date-safe
+    sf-displaystring = "%" DQUOTE ( unescaped | "\\" | percent-escaped-safe )* DQUOTE
 
 	unescaped = "!" | " "
 		| "[" | ALPHA | "@" | "?" | ">" | "=" | "<" | ";" | ":"
@@ -56,6 +56,8 @@ sf {
 		| "/"
 		| "="
     base64-safe = ""  # cannot specify only valid base64
+
+    date-safe = ( "-" )?  DIGIT{1,10}
 
 	tchar = "!"
 		| "#"
