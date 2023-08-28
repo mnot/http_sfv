@@ -1,5 +1,6 @@
 import base64
 from datetime import datetime
+from decimal import Decimal
 import json
 from string import ascii_lowercase, ascii_uppercase, digits
 from typing import Tuple, Any, Union
@@ -70,4 +71,6 @@ def json_translate(inobj: Any) -> Union[Any, dict]:
         return {"__type": "date", "value": inobj.timestamp()}
     if isinstance(inobj, DisplayString):
         return {"__type": "displaystring", "value": str(inobj)}
-    return inobj
+    if isinstance(inobj, Decimal):
+        return float(inobj)
+    raise ValueError(f"Unknown object type - {inobj}")
