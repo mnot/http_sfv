@@ -99,7 +99,7 @@ Note that `ser` produces a string, not a bytes-like object.
 
 You can validate and examine the data model of a field value by calling the library on the command line, using `-d`, `-l` and `-i` to denote dictionaries, lists or items respectively; e.g.,
 
-~~~ example
+~~~ bash
 > python3 -m http_sfv -i "foo;bar=baz"
 [
     {
@@ -117,14 +117,14 @@ You can validate and examine the data model of a field value by calling the libr
 
 or:
 
-~~~ example
+~~~ bash
 > python3 -m http_sfv -i "foo;&bar=baz"
 FAIL: Key does not begin with lcalpha or * at: &bar=baz
 ~~~
 
 Alternatively, you can pass the field name with the `-n` option, provided that it is a compatible retrofit field:
 
-~~~ example
+~~~ bash
 > python3 -m http_sfv -n "Cache-Control" "max-age=40, must-revalidate"
 {
     "max-age": [
