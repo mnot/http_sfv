@@ -11,17 +11,17 @@ _Currently, this implements [draft-ietf-httpbis-sfbis-03](https://datatracker.ie
 
 ## Python API
 
-Textual HTTP headers can be parsed by calling `parse_text`; the return value is a data structure that represents the field value.
+Textual HTTP headers can be parsed by calling `parse`; the return value is a data structure that represents the field value.
 
 ~~~ python
->>> from http_sfv import parse_text, ser_text
->>> parse_text(b"foo; a=1, bar; b=2", tltype="dictionary")
+>>> from http_sfv import parse, ser
+>>> parse(b"foo; a=1, bar; b=2", tltype="dictionary")
 {'foo': (True, {'a': 1}), 'bar': (True, {'b': 2})}
 ~~~
 
 Note that `.parse()` takes a bytes-like object as the first argument. If you want to parse a string, please `.encode()` it first.
 
-Because the library needs to know which kind of field it is, you need to hint this when calling `parse_text`. There are two ways to do this:
+Because the library needs to know which kind of field it is, you need to hint this when calling `parse`. There are two ways to do this:
 
 1. Using a `tltype` parameter, whose value should be one of 'dictionary', 'list', or 'item'.
 2. Using a `name` parameter to indicate a field name that has a registered type, per [the retrofit draft](https://httpwg.org/http-extensions/draft-ietf-httpbis-retrofit.html).
@@ -46,38 +46,38 @@ Structured Types that can have parameters (including Dictionary and List members
 So, a single item that's a Token with one parameter whose value is an integer will be represented like this:
 
 ~~~ python
->>> parse_text(b"foo; a=1", tltype="item")
+>>> parse(b"foo; a=1", tltype="item")
 (Token("foo"), {'a': 1})
 ~~~
 
 Note that even if there aren't parameters, a tuple will still be returned, as in soem items on this List:
 
 ~~~ python
->>> parse_text(b"a, b; q=5, c", tltype="list")
+>>> parse(b"a, b; q=5, c", tltype="list")
 [(Token("a"), {}), (Token("b"), {'q': 5}), (Token("c"), {})]
 ~~~
 
-To serialise that data structure back to a textual Structured Field, use `ser_text`:
+To serialise that data structure back to a textual Structured Field, use `ser`:
 
 ~~~ python
->>> field = parse_text(b"a, b; q=5, c", tltype="list")
->>> ser_text(field)
+>>> field = parse(b"a, b; q=5, c", tltype="list")
+>>> ser(field)
 'a, b;q=5, c'
 ~~~
 
-When using `ser_text`, if an Item or Inner List doesn't have parameters, they can be omitted; for example:
+When using `ser`, if an Item or Inner List doesn't have parameters, they can be omitted; for example:
 
 ~~~ python
 >>> structure = [5, 6, (7, {"with": "param"})]
->>> ser_text(structure)
+>>> ser(structure)
 '5, 6, 7;with="param"'
 ~~~
 
-However, `parse_text` will always produce tuples for Items and Inner Lists, even when there are no parameters:
+However, `parse` will always produce tuples for Items and Inner Lists, even when there are no parameters:
 
 ~~~ python
->>> parse_text(bytes(ser_text(structure), encoding='ascii'), tltype='list')
+>>> parse(bytes(ser(structure), encoding='ascii'), tltype='list')
 [(5, {}), (6, {}), (7, {'with': 'param'})]
 ~~~
 
-Note that `ser_text` produces a string, not a bytes-like object.
+Note that `ser` produces a string, not a bytes-like object.

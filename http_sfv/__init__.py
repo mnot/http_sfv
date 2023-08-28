@@ -37,7 +37,7 @@ from http_sfv.types import StructuredType, Token, DisplayString
 from http_sfv.util import discard_ows
 
 
-def parse_text(value: bytes, name: str = None, tltype: str = None) -> StructuredType:
+def parse(value: bytes, name: str = None, tltype: str = None) -> StructuredType:
     structure: StructuredType
     if name is not None:
         tltype = retrofit.get(name.lower(), None)
@@ -56,7 +56,7 @@ def parse_text(value: bytes, name: str = None, tltype: str = None) -> Structured
     return structure
 
 
-def ser_text(structure: StructuredType) -> str:
+def ser(structure: StructuredType) -> str:
     if isinstance(structure, Dict):
         return ser_dictionary(structure)
     if isinstance(structure, List):

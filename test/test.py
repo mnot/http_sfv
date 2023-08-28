@@ -8,7 +8,7 @@ from pathlib import Path
 import sys
 from typing import Any, List, Union
 
-from http_sfv import parse_text, ser_text, Token, DisplayString
+from http_sfv import parse, ser, Token, DisplayString
 
 FAIL = "\033[91m"
 WARN = "\033[93m"
@@ -73,7 +73,7 @@ def test_parse(test: dict) -> Union[bool, Any, str]:
     test_success = False
     try:
         field_value = b", ".join([v.encode('utf-8') for v in test["raw"]])
-        structure = parse_text(field_value, tltype=test["header_type"])
+        structure = parse(field_value, tltype=test["header_type"])
         parse_success = True
     except ValueError as why:
         parse_fail_reason = why.args
@@ -135,7 +135,7 @@ def test_serialise(test: dict) -> Union[bool, str, str, str]:
     output = None
     serialise_fail_reason = None
     try:
-        output = ser_text(test["expected"])
+        output = ser(test["expected"])
     except ValueError as why:
         serialise_fail_reason = why.args[0]
     except Exception:
