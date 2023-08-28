@@ -38,10 +38,13 @@ sf {
 		| sf-token
 		| sf-binary
 		| sf-boolean
+		| sf-date
 
 	sf-integer = ( "-" )?  DIGIT{1,15}
 
 	sf-decimal = ( "-" )?  DIGIT{1,12}  "."  DIGIT{1,3}
+
+	sf-date = "@" sf-integer
 
 	chr = unescaped
 		| escaped
