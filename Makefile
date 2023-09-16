@@ -23,10 +23,6 @@ update-tests:
 perf: venv
 	PYTHONPATH=. $(VENV)/python test/test_perf.py
 
-.PHONY: typecheck
-typecheck: venv
-	PYTHONPATH=$(VENV) $(VENV)/python -m mypy $(PROJECT)
-
 pyright: venv
 	PYTHONPATH=$(VENV) $(VENV)/python -m pyright $(PROJECT)
 
@@ -43,30 +39,21 @@ fuzz-%: venv $(BLAB)
 		$(BLAB) -l test -e "sf.sf-$*" -f 200 | PYTHONPATH=$(VENV) $(VENV)/python -m http_sfv --$* --stdin || exit 1;\
 	done
 
+.PHONY: clean
+clean: clean_py
+	rm -rf test/blab*
+
 .PHONY: tidy
-tidy: venv
-	$(VENV)/black $(PROJECT)
+tidy: tidy_py
 
 .PHONY: lint
-lint: venv
-	PYTHONPATH=$(VENV) $(VENV)/pylint --output-format=colorized $(PROJECT)
+lint: lint_py
 
-.PHONY: clean
-clean: clean-venv
-	find . -d -type d -name __pycache__ -exec rm -rf {} \;
-	rm -rf build dist MANIFEST $(PROJECT).egg-info .mypy_cache *.log test/blab*
-
+.PHONY: typecheck
+typecheck: typecheck_py
 
 #############################################################################
 ## Distribution
-
-.PHONY: version
-version: venv
-	$(eval VERSION=$(shell $(VENV)/python -c "import $(PROJECT); print($(PROJECT).__version__)"))
-
-.PHONY: build
-build: clean venv
-	$(VENV)/python -m build
 
 .PHONY: upload
 upload: build test typecheck version
@@ -76,5 +63,4 @@ upload: build test typecheck version
 	$(VENV)/python -m twine upload dist/*
 
 
-
-include Makefile.venv
+include Makefile.pyproject

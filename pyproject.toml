@@ -1,3 +1,35 @@
+[project]
+name = "http_sfv"
+dynamic = ["version", "readme"]
+authors = [
+    {name="Mark Nottingham", email="mnot@mnot.net"}
+]
+description = "Parse and serialise HTTP Structured Field Values"
+requires-python = ">=3.8"
+license = {file = "LICENSE.md"}
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python",
+    "Operating System :: POSIX",
+    "Topic :: Internet :: WWW/HTTP",
+    "Topic :: Software Development :: Libraries :: Python Modules"
+]
+dependencies = [
+    "typing_extensions"
+]
+
+[project.optional-dependencies]
+dev = ["mypy", "playwright", "black", "validate-pyproject"]
+
+[tool.setuptools.dynamic]
+version = {attr = "http_sfv.__version__"}
+readme = {file = ["README.md"], content-type = "text/markdown"}
+
+[tool.setuptools.packages.find]
+where = ["."]
+
 [build-system]
 requires = [
     "setuptools>=42",
@@ -5,9 +37,15 @@ requires = [
 ]
 build-backend = "setuptools.build_meta"
 
+[tool.pyright]
+include = ["http_sfv"]
+defineConstant = { DEBUG = true }
+venv = ".venv"
+reportMissingImports = true
+pythonVersion = "3.11"
+pythonPlatform = "Darwin"
 
 [tool.mypy]
-python_version = 3.8
 follow_imports = "normal"
 incremental = true
 disallow_untyped_defs = true
@@ -19,15 +57,6 @@ warn_return_any = true
 warn_unreachable = true
 strict_optional = false
 show_error_codes = true
-
-[tool.pyright]
-include = ["http_sfv"]
-defineConstant = { DEBUG = true }
-venv = ".venv"
-reportMissingImports = true
-pythonVersion = "3.11"
-pythonPlatform = "Darwin"
-
 
 [tool.pylint.basic]
 function-rgx = "[a-z_][a-z0-9_]{1,30}$"
