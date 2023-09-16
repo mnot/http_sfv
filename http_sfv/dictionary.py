@@ -35,9 +35,7 @@ def parse_dictionary(data: bytes) -> Tuple[int, DictionaryType]:
         if bytes_consumed == data_len:
             return bytes_consumed, dictionary
         if data[bytes_consumed] != COMMA:
-            raise ValueError(
-                f"Dictionary member '{this_key}' has trailing characters"
-            )
+            raise ValueError(f"Dictionary member '{this_key}' has trailing characters")
         bytes_consumed += 1
         bytes_consumed += discard_http_ows(data[bytes_consumed:])
         if bytes_consumed == data_len:
