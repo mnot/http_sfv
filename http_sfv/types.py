@@ -2,23 +2,32 @@ from collections import UserString
 from datetime import datetime
 from decimal import Decimal
 from typing import Union, Dict, List, Tuple
+from typing_extensions import TypeAlias
 
 
-class Token(str):
-    pass
+class Token(UserString):
+    def __init__(self, seq: str):  # pylint: disable=W0231
+        self.data = seq
+
+    def __repr__(self) -> str:
+        return f'Token("{self.data}")'
 
 
-class DisplayString(str):
-    pass
+class DisplayString(UserString):
+    def __init__(self, seq: str):  # pylint: disable=W0231
+        self.data = seq
+
+    def __repr__(self) -> str:
+        return f'Token("{self.data}")'
 
 
-BareItemType = Union[
+BareItemType: TypeAlias = Union[
     int, float, str, bool, Decimal, bytes, Token, datetime, DisplayString
 ]
-JsonBareType = Union[int, float, str, bool, Decimal, Dict]
-
-JsonParamType = List[Tuple[str, JsonBareType]]
-JsonItemType = Tuple[JsonBareType, JsonParamType]
-JsonInnerListType = Tuple[List[JsonItemType], JsonParamType]
-JsonListType = List[Union[JsonItemType, JsonInnerListType]]
-JsonDictType = List[Tuple[str, Union[JsonItemType, JsonInnerListType]]]
+ParamsType: TypeAlias = Dict[str, BareItemType]
+ItemType: TypeAlias = Union[BareItemType, Tuple[BareItemType, ParamsType]]
+InnerListType: TypeAlias = Union[List[ItemType], Tuple[List[ItemType], ParamsType]]
+ItemOrInnerListType: TypeAlias = Union[ItemType, InnerListType]
+ListType: TypeAlias = List[Union[ItemType, InnerListType]]
+DictionaryType: TypeAlias = Dict[str, Union[ItemType, InnerListType]]
+StructuredType: TypeAlias = Union[ItemType, ListType, DictionaryType]

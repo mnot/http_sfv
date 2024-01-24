@@ -1,36 +1,28 @@
 sf {
 
-	sf-string = DQUOTE  chr*  DQUOTE
-
-	sf-list = list-member  ( OWS "," OWS list-member )*
-
+	sf-list = list-member ( OWS "," OWS list-member )*
 	list-member = sf-item
 		| inner-list
 
-	inner-list = "("  SP*  ( sf-item ( SP+ sf-item )* SP* )?  ")"  parameters
+	inner-list = "(" SP* ( sf-item ( SP+ sf-item )* SP* )? ")" parameters
 
 	parameters = ( ";" SP* parameter )*
-
-	parameter = param-name  ( "=" param-value )?
-
+	parameter = param-name ( "=" param-value )?
 	param-name = key
-
-	key = lcalpha | "*"  ( lcalpha | DIGIT | "_" | "-" | "." | "*" )*
-
-	lcalpha = "z" | "y" | "x" | "w" | "v" | "u" | "t" | "s" | "r" | "q" | "p" | "o" | "n" | "m" | "l" | "k" | "j" | "i" | "h" | "g" | "f" | "e" | "d" | "c" | "b" | "a"
-
+	key = (lcalpha | "*") ( lcalpha | DIGIT | "_" | "-" | "." | "*" )*
 	param-value = bare-item
 
-	sf-dictionary = dict-member  ( OWS "," OWS dict-member )*
+	lcalpha = "z" | "y" | "x" | "w" | "v" | "u" | "t" | "s" | "r"
+        | "q" | "p" | "o" | "n" | "m" | "l" | "k" | "j" | "i" | "h"
+        | "g" | "f" | "e" | "d" | "c" | "b" | "a"
 
-	dict-member = member-name  ( "=" member-value )?
-
+	sf-dictionary = dict-member ( OWS "," OWS dict-member )*
+	dict-member = member-name ( "=" member-value )?
 	member-name = key
-
 	member-value = sf-item
 		| inner-list
 
-	sf-item = bare-item  parameters
+	sf-item = bare-item parameters
 
 	bare-item = sf-integer
 		| sf-decimal
@@ -38,34 +30,36 @@ sf {
 		| sf-token
 		| sf-binary
 		| sf-boolean
+		| sf-date
+    | sf-displaystring
 
-	sf-integer = ( "-" )?  DIGIT{1,15}
-
-	sf-decimal = ( "-" )?  DIGIT{1,12}  "."  DIGIT{1,3}
-
-	chr = unescaped
-		| escaped
+	sf-integer = ( "-" )? DIGIT{1,15}
+	sf-decimal = ( "-" )? DIGIT{1,12} "." DIGIT{1,3}
+	sf-string = DQUOTE (unescaped | "%" | backslash-escaped)* DQUOTE
+	sf-token = (ALPHA | "*") ( tchar | ":" | "/" )*
+	sf-binary = ":" base64-safe* ":"
+	sf-boolean = "?" ( "0" | "1" )
+	sf-date = "@" date-safe
+    sf-displaystring = "%" DQUOTE ( unescaped | "\\" | percent-escaped-safe )* DQUOTE
 
 	unescaped = "!" | " "
-		| "[" | "Z" | "Y" | "X" | "W" | "V" | "U" | "T" | "S" | "R" | "Q" | "P" | "O" | "N" | "M" | "L" | "K" | "J" | "I" | "H" | "G" | "F" | "E" | "D" | "C" | "B" | "A" | "@" | "?" | ">" | "=" | "<" | ";" | ":" | "9" | "8" | "7" | "6" | "5" | "4" | "3" | "2" | "1" | "0" | "/" | "." | "-" | "," | "+" | "*" | ")" | "(" | "\'" | "&" | "%" | "$" | "#"
-		| "~" | "}" | "|" | "{" | "z" | "y" | "x" | "w" | "v" | "u" | "t" | "s" | "r" | "q" | "p" | "o" | "n" | "m" | "l" | "k" | "j" | "i" | "h" | "g" | "f" | "e" | "d" | "c" | "b" | "a" | "`" | "_" | "^" | "]"
+		| "[" | ALPHA | "@" | "?" | ">" | "=" | "<" | ";" | ":"
+        | DIGIT | "/" | "." | "-" | "," | "+" | "*" | ")" | "(" | "\'" | "&" | "$" | "#"
+		| "~" | "}" | "|" | "{" | "`" | "_" | "^" | "]"
 
-	escaped = "\\" ( DQUOTE | "\\" )
+    percent-escaped = "%" lchexdig lchexdig
+    percent-escaped-safe = "" # cannot specify only valid unicode characters
+    lchexdig = DIGIT | "a" | "b" | "c" | "d" | "e" | "f"
 
-	sf-token = ALPHA | "*"  ( tchar | ":" | "/" )*
-
-	sf-binary = ":"   ":"
+	backslash-escaped = "\\" ( DQUOTE | "\\" )
 
 	base64 = ALPHA
 		| DIGIT
-		| "+"
 		| "/"
 		| "="
+    base64-safe = "" # cannot specify only valid base64
 
-	sf-boolean = "?"  boolean
-
-	boolean = "0"
-		| "1"
+    date-safe = ( "-" )? DIGIT{1,10}
 
 	tchar = "!"
 		| "#"
@@ -85,9 +79,9 @@ sf {
 		| DIGIT
 		| ALPHA
 
-	OWS = ( SP | HTAB )*
 
-	VCHAR = "~" | "}" | "|" | "{" | "z" | "y" | "x" | "w" | "v" | "u" | "t" | "s" | "r" | "q" | "p" | "o" | "n" | "m" | "l" | "k" | "j" | "i" | "h" | "g" | "f" | "e" | "d" | "c" | "b" | "a" | "`" | "_" | "^" | "]" | "\\" | "[" | "Z" | "Y" | "X" | "W" | "V" | "U" | "T" | "S" | "R" | "Q" | "P" | "O" | "N" | "M" | "L" | "K" | "J" | "I" | "H" | "G" | "F" | "E" | "D" | "C" | "B" | "A" | "@" | "?" | ">" | "=" | "<" | ";" | ":" | "9" | "8" | "7" | "6" | "5" | "4" | "3" | "2" | "1" | "0" | "/" | "." | "-" | "," | "+" | "*" | ")" | "(" | "\'" | "&" | "%" | "$" | "#" | "\"" | "!"
+
+	OWS = ( SP | HTAB )*
 
 	SP = " "
 
@@ -95,9 +89,11 @@ sf {
 
 	DIGIT = "9" | "8" | "7" | "6" | "5" | "4" | "3" | "2" | "1" | "0"
 
-	ALPHA = "Z" | "Y" | "X" | "W" | "V" | "U" | "T" | "S" | "R" | "Q" | "P" | "O" | "N" | "M" | "L" | "K" | "J" | "I" | "H" | "G" | "F" | "E" | "D" | "C" | "B" | "A"
-		| "z" | "y" | "x" | "w" | "v" | "u" | "t" | "s" | "r" | "q" | "p" | "o" | "n" | "m" | "l" | "k" | "j" | "i" | "h" | "g" | "f" | "e" | "d" | "c" | "b" | "a"
+	ALPHA = "Z" | "Y" | "X" | "W" | "V" | "U" | "T" | "S" | "R" | "Q" | "P"
+        | "O" | "N" | "M" | "L" | "K" | "J" | "I" | "H" | "G" | "F" | "E"
+        | "D" | "C" | "B" | "A" | "z" | "y" | "x" | "w" | "v" | "u" | "t"
+        | "s" | "r" | "q" | "p" | "o" | "n" | "m" | "l" | "k" | "j" | "i"
+        | "h" | "g" | "f" | "e" | "d" | "c" | "b" | "a"
 
 	DQUOTE = "\""
-
 }

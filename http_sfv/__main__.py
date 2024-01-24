@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 
 import argparse
-import json
 import sys
 
-from . import structures
+from . import parse
+from .util import to_json
 
 
 parser = argparse.ArgumentParser(
@@ -35,6 +35,13 @@ structure.add_argument(
     const="item",
     help="Item field",
 )
+structure.add_argument(
+    "-n",
+    "--name",
+    dest="field_name",
+    action="store",
+    help="Field name",
+)
 
 input_source = parser.add_mutually_exclusive_group(required=True)
 input_source.add_argument(
@@ -57,9 +64,12 @@ else:
     input_string = args.input_string
 
 try:
-    field = structures[args.field_type]()
-    field.parse(input_string.encode("utf-8"))
-    print(json.dumps(field.to_json(), sort_keys=True, indent=4))
+    input_bytes = input_string.encode("utf-8")
+    if args.field_type:
+        field = parse(input_bytes, tltype=args.field_type)
+    else:
+        field = parse(input_bytes, name=args.field_name)
+    print(to_json(field, sort_keys=True, indent=4))
 except ValueError as why:
     sys.stderr.write(f"VALUE: {input_string.strip()}\n")
     sys.stderr.write(f"FAIL: {why}\n")

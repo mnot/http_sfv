@@ -1,5 +1,11 @@
+import base64
+from datetime import datetime
+from decimal import Decimal
+import json
 from string import ascii_lowercase, ascii_uppercase, digits
-from typing import Tuple
+from typing import Tuple, Any, Union
+
+from .types import StructuredType, Token, DisplayString
 
 SPACE = ord(b" ")
 HTTP_OWS = set(b" \t")
@@ -52,16 +58,19 @@ def ser_key(key: str) -> str:
     return key
 
 
-class StructuredFieldValue:
-    def parse(self, data: bytes) -> None:
-        bytes_consumed = discard_ows(data)
-        bytes_consumed += self.parse_content(data[bytes_consumed:])
-        bytes_consumed += discard_ows(data[bytes_consumed:])
-        if data[bytes_consumed:]:
-            raise ValueError("Trailing text after parsed value")
+def to_json(structure: StructuredType, **args: Any) -> str:
+    return json.dumps(structure, default=json_translate, **args)
 
-    def parse_content(self, data: bytes) -> int:
-        raise NotImplementedError
 
-    def __str__(self) -> str:
-        raise NotImplementedError
+def json_translate(inobj: Any) -> Union[Any, dict]:
+    if isinstance(inobj, Token):
+        return {"__type": "token", "value": str(inobj)}
+    if isinstance(inobj, bytes):
+        return {"__type": "binary", "value": base64.b32encode(inobj).decode("ascii")}
+    if isinstance(inobj, datetime):
+        return {"__type": "date", "value": inobj.timestamp()}
+    if isinstance(inobj, DisplayString):
+        return {"__type": "displaystring", "value": str(inobj)}
+    if isinstance(inobj, Decimal):
+        return float(inobj)
+    raise ValueError(f"Unknown object type - {inobj}")

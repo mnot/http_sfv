@@ -11,103 +11,88 @@ _Currently, this implements [draft-ietf-httpbis-sfbis-03](https://datatracker.ie
 
 ## Python API
 
-There are three top-level types for Structured Field Values; `Dictionary`, `List` and `Item`. After instantiation, each can be used to parse a string HTTP header field value by calling `.parse()`:
+### Parsing
+
+Textual HTTP headers can be parsed by calling `parse`; the return value is a data structure that represents the field value.
 
 ~~~ python
->>> from http_sfv import List
->>> my_list = List()
->>> my_list.parse(b"foo; a=1, bar; b=2")
+>>> from http_sfv import parse, ser
+>>> parse(b"foo; a=1, bar; b=2", tltype="dictionary")
+{'foo': (True, {'a': 1}), 'bar': (True, {'b': 2})}
 ~~~
 
-Note that `.parse()` takes a bytes-like object. If you want to parse a string, please `.encode()` it first.
+`parse()` takes a bytes-like object as the first argument. If you want to parse a string, please `.encode()` it first.
 
-Members of Lists and Dictionaries are available by normal Pythonic list and dictionary methods, respectively:
+#### Indicating Top-Level Type
+
+Because the library needs to know which kind of field it is, you need to hint this when calling `parse`. There are two ways to do this:
+
+1. Using a `tltype` parameter, whose value should be one of 'dictionary', 'list', or 'item'.
+2. Using a `name` parameter to indicate a field name that has a registered type, per [the retrofit draft](https://httpwg.org/http-extensions/draft-ietf-httpbis-retrofit.html).
+
+Note that if you use `name`, a `KeyError` will be raised if the type associated with the name isn't known.
+
+### Types
+
+In the returned data, Dictionaries are represented as Python dictionaries; Lists are represented as Python lists, and Items are the bare type.
+
+Bare types are represented using the following Python types:
+
+* Integers: `int`
+* Decimals: `float`
+* Strings: `str`
+* Tokens: `http_sfv.Token` (a `UserString`)
+* Byte Sequences: `bytes`
+* Booleans: `bool`
+* Dates: `datetime.datetime`
+* Display Strings: `http_sfv.DisplayString` (a `UserString`)
+
+Inner Lists are represented as lists as well.
+
+### Parameters
+
+Structured Types that can have parameters (including Dictionary and List members as well as singular Items and Inner Lists) are represented as a tuple of `(value, parameters)` where parameters is a dictionary.
+
+So, a single item that's a Token with one parameter whose value is an integer will be represented like this:
 
 ~~~ python
->>> my_list
-[<http_sfv.item.Item object at 0x106d25190>, <http_sfv.item.Item object at 0x106d25210>]
->>> my_list[0]
-<http_sfv.item.Item object at 0x106d25190>
+>>> parse(b"foo; a=1", tltype="item")
+(Token("foo"), {'a': 1})
 ~~~
 
-Items (whether top-level or inside a list or dictionary value) can have their values accessed with the `.value` property:
+Note that even if there aren't parameters, a tuple will still be returned, as in some items on this List:
 
 ~~~ python
->>> my_list[0].value
-'foo'
+>>> parse(b"a, b; q=5, c", tltype="list")
+[(Token("a"), {}), (Token("b"), {'q': 5}), (Token("c"), {})]
 ~~~
 
-Parameters on Items (and Inner Lists) can be accessed using the `.params` property, which is a dictionary:
+### Serialisation
+
+To serialise that data structure back to a textual Structured Field, use `ser`:
 
 ~~~ python
->>> my_list[0].params['a']
-1
+>>> field = parse(b"a, b; q=5, c", tltype="list")
+>>> ser(field)
+'a, b;q=5, c'
 ~~~
 
-Note that Tokens and Strings both evaluate as Python strings, but Tokens have a different class:
+When using `ser`, if an Item or Inner List doesn't have parameters, they can be omitted; for example:
 
 ~~~ python
->>> type(my_list[0].value)
-<class 'http_sfv.token.Token'>
+>>> structure = [5, 6, (7, {"with": "param"})]
+>>> ser(structure)
+'5, 6, 7;with="param"'
 ~~~
 
-That means that you need to create Tokens explicitly:
-
-~~~ python
->>> from http_sfv import Token
->>> my_list.append(Token('bar'))
->>> my_list[-1]
-'bar'
-~~~
-
-Likewise, Display Strings are represented using DisplayString objects; Dates as `datetime.datetime` objects.
-
-If you compare two Items, they'll be considered to be equivalent if their values match, even when their parameters are different:
-
-~~~ python
->>> Token('foo') in my_list  # note that my_list's 'foo' has a parameter
-True
->>> my_list.count(Token("foo"))
-1
-~~~
-
-Inner Lists can be added by passing a list:
-
-~~~ python
->>> my_list.append(['another_thing', 'and_another'])
->>> print(my_list)
-foo;a=1, bar;b=2, bar, ("another_thing" "and_another")
->>> my_list[-1][-1].params['a'] = True
-~~~
-
-Dictionaries, Lists, and Items can be instantiated with a value:
-
-~~~ python
->>> from http_sfv import Dictionary
->>> my_dictionary = Dictionary({'a': '1', 'b': 2, 'c': Token('foo')})
->>> my_dictionary
-{'a': <http_sfv.item.Item object at 0x106a94c40>, 'b': <http_sfv.item.Item object at 0x106a94d00>, 'c': <http_sfv.item.Item object at 0x106a94dc0>}
-~~~
-
-Once instantiated, parameters can then be accessed:
-
-~~~ python
->>> my_dictionary['b'].params['1'] = 2.0
-~~~
-
-Finally, to serialise a field value, just evaluate it as a string:
-
-~~~ python
->>> print(my_dictionary)
-a=1, b=2;b1=2.0, c=foo
-~~~
+Note that `ser` produces a string, not a bytes-like object.
 
 
 ## Command Line Use
 
 You can validate and examine the data model of a field value by calling the library on the command line, using `-d`, `-l` and `-i` to denote dictionaries, lists or items respectively; e.g.,
 
-~~~ example
+~~~ bash
 > python3 -m http_sfv -i "foo;bar=baz"
 [
     {
@@ -125,9 +110,26 @@ You can validate and examine the data model of a field value by calling the libr
 
 or:
 
-~~~ example
+~~~ bash
 > python3 -m http_sfv -i "foo;&bar=baz"
 FAIL: Key does not begin with lcalpha or * at: &bar=baz
 ~~~
 
+Alternatively, you can pass the field name with the `-n` option, provided that it is a compatible retrofit field:
+
+~~~ bash
+> python3 -m http_sfv -n "Cache-Control" "max-age=40, must-revalidate"
+{
+    "max-age": [
+        40,
+        {}
+    ],
+    "must-revalidate": [
+        true,
+        {}
+    ]
+}
+~~~
+
 Note that if successful, the output is in the JSON format used by the [test suite](https://github.com/httpwg/structured-header-tests/).
+

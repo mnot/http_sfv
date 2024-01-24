@@ -4,7 +4,7 @@
 
 __author__ = "Mark Nottingham <mnot@mnot.net>"
 __copyright__ = """\
-Copyright (c) 2018-2020 Mark Nottingham
+Copyright (c) Mark Nottingham
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -27,12 +27,40 @@ THE SOFTWARE.
 
 __version__ = "0.9.8"
 
-# Item type wrappers
-from .types import DisplayString, Token
+from typing import Tuple, List, Dict, Optional
 
-# Top-level structures
-from .dictionary import Dictionary
-from .list import List
-from .item import Item, InnerList
+from http_sfv.dictionary import parse_dictionary, ser_dictionary
+from http_sfv.item import parse_item, ser_item
+from http_sfv.list import parse_list, ser_list
+from http_sfv.retrofit import retrofit
+from http_sfv.types import StructuredType, Token, DisplayString
+from http_sfv.util import discard_ows
 
-structures = {"dictionary": Dictionary, "list": List, "item": Item}
+
+def parse(
+    value: bytes, name: Optional[str] = None, tltype: Optional[str] = None
+) -> StructuredType:
+    structure: StructuredType
+    if name is not None:
+        tltype = retrofit.get(name.lower(), None)
+    cursor = discard_ows(value)
+    if tltype == "dictionary":
+        bytes_consumed, structure = parse_dictionary(value[cursor:])
+    elif tltype == "list":
+        bytes_consumed, structure = parse_list(value[cursor:])
+    elif tltype == "item":
+        bytes_consumed, structure = parse_item(value[cursor:])
+    else:
+        raise KeyError("unrecognised top-level type")
+    cursor += bytes_consumed
+    if discard_ows(value[cursor:]) < len(value) - cursor:
+        raise ValueError("Trailing characters after value.")
+    return structure
+
+
+def ser(structure: StructuredType) -> str:
+    if isinstance(structure, Dict):
+        return ser_dictionary(structure)
+    if isinstance(structure, List):
+        return ser_list(structure)
+    return ser_item(structure)

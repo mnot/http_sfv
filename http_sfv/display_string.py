@@ -48,8 +48,8 @@ def ser_display_string(inval: DisplayString) -> str:
     byte_array = inval.encode("utf-8")
     escaped = []
     for byte in byte_array:
-        if byte in [PERCENT, DQUOTE] or not (31 <= byte <= 127):
+        if byte in [PERCENT, DQUOTE] or not 31 <= byte <= 127:
             escaped.append(f"%{byte:x}")
         else:
             escaped.append(chr(byte))
-    return DisplayString(f'%"{"".join(escaped)}"')
+    return f'%"{"".join(escaped)}"'

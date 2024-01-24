@@ -1,7 +1,6 @@
 from decimal import Decimal
 from string import digits
-from typing import Tuple, Union
-
+from typing import Tuple, Union, cast
 
 MAX_INT = 999999999999999
 MIN_INT = -999999999999999
@@ -10,10 +9,12 @@ DIGITS = set(digits.encode("ascii"))
 NUMBER_START_CHARS = set((digits + "-").encode("ascii"))
 PERIOD = ord(b".")
 MINUS = ord(b"-")
+INTEGER = "integer"
+DECIMAL = "decimal"
 
 
 def parse_integer(data: bytes) -> Tuple[int, int]:
-    return parse_number(data)  # type: ignore
+    return cast(Tuple[int, int], parse_number(data))
 
 
 def ser_integer(inval: int) -> str:
@@ -24,10 +25,6 @@ def ser_integer(inval: int) -> str:
         output += "-"
     output += str(abs(inval))
     return output
-
-
-INTEGER = "integer"
-DECIMAL = "decimal"
 
 
 def parse_number(data: bytes) -> Tuple[int, Union[int, Decimal]]:

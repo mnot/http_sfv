@@ -39,7 +39,7 @@ perf_structures = [
 def time_parse(structure, field_type):
     return int(
         timeit.timeit(
-        f"sfv.structures['{field_type}']().parse(b'{structure}')",
+        f"sfv.parse(b'{structure}', tltype='{field_type}')",
         setup=f"import time; time.sleep({wait})",
         globals=globals(),
         number=i

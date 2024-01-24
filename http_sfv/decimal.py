@@ -1,7 +1,7 @@
 from decimal import Decimal
-from typing import Tuple, Union
+from typing import Tuple, Union, cast
 
-from .integer import parse_number
+from http_sfv.integer import parse_number
 
 INT_DIGITS = 12
 FRAC_DIGITS = 3
@@ -9,7 +9,7 @@ PRECISION = Decimal(10) ** -FRAC_DIGITS
 
 
 def parse_decimal(data: bytes) -> Tuple[int, Decimal]:
-    return parse_number(data)  # type: ignore
+    return cast(Tuple[int, Decimal], parse_number(data))
 
 
 def ser_decimal(input_decimal: Union[Decimal, float]) -> str:

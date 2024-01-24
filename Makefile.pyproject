@@ -1,0 +1,146 @@
+#
+# Common Makefile for Python projects
+#
+#
+# Insert `include Makefile.pyproject` at the bottom of your Makefile to enable these
+# rules. Requires Makefile.venv to also be present.
+#
+# Requires $PROJECT to be set to the name of the project, and for that to be the source folder.
+#
+# This Makefile provides the following targets:
+#
+# clean_py
+#     Clean Python-related temporary files
+# tidy_py
+#     Run black on Python files in $PROJECT
+# lint_py
+#     Run pylint on $PROJECT, and validate pyproject.toml
+# typecheck_py
+#     Run mypy on $PROJECT
+# bump-calver
+#     Bump the __version__ in $PROJECT/__init__.py using calver (https://calver.org/)
+# bump-semver[-major,-minor,-micro]
+#     Bump the __version__ in $PROJECT/__init__.py using semver (https://semver.org/)
+# version <<< COMMITS TO GIT
+#     Bump the version according to $VERSIONING (default: semver-micro).
+# build
+#     Build the project
+# pypi-pub
+#     Publish the project to pypi
+# release <<< TAGS AND PUSHES TO GITHUB
+#     Release the project on Pypi and Github releases (requires /.github/workflows/release.yml)
+#
+# See also Makefile.venv.
+#
+#
+# Make sure the following are in requirements.txt:
+# - pylint
+# - mypy
+# - black
+# - build
+# - validate-pyproject
+
+PY?=python
+VERSIONING?=semver-micro
+YEAR=`date +%Y`
+MONTH=`date +%m`
+
+# Python-specific targets
+
+.PHONY: clean_py
+clean_py: clean-venv
+	find . -d -type d -name __pycache__ -exec rm -rf {} \;
+	rm -rf build dist MANIFEST $(PROJECT).egg-info .mypy_cache *.log changelog.md
+
+.PHONY: tidy_py
+tidy_py: venv
+	$(VENV)/black $(PROJECT)
+
+.PHONY: lint_py
+lint_py: venv
+	PYTHONPATH=$(VENV) $(VENV)/pylint --output-format=colorized $(PROJECT)
+	$(VENV)/validate-pyproject pyproject.toml
+
+.PHONY: typecheck_py
+typecheck_py: venv
+	PYTHONPATH=$(VENV) $(VENV)/python -m mypy $(PROJECT)
+
+## Release
+
+.PHONY: py_version
+py_version: venv
+	$(eval VERSION=$(shell $(VENV)/python -c "import $(PROJECT); print($(PROJECT).__version__)"))
+	$(eval VER_MAJOR=$(shell echo $(VERSION) | cut -d. -f1))
+	$(eval VER_MINOR=$(shell echo $(VERSION) | cut -d. -f2))
+	$(eval VER_MICRO=$(shell echo $(VERSION) | cut -d. -f3))
+	## for calendar-based versioning
+	$(eval NEXT_CALMICRO=$(shell \
+		if [[ $(YEAR) != $(VER_MAJOR) || $(MONTH) != $(VER_MINOR) ]] ; then \
+			echo "1"; \
+		else \
+			echo $$(( $(VER_MICRO) + 1 )); \
+		fi; \
+	))
+	## for semantic versioning
+	$(eval NEXT_SEMMAJOR=$(shell \
+		echo $$(( $(VER_MAJOR) + 1 )); \
+	))
+	$(eval NEXT_SEMMINOR=$(shell \
+		echo $$(( $(VER_MINOR) + 1 )); \
+	))
+	$(eval NEXT_SEMMICRO=$(shell \
+		echo $$(( $(VER_MICRO) + 1 )); \
+	))
+
+.PHONY: bump-calver
+bump-calver: py_version
+	sed -i "" -e "s/$(VERSION)/$(YEAR).$(MONTH).$(NEXT_CALMICRO)/" $(PROJECT)/__init__.py
+
+.PHONY: bump-semver-micro
+bump-semver-micro: py_version
+	sed -i "" -e "s/$(VERSION)/$(VER_MAJOR).$(VER_MINOR).$(NEXT_SEMMICRO)/" $(PROJECT)/__init__.py
+
+.PHONY: bump-semver-minor
+bump-semver-minor: py_version
+	sed -i "" -e "s/$(VERSION)/$(VER_MAJOR).$(NEXT_SEMMINOR).0/" $(PROJECT)/__init__.py
+
+.PHONY: bump-semver-major
+bump-semver-major: py_version
+	sed -i "" -e "s/$(VERSION)/$(NEXT_SEMMAJOR).0.0/" $(PROJECT)/__init__.py
+
+.PHONY: version
+version: typecheck lint test bump-$(VERSIONING)
+	git add $(PROJECT)/__init__.py
+	git commit -m 'bump version'
+
+.PHONY: build
+build: venv
+	$(VENV)/python -m build
+
+changelog.md:
+	$(eval PREV_RELEASE=$(shell git tag --sort=-taggerdate -l v* | head -1))
+	git --no-pager log --pretty="- %s" $(PREV_RELEASE)..HEAD --grep "^Changed:" --grep "^Fixed:" --grep "^Added:" --grep "^Changed:" --grep "^Removed:" --output=$@
+	sed -i "" -e "1s/^/\n\n/" $@
+
+# Manual pypi publication; no GitHub release
+.PHONY: pypi-pub
+pypi-pub: venv build
+	$(VENV)/python -m twine upload dist/*
+
+# Github release with Pypi publication; requires /.github/workflows/release.yml
+.PHONY: release
+release: py_version changelog.md
+	git tag -a "v$(VERSION)" -F changelog.md
+	rm -f changelog.md
+	git push
+	git push --tags origin  # github action will push to pypi and create a release
+
+
+include Makefile.venv
+
+## Patch venv to install from pyproject.toml
+
+venv: | $(VENV)/$(MARKER)-dev
+$(VENV)/$(MARKER)-dev: $(VENV)/$(MARKER)
+	$(VENV)/pip install -e .[dev]
+	touch $@
