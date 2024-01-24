@@ -2,10 +2,6 @@ PROJECT=http_sfv
 BLAB=test/blab
 TESTS=test/tests/*.json
 
-# for running from IDEs (e.g., TextMate)
-.PHONY: run
-run: test
-
 .PHONY: test
 test: $(TESTS) venv
 	PYTHONPATH=.:$(VENV) $(VENV)/python test/test.py $(TESTS)
@@ -43,24 +39,15 @@ fuzz-%: venv $(BLAB)
 clean: clean_py
 	rm -rf test/blab*
 
-.PHONY: tidy
-tidy: tidy_py
-
 .PHONY: lint
 lint: lint_py
 
 .PHONY: typecheck
 typecheck: typecheck_py
 
-#############################################################################
-## Distribution
+.PHONY: tidy
+tidy: tidy_py
 
-.PHONY: upload
-upload: build test typecheck version
-	git tag $(PROJECT)-$(VERSION)
-	git push
-	git push --tags origin
-	$(VENV)/python -m twine upload dist/*
 
 
 include Makefile.pyproject

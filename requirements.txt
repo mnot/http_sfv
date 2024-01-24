@@ -1,8 +1,0 @@
-typing_extensions
-pylint
-mypy
-twine
-black
-build
-pyright
-validate-pyproject
