@@ -27,7 +27,7 @@ THE SOFTWARE.
 
 __version__ = "0.9.8"
 
-from typing import Tuple, List, Dict
+from typing import Tuple, List, Dict, Optional
 
 from http_sfv.dictionary import parse_dictionary, ser_dictionary
 from http_sfv.item import parse_item, ser_item
@@ -37,7 +37,9 @@ from http_sfv.types import StructuredType, Token, DisplayString
 from http_sfv.util import discard_ows
 
 
-def parse(value: bytes, name: str = None, tltype: str = None) -> StructuredType:
+def parse(
+    value: bytes, name: Optional[str] = None, tltype: Optional[str] = None
+) -> StructuredType:
     structure: StructuredType
     if name is not None:
         tltype = retrofit.get(name.lower(), None)
