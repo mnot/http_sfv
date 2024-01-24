@@ -60,7 +60,7 @@ So, a single item that's a Token with one parameter whose value is an integer wi
 (Token("foo"), {'a': 1})
 ~~~
 
-Note that even if there aren't parameters, a tuple will still be returned, as in soem items on this List:
+Note that even if there aren't parameters, a tuple will still be returned, as in some items on this List:
 
 ~~~ python
 >>> parse(b"a, b; q=5, c", tltype="list")
@@ -83,13 +83,6 @@ When using `ser`, if an Item or Inner List doesn't have parameters, they can be 
 >>> structure = [5, 6, (7, {"with": "param"})]
 >>> ser(structure)
 '5, 6, 7;with="param"'
-~~~
-
-However, `parse` will always produce tuples for Items and Inner Lists, even when there are no parameters:
-
-~~~ python
->>> parse(bytes(ser(structure), encoding='ascii'), tltype='list')
-[(5, {}), (6, {}), (7, {'with': 'param'})]
 ~~~
 
 Note that `ser` produces a string, not a bytes-like object.
