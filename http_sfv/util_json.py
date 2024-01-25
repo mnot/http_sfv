@@ -33,6 +33,6 @@ def value_from_json(value: JsonBareType) -> BareItemType:
                 return datetime.fromtimestamp(value["value"])
             if value["__type"] == "displaystring":
                 return DisplayString(value["value"])
-            raise Exception(f"Unrecognised data type {value['__type']}")
-        raise Exception("Dictionary as Item")
+            raise RuntimeError(f"Unrecognised data type {value['__type']}")
+        raise RuntimeError("Dictionary as Item")
     return value
